@@ -12,5 +12,8 @@
     return markUp;
   }
   var markUp = recurseDOM(document.body);
-  chrome.runtime.sendMessage(markUp);
+  chrome.runtime.sendMessage({
+    name: 'mark-up',
+    content: markUp
+  });
 })();

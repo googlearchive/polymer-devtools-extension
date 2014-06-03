@@ -1,5 +1,5 @@
 chrome.devtools.panels.create("Test",
-  "sandwich-16.png",
+  null,
   "panel.html",
   null
 );
