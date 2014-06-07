@@ -1,0 +1,18 @@
+{
+  "name": "test",
+  "version": "0.0.0",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.2.4",
+    "polymer-ui-arrow": "Polymer/polymer-ui-arrow#~0.2.4",
+    "platform": "Polymer/platform#~0.2.4",
+    "polymer-ui-collapsible": "Polymer/polymer-ui-collapsible#~0.2.4"
+  }
+}

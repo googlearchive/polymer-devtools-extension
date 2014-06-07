@@ -25,12 +25,11 @@
   });
 
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-		if (message.name === 'mark-up') {
+		if (message.name === 'refresh') {
       if (sender.tab.id in tabIdToPortMap) {
         var port = tabIdToPortMap[sender.tab.id];
         port.postMessage({
-          name: 'mark-up',
-          content: message.content
+          name: 'refresh',
         });
       }
     }

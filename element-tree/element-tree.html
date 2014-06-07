@@ -1,0 +1,9 @@
+<polymer-element name='element-tree' attributes='indent text basewidth' constructor='ElementTree'>
+  <template>
+    <div id='content'>
+      <p style='cursor: pointer;' on-click='{{toggle}}'>{{text}}</p>
+      <div id='childrenContent'></div>
+    </div>
+  </template>
+  <script src='element-tree.js'></script>
+</polymer-element>
