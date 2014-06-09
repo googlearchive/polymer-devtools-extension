@@ -9,6 +9,7 @@
     },
     addChild: function (element) {
       this.childElements.push(element);
+      this.$.childrenContent.appendChild(child);
     },
     empty: function () {
       this.text = '';
