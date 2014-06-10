@@ -1,7 +1,10 @@
 <polymer-element name='element-tree' attributes='indent text basewidth' constructor='ElementTree'>
   <template>
     <div id='content'>
-      <p style='cursor: pointer;' on-click='{{toggle}}'>{{text}}</p>
+      <p>
+        <span id='expandBtn' on-click='{{toggle}}' style='cursor: pointer;'>{{expandBtnText}}</span>
+        <span id='name' style='cursor: default;' on-click='{{toggleSelection}}'>{{text}}</span>
+      </p>
       <div id='childrenContent'></div>
     </div>
   </template>

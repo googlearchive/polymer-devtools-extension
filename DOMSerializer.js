@@ -1,6 +1,9 @@
 function DOMSerializer () {
   var addedObjects = [];
   var unwantedClasses = [Function, HTMLElement, Document, Window];
+  function isPolymerElement (node) {
+    return node && ('element' in node) && (node.element.localName === 'polymer-element');
+  }
   function JSONize (obj) {
     function isUnrequired (obj) {
       for (var i = 0; i < unwantedClasses.length; i++) {
@@ -25,7 +28,6 @@ function DOMSerializer () {
       if (isUnrequired(oldObj[prop])) {
         return;
       }
-      addedObjects.push(oldObj[prop]);
       if (typeof oldObj[prop] === 'string') {
         newObj[prop] = {
           type: 'string',
@@ -43,12 +45,14 @@ function DOMSerializer () {
         };
       } else if (typeof oldObj[prop] === 'object' &&
         !(oldObj instanceof Array)) {
+        addedObjects.push(oldObj[prop]);
         newObj[prop] = {
           type: 'object',
           value: {}
         };
         explore(oldObj[prop], newObj[prop].value);
       } else if (typeof oldObj[prop] === 'object') {
+        addedObjects.push(oldObj[prop]);
         newObj[prop] = {
           type: 'array',
           length: oldObj[prop].length,
@@ -60,12 +64,17 @@ function DOMSerializer () {
       }
     }
     function explore (node, obj) {
-      for (var key in node) {
-        try {
-          copyProperty(node, obj, key);
-        } catch (e) {
+      if (isPolymerElement(node)) {
+        for (var key in node.__proto__) {
+          try {
+            copyProperty(node, obj, key);
+          } catch (e) {
 
+          }
         }
+      }
+      if ('tagName' in node) {
+        copyProperty(node, obj, 'tagName');
       }
     }
     var res = {};
@@ -73,9 +82,6 @@ function DOMSerializer () {
     return res;
   }
 
-  function isPolymerElement (node) {
-    return node && ('element' in node) && (node.element.localName === 'polymer-element');
-  }
   this.serialize = function (root) {
     addedObjects = [];
     function traverse (root) {

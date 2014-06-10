@@ -34,18 +34,24 @@ function DOMToPolymerDOM (DOM) {
   return polymerDOM;
 }
 
+function getDOMString() {
+  var serializer = new DOMSerializer();
+  return {
+    'data': serializer.serialize(document.body)
+  };
+}
+
 function refreshPanel () {
-  var toEval = '(' + getDOMString.toString() + ')()';
+  var toEval = DOMSerializer.toString() + ';(' + getDOMString.toString() + ')()';
   var DOM;
   var elementTree = document.querySelector('element-tree');
   chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
     if (error) {
       // TODO
     }
-    var parser = new DOMParser();
-    DOM = parser.parseFromString(result.data, 'text/html');
-    DOMToPolymerDOM(DOM.body);
-    elementTree.initFromDOMTree(DOM.body);
+    DOM = JSON.parse(result.data);
+    // DOMToPolymerDOM(DOM.body);
+    elementTree.initFromDOMTree(DOM);
   });
 }
 
