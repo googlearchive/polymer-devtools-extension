@@ -1,0 +1,24 @@
+<link rel="import" href="../editable-label/editable-label.html">
+
+<polymer-element name='object-tree' attributes='indent basewidth' constructor='ObjectTree'>
+  <template>
+    <style>
+      editable-label {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      label {
+        font-family: "Courier New", Courier, monospace;
+      }
+    </style>
+    <div id='content'>
+      <div id='rootContent'>
+        <span id='expandBtn' on-click='{{toggle}}' style='cursor: pointer;'>{{expandBtnText}}</span>
+        <label>{{labelText}}</label>
+        <editable-label text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>
+      </div>
+      <div id='childrenContent'></div>
+    </div>
+  </template>
+  <script src='object-tree.js'></script>
+</polymer-element>

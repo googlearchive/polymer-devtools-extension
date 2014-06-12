@@ -17,7 +17,7 @@
     },
     addChild: function (element) {
       this.childElements.push(element);
-      this.$.childrenContent.appendChild(child);
+      this.$.childrenContent.appendChild(element);
     },
     empty: function () {
       this.text = '';
@@ -30,8 +30,9 @@
     },
     initFromDOMTree: function (tree, root) {
       this.empty();
-      this.text = tree.tagName.value;
+      this.text = tree.JSONobj.value.tagName.value;
       this.isPolymer = tree.isPolymer;
+      this.key = tree.key;
       if (this.isPolymer) {
         this.$.name.style.backgroundColor = COLOR_POLYMER_UNSELECTED;
       }
@@ -40,8 +41,7 @@
         var child = new ElementTree();
         child.indent = this.indent + this.baseWidth;
         child.initFromDOMTree(tree.children[i], this.root);
-        this.childElements.push(child);
-        this.$.childrenContent.appendChild(child);
+        this.addChild(child);
       }
     },
     toggle: function () {
@@ -66,7 +66,9 @@
         this.root.selectedChild = null;
         this.$.name.style.backgroundColor = COLOR_POLYMER_UNSELECTED;
         this.selected = !(this.selected);
-        this.fire('unselected');
+        this.fire('unselected', {
+          key: this.key
+        });
       } else {
         if (this.root.selectedChild) {
           this.root.selectedChild.toggleSelection();
@@ -74,7 +76,9 @@
         this.root.selectedChild = this;
         this.$.name.style.backgroundColor = COLOR_POLYMER_SELECTED;
         this.selected = !(this.selected);
-        this.fire('selected');
+        this.fire('selected', {
+          key: this.key
+        });
       }
     }
   });

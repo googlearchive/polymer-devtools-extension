@@ -1,12 +1,17 @@
 <html>
   <head>
-  <script src="panel.js"></script>
-  <script src="bower_components/platform/platform.js"></script>
-  <script src="bower_components/polymer/polymer.js"></script>
-  <link rel="import" href="element-tree/element-tree.html">
-  <script src="DOMSerializer.js"></script>
+    <script src="panel.js"></script>
+    <script src="bower_components/platform/platform.js"></script>
+    <script src="bower_components/polymer/polymer.js"></script>
+    <link rel="import" href="element-tree/element-tree.html">
+    <link rel="import" href="object-tree/object-tree.html">
+    <link rel="import" href="split-pane/split-pane.html">
+    <script src="DOMSerializer.js"></script>
   </head>
   <body>
-    <element-tree></element-tree>
+    <split-pane>
+      <element-tree class='split-pane-left'></element-tree>
+      <object-tree class='split-pane-right'></object-tree>
+    </split-pane>
   </body>
 </html>

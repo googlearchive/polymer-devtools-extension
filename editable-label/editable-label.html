@@ -1,0 +1,18 @@
+<polymer-element name='editable-label' attributes='width text hidden'>
+  <template>
+    <style>
+      #static {
+        border: 1px solid #E6F0EA;
+        min-width: 10px;
+        height: 20px;
+        float: left;
+      }
+    </style>
+    <div hidden?='{{hidden}}'>
+      <div id='static' on-click='{{startEditing}}'>{{text}}</div>
+      <input id='dynamic' type='text' value='{{text}}' size='{{width}}'
+      on-blur='{{stopEditing}}' on-keypress='{{handleKeyPress}}'/>
+    </div>
+  </template>
+  <script src='editable-label.js'></script>
+</polymer-element>

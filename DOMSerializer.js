@@ -62,6 +62,7 @@ function DOMSerializer () {
           newObj[prop].value.push(explore(oldObj[prop], newObj[prop].value));
         }
       }
+      newObj[prop].name = prop;
     }
     function explore (node, obj) {
       if (isPolymerElement(node)) {
@@ -74,29 +75,58 @@ function DOMSerializer () {
         }
       }
       if ('tagName' in node) {
+        console.log(node);
         copyProperty(node, obj, 'tagName');
       }
     }
-    var res = {};
-    explore(obj, res);
+    var res = {
+      name: '/',
+      type: 'object',
+      value: {}
+    };
+    explore(obj, res.value);
     return res;
   }
 
+  var lastDOMKey = 0;
+  function createCache() {
+    window._polymerDOMCache = {};
+  }
+  function addToCache(obj) {
+    obj.key = lastDOMKey;
+    window._polymerDOMCache[lastDOMKey++] = obj;
+  }
+
   this.serialize = function (root) {
+    createCache();
     addedObjects = [];
     function traverse (root) {
-      var res = JSONize(root);
+      var res = {};
+      res.JSONobj = JSONize(root);
       if (isPolymerElement(root)) {
         root = root.shadowRoot;
         res.isPolymer = true;
       }
       res.children = [];
-      for (var i = 0; i < root.children.length; i++) {
-        res.children.push(traverse(root.children[i]));
+      if (!root) {
+        return res;
       }
+      for (var i = 0; i < root.children.length; i++) {
+        if (root.children[i]) {
+          res.children.push(traverse(root.children[i]));
+        }
+      }
+      addToCache(res);
       return res;
     }
     console.log(traverse(root));
     return JSON.stringify(traverse(root));
+  };
+
+  this.workOnElement = function (key, callback) {
+    if (!(key in window._polymerDOMCache)) {
+      throw 'Invalid node key request';
+    }
+    callback.call(window._polymerDOMCache[key], window._polymerDOMCache[key]);
   };
 }
