@@ -13,6 +13,15 @@
     ready: function () {
       this.childElements = [];
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
+      this.addEventListener('field-changed', function (event) {
+        var newValue = event.detail.newValue;
+        var prop = this.labelText;
+        event.stopPropagation();
+        this.fire('property-changed', {
+          prop: prop,
+          value: newValue
+        });
+      });
     },
     addChild: function (element) {
       this.childElements.push(element);

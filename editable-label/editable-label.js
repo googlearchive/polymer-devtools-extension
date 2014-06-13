@@ -1,7 +1,4 @@
 (function () {
-  function hideElement(el) {
-
-  }
   Polymer('editable-label', {
     text: '',
     editing: false,
@@ -36,8 +33,8 @@
       if (event.keyCode === 13) {
         this.stopEditing();
         this.fire('field-changed', {
-          oldData: this.lastText,
-          newData: this.text
+          oldValue: this.lastText,
+          newValue: this.text
         });
         this.lastText = this.text;
       }

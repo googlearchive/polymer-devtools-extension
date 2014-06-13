@@ -54,8 +54,12 @@
     }
   }
 
-  function refreshPanel () {
-    var toEval = DOMSerializer.toString() + ';(' + getDOMString.toString() + ')()';
+  function init () {
+    var toEval = 'window._polymerNamespace_ = {}; window._polymerNamespace_.highlight = ' + highlight.toString() + ';';
+    toEval += 'window._polymerNamespace_.unhighlight = ' + unhighlight.toString() + ';';
+    toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
+    toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
+    toEval += DOMSerializer.toString() + ';(' + getDOMString.toString() + ')()';
     var DOM;
     var elementTree = document.querySelector('element-tree');
     var objectTree = document.querySelector('object-tree');
@@ -64,21 +68,53 @@
         // TODO
       }
       DOM = JSON.parse(result.data);
+      console.log(DOM);
       cacheDOM(DOM);
       elementTree.initFromDOMTree(DOM);
     });
   }
 
+  function highlightElement (key) {
+    var toEval = 'window._polymerNamespace_.highlight(' + key + ');';
+    toEval += 'window._polymerNamespace_.scrollIntoView(' + key + ')';
+    chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+      if (error) {
+        // TODO
+      }
+    });
+  }
+  function unhighlightElement (key) {
+    var toEval = 'window._polymerNamespace_.unhighlight();';
+    chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+      if (error) {
+        // TODO
+      }
+    });
+  }
+
   window.addEventListener('polymer-ready', function () {
-    refreshPanel();
+    init();
     var elementTree = document.querySelector('element-tree');
     var objectTree = document.querySelector('object-tree');
-    elementTree.addEventListener('selected', function (event) {
+    window.addEventListener('selected', function (event) {
       var key = event.detail.key;
       objectTree.initFromObjectTree(polymerDOMCache[key].JSONobj);
+      highlightElement(key);
     });
-    elementTree.addEventListener('unselected', function (event) {
+    window.addEventListener('unselected', function (event) {
       objectTree.empty();
+      unhighlightElement();
+    });
+    window.addEventListener('property-changed', function (event) {
+      var newValue = event.detail.value;
+      var prop = event.detail.prop;
+      var key = elementTree.selectedChild.key;
+      var toEval = 'window._polymerNamespace_.changeProperty(' + key + ', "' + prop + '", ' + newValue + ');';
+      chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+        if (error) {
+          // TODO
+        }
+      });
     });
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
@@ -89,7 +125,7 @@
     });
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
       if (message.name === 'refresh') {
-        refreshPanel();
+        init();
       }
     });
   });

@@ -11,7 +11,7 @@ function DOMSerializer () {
           return true;
         }
       }
-      if (alreadyAdded(obj)) {
+      if (typeof obj === 'object' && alreadyAdded(obj)) {
         return true;
       }
       return false;
@@ -28,7 +28,12 @@ function DOMSerializer () {
       if (isUnrequired(oldObj[prop])) {
         return;
       }
-      if (typeof oldObj[prop] === 'string') {
+      if (oldObj[prop] === null) {
+        newObj[prop] = {
+          type: 'null',
+          value: oldObj[prop]
+        };
+      } else if (typeof oldObj[prop] === 'string') {
         newObj[prop] = {
           type: 'string',
           value: oldObj[prop]
@@ -67,6 +72,9 @@ function DOMSerializer () {
     function explore (node, obj) {
       if (isPolymerElement(node)) {
         for (var key in node.__proto__) {
+          if (key == 'foo') {
+            console.log(node[key]);
+          }
           try {
             copyProperty(node, obj, key);
           } catch (e) {
@@ -75,7 +83,6 @@ function DOMSerializer () {
         }
       }
       if ('tagName' in node) {
-        console.log(node);
         copyProperty(node, obj, 'tagName');
       }
     }
@@ -88,13 +95,13 @@ function DOMSerializer () {
     return res;
   }
 
-  var lastDOMKey = 0;
   function createCache() {
-    window._polymerDOMCache = {};
+    window._polymerNamespace_.DOMCache = {};
+    window._polymerNamespace_.lastDOMKey = 0;
+    window._polymerNamespace_.serializer = this;
   }
   function addToCache(obj) {
-    obj.key = lastDOMKey;
-    window._polymerDOMCache[lastDOMKey++] = obj;
+    window._polymerNamespace_.DOMCache[obj.key] = obj;
   }
 
   this.serialize = function (root) {
@@ -103,6 +110,9 @@ function DOMSerializer () {
     function traverse (root) {
       var res = {};
       res.JSONobj = JSONize(root);
+      res.key = window._polymerNamespace_.lastDOMKey++;
+      root.key = res.key;
+      addToCache(root);
       if (isPolymerElement(root)) {
         root = root.shadowRoot;
         res.isPolymer = true;
@@ -116,17 +126,15 @@ function DOMSerializer () {
           res.children.push(traverse(root.children[i]));
         }
       }
-      addToCache(res);
       return res;
     }
-    console.log(traverse(root));
     return JSON.stringify(traverse(root));
   };
 
   this.workOnElement = function (key, callback) {
-    if (!(key in window._polymerDOMCache)) {
+    if (!(key in window._polymerNamespace_.DOMCache)) {
       throw 'Invalid node key request';
     }
-    callback.call(window._polymerDOMCache[key], window._polymerDOMCache[key]);
+    callback.call(window._polymerNamespace_.DOMCache[key], window._polymerNamespace_.DOMCache[key]);
   };
 }

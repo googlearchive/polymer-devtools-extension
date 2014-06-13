@@ -3,6 +3,9 @@
 <polymer-element name='object-tree' attributes='indent basewidth' constructor='ObjectTree'>
   <template>
     <style>
+      #rootContent {
+        white-space: nowrap;
+      }
       editable-label {
         display: inline-block;
         vertical-align: middle;
@@ -15,7 +18,7 @@
       <div id='rootContent'>
         <span id='expandBtn' on-click='{{toggle}}' style='cursor: pointer;'>{{expandBtnText}}</span>
         <label>{{labelText}}</label>
-        <editable-label text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>
+        <editable-label id='editableLabel' text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>
       </div>
       <div id='childrenContent'></div>
     </div>
