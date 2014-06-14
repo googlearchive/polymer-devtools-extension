@@ -1,3 +1,6 @@
+// All these helpers are meant to be injected into the host page as strings
+// after .toString()
+
 function highlight (key) {
   window._polymerNamespace_.unhighlight();
   window._polymerNamespace_.lastHighlightedKey = key;
@@ -27,4 +30,11 @@ function changeProperty (nodeKey, prop, newValue) {
   if (nodeKey in window._polymerNamespace_.DOMCache) {
     window._polymerNamespace_.DOMCache[nodeKey][prop] = newValue;
   }
+}
+
+function getDOMString() {
+  var serializer = new window._polymerNamespace_.DOMSerializer();
+  return {
+    'data': serializer.serialize(document.body)
+  };
 }

@@ -1,7 +1,9 @@
 (function () {
-  var polymerDOMCache = {};
+  // The cache equivalent to the DOM cache maintained in the host page.
+  // Used to display object-tree in response to selection in element-tree.
+  var polymerDOMCache;
 
-  function DOMToPolymerDOM (DOM) {
+  /*function DOMToPolymerDOM (DOM) {
     function recurseDOM (node) {
       var isPolymerElement = 'isPolymer' in node;
       var tree, i, child;
@@ -35,14 +37,7 @@
     polymerDOM.tagName = '/';
     polymerDOM.children = recurseDOM(DOM);
     return polymerDOM;
-  }
-
-  function getDOMString() {
-    var serializer = new DOMSerializer();
-    return {
-      'data': serializer.serialize(document.body)
-    };
-  }
+  }*/
 
   function cacheDOM (dom) {
     if (!dom) {
@@ -55,39 +50,50 @@
   }
 
   function init () {
+    // Make all the definitions in the host page
     var toEval = 'window._polymerNamespace_ = {}; window._polymerNamespace_.highlight = ' + highlight.toString() + ';';
     toEval += 'window._polymerNamespace_.unhighlight = ' + unhighlight.toString() + ';';
     toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
     toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
-    toEval += DOMSerializer.toString() + ';(' + getDOMString.toString() + ')()';
+    toEval += 'window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
+    // Inject code to get DOM string
+    toEval += '(' + getDOMString.toString() + ')();';
     var DOM;
     var elementTree = document.querySelector('element-tree');
     var objectTree = document.querySelector('object-tree');
     chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
       if (error) {
-        // TODO
+        throw error;
       }
       DOM = JSON.parse(result.data);
-      console.log(DOM);
+      polymerDOMCache = {};
       cacheDOM(DOM);
       elementTree.initFromDOMTree(DOM);
+      objectTree.empty();
     });
   }
 
+  /**
+  * Highlight an element in the page
+  */
   function highlightElement (key) {
     var toEval = 'window._polymerNamespace_.highlight(' + key + ');';
     toEval += 'window._polymerNamespace_.scrollIntoView(' + key + ')';
     chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
       if (error) {
-        // TODO
+        throw error;
       }
     });
   }
+
+  /**
+  * Unhighlight the highlighted element in the page
+  */
   function unhighlightElement (key) {
     var toEval = 'window._polymerNamespace_.unhighlight();';
     chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
       if (error) {
-        // TODO
+        throw error;
       }
     });
   }
@@ -96,23 +102,27 @@
     init();
     var elementTree = document.querySelector('element-tree');
     var objectTree = document.querySelector('object-tree');
+    // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
       objectTree.initFromObjectTree(polymerDOMCache[key].JSONobj);
       highlightElement(key);
     });
+    // When an element in the element-tree is unselected
     window.addEventListener('unselected', function (event) {
       objectTree.empty();
       unhighlightElement();
     });
+    // When a property in the object-tree changes
     window.addEventListener('property-changed', function (event) {
       var newValue = event.detail.value;
       var prop = event.detail.prop;
       var key = elementTree.selectedChild.key;
+      // Reflect a change in property in the host page
       var toEval = 'window._polymerNamespace_.changeProperty(' + key + ', "' + prop + '", ' + newValue + ');';
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         if (error) {
-          // TODO
+          throw error;
         }
       });
     });

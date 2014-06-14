@@ -1,9 +1,10 @@
 (function () {
   Polymer('editable-label', {
     text: '',
+    // Present state: editing or not
     editing: false,
     width: 5,
-    lastText: '',
+    lastText: null,
     hidden: false,
     toggleEditing: function () {
       if (this.editing) {
@@ -21,22 +22,29 @@
     startEditing: function () {
       if (!this.editing) {
         this.toggleEditing();
+        // Select all text in the dynamic field
         this.$.dynamic.select();
       }
     },
     stopEditing: function () {
       if (this.editing) {
         this.toggleEditing();
-      }
-    },
-    handleKeyPress: function (event) {
-      if (event.keyCode === 13) {
-        this.stopEditing();
         this.fire('field-changed', {
           oldValue: this.lastText,
           newValue: this.text
         });
         this.lastText = this.text;
+      }
+    },
+    handleKeyPress: function (event) {
+      if (event.keyCode === 13) {
+        // Enter was pressed. It marks the end of editing.
+        this.stopEditing();
+      }
+    },
+    textChanged: function (oldVal, newVal) {
+      if (this.lastText === null) {
+        this.lastText = newVal;
       }
     }
   });

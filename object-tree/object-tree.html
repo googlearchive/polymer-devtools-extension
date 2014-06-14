@@ -10,14 +10,22 @@
         display: inline-block;
         vertical-align: middle;
       }
-      label {
+      #labelText {
         font-family: "Courier New", Courier, monospace;
+      }
+      #typeText {
+        font-family: "Arial", Courier, monospace;
+        font-size: 11px;
+      }
+      #expandBtn {
+        cursor: pointer;
       }
     </style>
     <div id='content'>
       <div id='rootContent'>
-        <span id='expandBtn' on-click='{{toggle}}' style='cursor: pointer;'>{{expandBtnText}}</span>
-        <label>{{labelText}}</label>
+        <span id='expandBtn' on-click='{{toggle}}'>{{expandBtnText}}</span>
+        <label id='labelText'>{{labelText}}</label>
+        <label id='typeText'>{{typeText}}</label>
         <editable-label id='editableLabel' text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>
       </div>
       <div id='childrenContent'></div>

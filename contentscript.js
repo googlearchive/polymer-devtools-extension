@@ -38,6 +38,8 @@
   });
 })();
 */
+// 'polymer-ready' event means that the host page runs a Polymer app and it was loaded.
+// We need to refresh our panel.
 window.addEventListener('polymer-ready', function () {
   chrome.runtime.sendMessage({
     name: 'refresh'

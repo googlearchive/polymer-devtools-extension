@@ -1,33 +1,41 @@
 function DOMSerializer () {
+  // To store objects added sp far.
   var addedObjects = [];
+  // TODO: improve unwantedClasses
   var unwantedClasses = [Function, HTMLElement, Document, Window];
   function isPolymerElement (node) {
     return node && ('element' in node) && (node.element.localName === 'polymer-element');
   }
+  /**
+  * Converts an object to JSON by removing cyclical references
+  */
   function JSONize (obj) {
-    function isUnrequired (obj) {
+    /**
+    * Checks if the property is unrequired in the obj.
+    * prop has to be an own property of obj
+    */
+    function isUnrequired (obj, prop) {
+      var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+      if (descriptor.set || descriptor.get) {
+        // We don't want to show properties with setters since
+        // we can't be sure what they'll be after an edit
+        return true;
+      }
       for (var i = 0; i < unwantedClasses.length; i++) {
-        if (obj instanceof unwantedClasses[i]) {
+        if (obj[prop] instanceof unwantedClasses[i]) {
           return true;
         }
-      }
-      if (typeof obj === 'object' && alreadyAdded(obj)) {
-        return true;
       }
       return false;
     }
     function alreadyAdded (obj) {
-      for (var i = 0; i < addedObjects.length; i++) {
-        if (obj === addedObjects[i]) {
-          return true;
-        }
-      }
-      return false;
+      return addedObjects.indexOf(obj) !== -1;
     }
+
+    /**
+    * Copies a property from oldObj to newObj and add some metadata
+    */
     function copyProperty (oldObj, newObj, prop) {
-      if (isUnrequired(oldObj[prop])) {
-        return;
-      }
       if (oldObj[prop] === null) {
         newObj[prop] = {
           type: 'null',
@@ -69,21 +77,36 @@ function DOMSerializer () {
       }
       newObj[prop].name = prop;
     }
-    function explore (node, obj) {
-      if (isPolymerElement(node)) {
-        for (var key in node.__proto__) {
-          if (key == 'foo') {
-            console.log(node[key]);
-          }
-          try {
-            copyProperty(node, obj, key);
-          } catch (e) {
 
+    /**
+    * Gets the Polymer-specific properties of an object
+    */
+    function getPolymerProps (element) {
+      var props = [];
+      var proto = element.__proto__;
+      while (proto && !Polymer.isBase(proto)) {
+        props = props.concat(Object.getOwnPropertyNames(proto).filter(function(n) {
+          return n[0] !== '_' && n.slice(-1) !== '_' && !getPolymerProps.blacklist[n] &&
+            !isUnrequired(proto, n);
+        }));
+        proto = proto.__proto__;
+      }
+      return props;
+    }
+    // TODO: Improve blacklist
+    getPolymerProps.blacklist = {resolvePath: 1};
+
+    /**
+    * Explores the object for proerties
+    */
+    function explore (element, obj) {
+      if (isPolymerElement(element)) {
+        var props = getPolymerProps(element);
+        for (var i = 0; i < props.length; i++) {
+          if (!alreadyAdded(element[props[i]])) {
+            copyProperty(element, obj, props[i]);
           }
         }
-      }
-      if ('tagName' in node) {
-        copyProperty(node, obj, 'tagName');
       }
     }
     var res = {
@@ -95,8 +118,12 @@ function DOMSerializer () {
     return res;
   }
 
+  /**
+  * Create a store for caching DOM elements
+  */
   function createCache() {
     window._polymerNamespace_.DOMCache = {};
+    // The key of the last DOM element added
     window._polymerNamespace_.lastDOMKey = 0;
     window._polymerNamespace_.serializer = this;
   }
@@ -104,12 +131,34 @@ function DOMSerializer () {
     window._polymerNamespace_.DOMCache[obj.key] = obj;
   }
 
+  /**
+  * Serializes a DOM element
+  * Return object looks like this:
+  * {
+  *   JSONObj: {
+  *     <prop>: {
+  *       type: <type>,
+  *       name: <name>,
+  *       value: <value>
+  *     }
+  *   },
+  *   tagName: <tag-name>,
+  *   key: <unique-key>,
+  *   isPolymer: <true|false>,
+  *   children: [<more such objects>]
+  * }
+  */
   this.serialize = function (root) {
     createCache();
     addedObjects = [];
     function traverse (root) {
       var res = {};
       res.JSONobj = JSONize(root);
+      if ('tagName' in root) {
+        res.tagName = root.tagName;
+      } else {
+        throw 'tagName is a required property';
+      }
       res.key = window._polymerNamespace_.lastDOMKey++;
       root.key = res.key;
       addToCache(root);
