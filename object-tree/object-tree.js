@@ -17,9 +17,9 @@
   }
   Polymer('object-tree', {
     indent: 0,
-    collapsed: false,
+    collapsed: true,
     baseWidth: 10,
-    expandBtnText: '-',
+    expandBtnText: '+',
     // Value of the property (to the right)
     contentText: '',
     // Text of the property (to the left)
@@ -80,6 +80,7 @@
             var childTree = new ObjectTree();
             childTree.initFromObjectTree(tree.value[key]);
             this.addChild(childTree);
+            childTree.$.content.style.display = 'none';
           }
         }
       } else {
