@@ -32,9 +32,20 @@ function changeProperty (nodeKey, prop, newValue) {
   }
 }
 
-function getDOMString() {
-  var serializer = new window._polymerNamespace_.DOMSerializer();
+function getDOMString () {
+  window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
   return {
-    'data': serializer.serialize(document.body)
+    'data': window._polymerNamespace_.serializer.serializeDOMObject(document.body)
+  };
+}
+
+function getObjectString (key, path) {
+  var obj = window._polymerNamespace_.DOMCache[key];
+  path.forEach(function (el) {
+    obj = obj[el];
+  });
+  return {
+    'data': window._polymerNamespace_.serializer.
+      serializeObject(obj)
   };
 }

@@ -357,6 +357,6 @@ function DOMSerializer () {
   };
 
   this.serializeObject = function (obj) {
-
-  }
+    return JSON.stringify(JSONize(obj));
+  };
 }

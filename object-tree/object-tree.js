@@ -37,6 +37,9 @@
         this.expandBtnText = ' ';
       }
     },
+    collapsedChanged: function (oldValue, newValue) {
+      this.expandBtnText = newValue ? '+' : '-';
+    },
     ready: function () {
       this.childElements = [];
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
@@ -58,11 +61,15 @@
         });
       });
       this.addEventListener('object-toggle', function (event) {
+        if (event.target === event.currentTarget) {
+          return;
+        }
         event.stopPropagation();
+        event.detail.path.push(this.labelText);
         this.fire('object-toggle', {
-          key: event.detail.key + '["' + this.labelText + '"]',
+          path: event.detail.path,
           expand: event.detail.expand
-        };
+        });
       });
     },
     addChild: function (element) {
@@ -76,7 +83,7 @@
       this.labelText = '';
       this.typeText = '';
       this.valueNeeded = false;
-      this.expandBtnText = '+';
+      this.expandBtnText = '-';
       this.collapsed = true;
       for (var i = 0; i < this.childElements.length; i++) {
         this.childElements[i].empty();
@@ -85,14 +92,35 @@
       delete this.childElements;
       this.childElements = [];
     },
+    init: function (obj) {
+      this.labelText = obj.name;
+      if (obj.type === 'object' || obj.type === 'array') {
+        this.typeText = '<' + obj.type + '>';
+      } else {
+        this.expandBtnNeeded = false;
+        this.valueNeeded = true;
+        this.contentText = obj.value;
+        if (obj.type === 'string') {
+          this.contentText = '"' + this.contentText + '"';
+        }
+      }
+    },
     /**
     * Pre-populates the object-tree with a given tree
     */
     initFromObjectTree: function (tree) {
       this.empty();
       this.labelText = tree.name;
+      this.collapsed = false;
       if (tree.type === 'object' || tree.type === 'array') {
         this.typeText = '<' + tree.type + '>';
+        for (var key in tree.value) {
+          if (tree.value.hasOwnProperty(key)) {
+            var childTree = new ObjectTree();
+            childTree.init(tree.value[key]);
+            this.addChild(childTree);
+          }
+        }
       } else {
         this.expandBtnNeeded = false;
         this.valueNeeded = true;
@@ -109,20 +137,15 @@
       if (!this.expandBtnNeeded) {
         return;
       }
-      if (this.childElements.length === 0) {
-        return;
-      }
       this.collapsed = !(this.collapsed);
-      this.expandBtnText = newExpandBtnState(this.expandBtnText);
       for (var i = 0; i < this.childElements.length; i++) {
         if (this.collapsed) {
           this.childElements[i].$.content.style.display = 'none';
-        } else {
-          this.childElements[i].$.content.style.display = 'block';
+          this.childElements = [];
         }
       }
       this.fire('object-toggle', {
-        key: '["' + this.labelText + '"]',
+        path: [this.labelText],
         expand: !this.collapsed
       });
     }

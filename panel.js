@@ -127,10 +127,21 @@
       });
     });
     window.addEventListener('object-toggle', function (event) {
-      var path = event.detail.key;
+      var path = '[';
+      for (var i = 0; i < event.detail.path.length; i++) {
+        if (i === event.detail.path.length - 1) {
+          path += ('"' + event.detail.path[i] + '"');
+        }
+      }
+      path += ']';
       var key = elementTree.selectedChild.key;
       if (event.detail.expand) {
-        
+        var toEval = 'window._polymerNamespace_.getObjectString(' + key + ', ' +
+          path + ');';
+        chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+          var obj = JSON.parse(result.data);
+          console.log(obj);
+        });
       }
     });
     var backgroundPageConnection = chrome.runtime.connect({
