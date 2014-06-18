@@ -28,6 +28,15 @@
     typeText: '',
     // Some keys are objects/arrays and don't need an immediate value
     valueNeeded: false,
+    // Only objects and arrays need the expand button
+    expandBtnNeeded: true,
+    expandBtnNeededChanged: function (oldValue, newValue) {
+      if (newValue) {
+        this.expandBtnText = this.collapsed ? '+' : '-';
+      } else {
+        this.expandBtnText = ' ';
+      }
+    },
     ready: function () {
       this.childElements = [];
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
@@ -48,6 +57,13 @@
           value: newValue
         });
       });
+      this.addEventListener('object-toggle', function (event) {
+        event.stopPropagation();
+        this.fire('object-toggle', {
+          key: event.detail.key + '["' + this.labelText + '"]',
+          expand: event.detail.expand
+        };
+      });
     },
     addChild: function (element) {
       this.childElements.push(element);
@@ -60,6 +76,8 @@
       this.labelText = '';
       this.typeText = '';
       this.valueNeeded = false;
+      this.expandBtnText = '+';
+      this.collapsed = true;
       for (var i = 0; i < this.childElements.length; i++) {
         this.childElements[i].empty();
         this.$.childrenContent.innerHTML = '';
@@ -75,15 +93,8 @@
       this.labelText = tree.name;
       if (tree.type === 'object' || tree.type === 'array') {
         this.typeText = '<' + tree.type + '>';
-        for (key in tree.value) {
-          if (tree.value.hasOwnProperty(key)) {
-            var childTree = new ObjectTree();
-            childTree.initFromObjectTree(tree.value[key]);
-            this.addChild(childTree);
-            childTree.$.content.style.display = 'none';
-          }
-        }
       } else {
+        this.expandBtnNeeded = false;
         this.valueNeeded = true;
         this.contentText = tree.value;
         if (tree.type === 'string') {
@@ -95,6 +106,9 @@
     * Collapse/Uncollapse
     */
     toggle: function () {
+      if (!this.expandBtnNeeded) {
+        return;
+      }
       if (this.childElements.length === 0) {
         return;
       }
@@ -107,6 +121,10 @@
           this.childElements[i].$.content.style.display = 'block';
         }
       }
+      this.fire('object-toggle', {
+        key: '["' + this.labelText + '"]',
+        expand: !this.collapsed
+      });
     }
   });
 })();

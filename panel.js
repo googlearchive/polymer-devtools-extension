@@ -56,7 +56,7 @@
     toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
     toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
     toEval += 'window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
-    // Inject code to get DOM string
+    // Inject code to get serialized DOM string
     toEval += '(' + getDOMString.toString() + ')();';
     var DOM;
     var elementTree = document.querySelector('element-tree');
@@ -125,6 +125,13 @@
           throw error;
         }
       });
+    });
+    window.addEventListener('object-toggle', function (event) {
+      var path = event.detail.key;
+      var key = elementTree.selectedChild.key;
+      if (event.detail.expand) {
+        
+      }
     });
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'

@@ -13,9 +13,6 @@
     expandBtnText: '-',
     // Polymer elements are shown differently and can be selected
     isPolymer: false,
-    childElementsChanged: function () {
-      // TODO
-    },
     ready: function () {
       this.childElements = [];
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
