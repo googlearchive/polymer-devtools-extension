@@ -1,6 +1,6 @@
 (function () {
-  var COLOR_POLYMER_SELECTED = '#8B7355';
-  var COLOR_POLYMER_UNSELECTED = '#FCF6CF';
+  var COLOR_POLYMER_SELECTED = '#cdcdc1';
+  var COLOR_POLYMER_UNSELECTED = '#eeeee0';
   function newExpandBtnState(present) {
     return present === '+' ? '-' : '+';
   }

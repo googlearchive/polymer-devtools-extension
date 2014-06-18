@@ -38,7 +38,7 @@ function DOMSerializer () {
       if (oldObj[prop] === null) {
         newObj[prop] = {
           type: 'null',
-          value: oldObj[prop]
+          value: 'null'
         };
       } else if (typeof oldObj[prop] === 'string') {
         newObj[prop] = {
@@ -76,7 +76,7 @@ function DOMSerializer () {
       } else {
         newObj[prop] = {
           type: 'undefined',
-          value: oldObj[prop]
+          value: 'undefined'
         };
       }
       newObj[prop].name = prop;
@@ -236,7 +236,11 @@ function DOMSerializer () {
       $: true,
       controller: true,
       eventDelegates: true,
-      reflect: true
+      reflect: true,
+
+      onautocomplete: true,
+      onautocompleteerror: true,
+      ontoggle: true
     };
 
     /**
@@ -256,19 +260,42 @@ function DOMSerializer () {
     function exploreObject (obj, destObj) {
       var props = Object.getOwnPropertyNames(obj);
       for (var i = 0; i < props.length; i++) {
-        copyProperty(obj, destObj, props[i]);
+        try {
+          copyProperty(obj, destObj, props[i]);
+        } catch (e) {
+          // TODO: Some properties throw when read. Find out more.
+        }
+      }
+    }
+
+    /**
+    * Explores an array for proerties
+    */
+    function exploreArray (arr, destObj) {
+      for (var i = 0; i < arr.length; i++) {
+        try {
+          copyProperty(arr, destObj, i);
+        } catch (e) {
+          // TODO: Some properties throw when read. Find out more.
+        }
       }
     }
 
     var res = {
-      name: '/',
-      type: 'object',
+      name: 'Root',
       value: {}
     };
     if (isPolymerElement(obj)) {
+      res.type = 'object';
       explorePolymerObject(obj, res.value);
     } else {
-      exploreObject(obj, res.value);
+      if (obj instanceof Array) {
+        res.type = 'array';
+        exploreArray(obj, res.value);
+      } else {
+        res.type = 'object';
+        exploreObject(obj, res.value);
+      }
     }
     return res;
   }
@@ -280,10 +307,9 @@ function DOMSerializer () {
     window._polymerNamespace_.DOMCache = {};
     // The key of the last DOM element added
     window._polymerNamespace_.lastDOMKey = 0;
-    window._polymerNamespace_.serializer = this;
   }
-  function addToCache (obj) {
-    window._polymerNamespace_.DOMCache[obj.key] = obj;
+  function addToCache (obj, key) {
+    window._polymerNamespace_.DOMCache[key] = obj;
   }
   function getComposedDOM (root) {
     if (root.shadowRoot) {
@@ -328,15 +354,14 @@ function DOMSerializer () {
     function traverse (root) {
       var res = {};
       if ('tagName' in root) {
-        res.tagName = root.tagName;
+        res.tagName = root.tagName.toLowerCase();
       } else {
         console.log(root);
         throw 'tagName is a required property';
       }
       res.JSONobj = JSONize(root);
       res.key = window._polymerNamespace_.lastDOMKey++;
-      root.key = res.key;
-      addToCache(root);
+      addToCache(root, res.key);
       if (isPolymerElement(root)) {
         res.isPolymer = true;
       }

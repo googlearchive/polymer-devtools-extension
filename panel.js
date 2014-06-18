@@ -126,23 +126,27 @@
         }
       });
     });
-    window.addEventListener('object-toggle', function (event) {
+    window.addEventListener('object-expand', function (event) {
       var path = '[';
-      for (var i = 0; i < event.detail.path.length; i++) {
-        if (i === event.detail.path.length - 1) {
-          path += ('"' + event.detail.path[i] + '"');
+      var lastIndex = event.detail.path.length - 2;
+      for (var i = lastIndex; i >= 0; i--) {
+        path += ('"' + event.detail.path[i] + '"');
+        if (i !== 0) {
+          path += ', ';
         }
       }
       path += ']';
       var key = elementTree.selectedChild.key;
-      if (event.detail.expand) {
-        var toEval = 'window._polymerNamespace_.getObjectString(' + key + ', ' +
-          path + ');';
-        chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
-          var obj = JSON.parse(result.data);
-          console.log(obj);
-        });
-      }
+      var toEval = '(' + getObjectString.toString() + ')(' + key + ', ' +
+        path + ');';
+      chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+        var obj = JSON.parse(result.data).value;
+        var props = Object.getOwnPropertyNames(obj);
+        for (var i = 0; i < props.length; i++) {
+          var objTreeNode = event.detail.origTarget;
+          objTreeNode.addChildProp(obj[props[i]]);
+        }
+      });
     });
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'

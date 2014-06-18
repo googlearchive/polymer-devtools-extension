@@ -5,24 +5,26 @@
     <style>
       #rootContent {
         white-space: nowrap;
+        font-size: 14px;
       }
       editable-label {
         display: inline-block;
         vertical-align: middle;
       }
       #labelText {
-        font-family: "Courier New", Courier, monospace;
+        font-family: dejavu sans mono, monospace;
       }
       #typeText {
+        color: gray;
         font-family: "Arial", Courier, monospace;
-        font-size: 11px;
+        font-size: 12px;
       }
       #expandBtn {
         cursor: pointer;
       }
     </style>
     <div id='content'>
-      <div id='rootContent'>
+      <p id='rootContent'>
         <span id='expandBtn' on-click='{{toggle}}'>{{expandBtnText}}</span>
         <label id='labelText'>{{labelText}}</label>
         <label id='typeText'>{{typeText}}</label>

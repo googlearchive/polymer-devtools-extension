@@ -60,21 +60,41 @@
           value: newValue
         });
       });
-      this.addEventListener('object-toggle', function (event) {
-        if (event.target === event.currentTarget) {
+      this.addEventListener('object-expand', function (event) {
+        if (event.detail.lastTarget === this) {
           return;
         }
         event.stopPropagation();
         event.detail.path.push(this.labelText);
-        this.fire('object-toggle', {
+        var that = this;
+        this.fire('object-expand', {
           path: event.detail.path,
-          expand: event.detail.expand
+          expand: event.detail.expand,
+          origTarget: event.detail.origTarget,
+          lastTarget: that
         });
       });
     },
     addChild: function (element) {
       this.childElements.push(element);
       this.$.childrenContent.appendChild(element);
+    },
+    /**
+    * Remove all children from the tree
+    */
+    removeChildren: function () {
+      while (this.$.childrenContent.firstChild) {
+        this.$.childrenContent.removeChild(this.$.childrenContent.firstChild);
+      }
+      this.childElements = [];
+    },
+    /**
+    * Add a property as a child
+    */
+    addChildProp: function (propObj) {
+      var child = new ObjectTree();
+      child.init(propObj);
+      this.addChild(child);
     },
     /**
     * Empties the object-tree
@@ -85,12 +105,7 @@
       this.valueNeeded = false;
       this.expandBtnText = '-';
       this.collapsed = true;
-      for (var i = 0; i < this.childElements.length; i++) {
-        this.childElements[i].empty();
-        this.$.childrenContent.innerHTML = '';
-      }
-      delete this.childElements;
-      this.childElements = [];
+      this.removeChildren();
     },
     init: function (obj) {
       this.labelText = obj.name;
@@ -112,21 +127,13 @@
       this.empty();
       this.labelText = tree.name;
       this.collapsed = false;
-      if (tree.type === 'object' || tree.type === 'array') {
-        this.typeText = '<' + tree.type + '>';
-        for (var key in tree.value) {
-          if (tree.value.hasOwnProperty(key)) {
-            var childTree = new ObjectTree();
-            childTree.init(tree.value[key]);
-            this.addChild(childTree);
-          }
-        }
-      } else {
-        this.expandBtnNeeded = false;
-        this.valueNeeded = true;
-        this.contentText = tree.value;
-        if (tree.type === 'string') {
-          this.contentText = '"' + this.contentText + '"';
+      this.expandBtnNeeded = false;
+      this.typeText = '<' + tree.type + '>';
+      for (var key in tree.value) {
+        if (tree.value.hasOwnProperty(key)) {
+          var childTree = new ObjectTree();
+          childTree.init(tree.value[key]);
+          this.addChild(childTree);
         }
       }
     },
@@ -138,16 +145,21 @@
         return;
       }
       this.collapsed = !(this.collapsed);
-      for (var i = 0; i < this.childElements.length; i++) {
-        if (this.collapsed) {
-          this.childElements[i].$.content.style.display = 'none';
-          this.childElements = [];
-        }
+      var that = this;
+      if (this.collapsed) {
+        this.removeChildren();
+        this.fire('object-collapse', {
+          path: [this.labelText],
+          origTarget: that,
+          lastTarget: that
+        });
+      } else {
+        this.fire('object-expand', {
+          path: [this.labelText],
+          origTarget: that,
+          lastTarget: that
+        });
       }
-      this.fire('object-toggle', {
-        path: [this.labelText],
-        expand: !this.collapsed
-      });
     }
   });
 })();
