@@ -39,6 +39,27 @@
     return polymerDOM;
   }*/
 
+  function copyArray (arr) {
+    var newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+      newArr.push(arr[i]);
+    }
+    return newArr;
+  }
+
+  function serializeArray (arr) {
+    var path = '[';
+    var lastIndex = arr.length - 1;
+    for (var i = 0; i <= lastIndex; i++) {
+      path += ('"' + arr[i] + '"');
+      if (i !== lastIndex) {
+        path += ', ';
+      }
+    }
+    path += ']';
+    return path;
+  }
+
   function cacheDOM (dom) {
     if (!dom) {
       return;
@@ -55,6 +76,7 @@
     toEval += 'window._polymerNamespace_.unhighlight = ' + unhighlight.toString() + ';';
     toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
     toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
+    toEval += 'window._polymerNamespace_.resolveObject = ' + resolveObject.toString() + ';';
     toEval += 'window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
     // Inject code to get serialized DOM string
     toEval += '(' + getDOMString.toString() + ')();';
@@ -116,10 +138,10 @@
     // When a property in the object-tree changes
     window.addEventListener('property-changed', function (event) {
       var newValue = event.detail.value;
-      var prop = event.detail.prop;
+      var path = serializeArray(event.detail.path);
       var key = elementTree.selectedChild.key;
       // Reflect a change in property in the host page
-      var toEval = 'window._polymerNamespace_.changeProperty(' + key + ', "' + prop + '", ' + newValue + ');';
+      var toEval = 'window._polymerNamespace_.changeProperty(' + key + ', ' + path + ', ' + newValue + ');';
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         if (error) {
           throw error;
@@ -127,15 +149,7 @@
       });
     });
     window.addEventListener('object-expand', function (event) {
-      var path = '[';
-      var lastIndex = event.detail.path.length - 2;
-      for (var i = lastIndex; i >= 0; i--) {
-        path += ('"' + event.detail.path[i] + '"');
-        if (i !== 0) {
-          path += ', ';
-        }
-      }
-      path += ']';
+      var path = serializeArray(event.detail.path);
       var key = elementTree.selectedChild.key;
       var toEval = '(' + getObjectString.toString() + ')(' + key + ', ' +
         path + ');';
@@ -143,8 +157,10 @@
         var obj = JSON.parse(result.data).value;
         var props = Object.getOwnPropertyNames(obj);
         for (var i = 0; i < props.length; i++) {
-          var objTreeNode = event.detail.origTarget;
-          objTreeNode.addChildProp(obj[props[i]]);
+          var objTreeNode = event.detail.treeNode;
+          var newPath = copyArray(event.detail.path);
+          newPath.push(props[i]);
+          objTreeNode.addChildProp(obj[props[i]], newPath);
         }
       });
     });

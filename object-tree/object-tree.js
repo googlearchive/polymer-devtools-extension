@@ -10,7 +10,8 @@
     if ((validValues.indexOf(val) !== -1) ||
       (val.length >= 2 &&
       (val[0] === '"' && val[val.length - 1] === '"') ||
-      (val[0] === '\'' && val[val.length - 1] === '\''))) {
+      (val[0] === '\'' && val[val.length - 1] === '\'')) ||
+      !isNaN(parseInt(val, 10))) {
       return true;
     }
     return false;
@@ -47,7 +48,7 @@
       this.addEventListener('field-changed', function (event) {
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
-        var prop = this.labelText;
+        var path = this.path;
         // Stop propagation since this will fire another event
         event.stopPropagation();
         if (!isFieldValueValid(newValue)) {
@@ -56,22 +57,8 @@
         }
         // Fire an event with all the information
         this.fire('property-changed', {
-          prop: prop,
+          path: path,
           value: newValue
-        });
-      });
-      this.addEventListener('object-expand', function (event) {
-        if (event.detail.lastTarget === this) {
-          return;
-        }
-        event.stopPropagation();
-        event.detail.path.push(this.labelText);
-        var that = this;
-        this.fire('object-expand', {
-          path: event.detail.path,
-          expand: event.detail.expand,
-          origTarget: event.detail.origTarget,
-          lastTarget: that
         });
       });
     },
@@ -91,9 +78,9 @@
     /**
     * Add a property as a child
     */
-    addChildProp: function (propObj) {
+    addChildProp: function (propObj, path) {
       var child = new ObjectTree();
-      child.init(propObj);
+      child.init(propObj, path);
       this.addChild(child);
     },
     /**
@@ -107,8 +94,9 @@
       this.collapsed = true;
       this.removeChildren();
     },
-    init: function (obj) {
+    init: function (obj, path) {
       this.labelText = obj.name;
+      this.path = path;
       if (obj.type === 'object' || obj.type === 'array') {
         this.typeText = '<' + obj.type + '>';
       } else {
@@ -131,9 +119,7 @@
       this.typeText = '<' + tree.type + '>';
       for (var key in tree.value) {
         if (tree.value.hasOwnProperty(key)) {
-          var childTree = new ObjectTree();
-          childTree.init(tree.value[key]);
-          this.addChild(childTree);
+          this.addChildProp(tree.value[key], [key]);
         }
       }
     },
@@ -149,15 +135,13 @@
       if (this.collapsed) {
         this.removeChildren();
         this.fire('object-collapse', {
-          path: [this.labelText],
-          origTarget: that,
-          lastTarget: that
+          path: that.path,
+          treeNode: that
         });
       } else {
         this.fire('object-expand', {
-          path: [this.labelText],
-          origTarget: that,
-          lastTarget: that
+          path: that.path,
+          treeNode: that
         });
       }
     }

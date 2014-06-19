@@ -240,7 +240,8 @@ function DOMSerializer () {
 
       onautocomplete: true,
       onautocompleteerror: true,
-      ontoggle: true
+      ontoggle: true,
+      hasBeenAttached: true
     };
 
     /**

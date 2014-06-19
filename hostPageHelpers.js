@@ -26,9 +26,19 @@ function scrollIntoView (key) {
   }
 }
 
-function changeProperty (nodeKey, prop, newValue) {
-  if (nodeKey in window._polymerNamespace_.DOMCache) {
-    window._polymerNamespace_.DOMCache[nodeKey][prop] = newValue;
+function resolveObject (key, path) {
+  var obj = window._polymerNamespace_.DOMCache[key];
+  path.forEach(function (el) {
+    obj = obj[el];
+  });
+  return obj;
+}
+
+function changeProperty (key, path, newValue) {
+  var prop = path.pop();
+  var obj = window._polymerNamespace_.resolveObject(key, path);
+  if (obj) {
+    obj[prop] = newValue;
   }
 }
 
@@ -40,10 +50,7 @@ function getDOMString () {
 }
 
 function getObjectString (key, path) {
-  var obj = window._polymerNamespace_.DOMCache[key];
-  path.forEach(function (el) {
-    obj = obj[el];
-  });
+  var obj = window._polymerNamespace_.resolveObject(key, path);
   return {
     'data': window._polymerNamespace_.serializer.
       serializeObject(obj)
