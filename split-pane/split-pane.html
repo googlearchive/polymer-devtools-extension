@@ -1,36 +1,31 @@
+<link rel="import" href="../bower_components/polymer-ui-splitter/v_polymer-ui-splitter.html">
+
 <polymer-element name='split-pane'>
   <template>
-    <div id='content'>
-      <div id='left'>
-        <content select='.split-pane-left'></content>
-      </div>
-      <div id='separator' on-drag='{{resizePanels}}'></div>
-      <div id='right'>
-        <content select='.split-pane-right'></content>
-      </div>
-    </div>
     <style>
+      #content {
+        display: flex;
+      }
       #left {
-        float: left;
         width: 60%;
         height: 100%;
         overflow: auto;
       }
-      #separator {
-        float: left;
-        width: 3px;
-        height: 100%;
-        background-color: gray;
-        cursor: -webkit-grab;
-      }
-      #separator:active {
-        cursor: -webkit-grabbing;
-      }
       #right {
+        flex: 1;
         height: 100%;
         overflow: auto;
       }
     </style>
+    <div id='content'>
+      <div id='left'>
+        <content select='.split-pane-left'></content>
+      </div>
+      <polymer-ui-splitter></polymer-ui-splitter>
+      <div id='right'>
+        <content select='.split-pane-right'></content>
+      </div>
+    </div>
   </template>
   <script src='split-pane.js'></script>
 </polymer-element>
