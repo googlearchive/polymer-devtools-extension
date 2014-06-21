@@ -1,10 +1,10 @@
 (function () {
-  function newExpandBtnState (present) {
-    return present === '+' ? '-' : '+';
-  }
   /**
   * Tells if the new value of the field is valid or not
   */
+  var EXPAND_BTN_IMAGE = '../res/expand.png';
+  var COLLAPSE_BTN_IMAGE = '../res/collapse.png';
+  var BLANK_IMAGE = '../res/blank.png';
   function isFieldValueValid (val) {
     var validValues = ['true', 'false', 'undefined', 'null'];
     if ((validValues.indexOf(val) !== -1) ||
@@ -19,8 +19,8 @@
   Polymer('object-tree', {
     indent: 0,
     collapsed: true,
-    baseWidth: 10,
-    expandBtnText: '+',
+    baseWidth: 14,
+    expandBtnImg: BLANK_IMAGE,
     // Value of the property (to the right)
     contentText: '',
     // Text of the property (to the left)
@@ -30,19 +30,22 @@
     // Some keys are objects/arrays and don't need an immediate value
     valueNeeded: false,
     // Only objects and arrays need the expand button
-    expandBtnNeeded: true,
+    expandBtnNeeded: false,
     expandBtnNeededChanged: function (oldValue, newValue) {
       if (newValue) {
-        this.expandBtnText = this.collapsed ? '+' : '-';
+        this.expandBtnImg = this.collapsed ? EXPAND_BTN_IMAGE : COLLAPSE_BTN_IMAGE;
       } else {
-        this.expandBtnText = ' ';
+        this.expandBtnImg = BLANK_IMAGE;
       }
     },
     collapsedChanged: function (oldValue, newValue) {
-      this.expandBtnText = newValue ? '+' : '-';
+      if (this.expandBtnNeeded) {
+        this.expandBtnImg = newValue ? EXPAND_BTN_IMAGE : COLLAPSE_BTN_IMAGE;
+      }
     },
     ready: function () {
       this.childElements = [];
+      this.childElementsMap = {};
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
       // When the editable-field changes
       this.addEventListener('field-changed', function (event) {
@@ -64,6 +67,7 @@
     },
     addChild: function (element) {
       this.childElements.push(element);
+      this.childElementsMap[element.labelText] = element;
       this.$.childrenContent.appendChild(element);
     },
     /**
@@ -74,6 +78,7 @@
         this.$.childrenContent.removeChild(this.$.childrenContent.firstChild);
       }
       this.childElements = [];
+      this.childElementsMap = {};
     },
     /**
     * Add a property as a child
@@ -90,32 +95,37 @@
       this.labelText = '';
       this.typeText = '';
       this.valueNeeded = false;
-      this.expandBtnText = '-';
       this.collapsed = true;
+      this.expandBtnNeeded = false;
       this.removeChildren();
     },
+    /**
+    * Init the node with an object
+    */
     init: function (obj, path) {
       this.labelText = obj.name;
       this.path = path;
-      if (obj.type === 'object' || obj.type === 'array') {
+      if (obj.type === 'object' || obj.type === 'array' || obj.type === 'function') {
         this.typeText = '<' + obj.type + '>';
+        this.expandBtnNeeded = true;
       } else {
-        this.expandBtnNeeded = false;
         this.valueNeeded = true;
         this.contentText = obj.value;
         if (obj.type === 'string') {
           this.contentText = '"' + this.contentText + '"';
         }
       }
+      if (obj.hasAccessor) {
+        this.typeText += ' <accessor>';
+      }
     },
     /**
-    * Pre-populates the object-tree with a given tree
+    * Pre-populates the object-tree with a given tree (1 level deep)
     */
     initFromObjectTree: function (tree) {
       this.empty();
       this.labelText = tree.name;
       this.collapsed = false;
-      this.expandBtnNeeded = false;
       this.typeText = '<' + tree.type + '>';
       for (var key in tree.value) {
         if (tree.value.hasOwnProperty(key)) {
@@ -144,6 +154,16 @@
           treeNode: that
         });
       }
+    },
+    /**
+    * Get child node led to by following path
+    */
+    getChildNode: function (path) {
+      var node = this;
+      for (var i = 0; i < path.length; i++) {
+        node = node.childElementsMap[path[i]];
+      }
+      return node;
     }
   });
 })();

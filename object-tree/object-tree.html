@@ -20,12 +20,15 @@
         font-size: 12px;
       }
       #expandBtn {
+        text-align: center;
         cursor: pointer;
+        width: 10px;
+        height: 10px;
       }
     </style>
     <div id='content'>
       <p id='rootContent'>
-        <span id='expandBtn' on-click='{{toggle}}'>{{expandBtnText}}</span>
+        <img id='expandBtn' on-click='{{toggle}}' src='{{expandBtnImg}}'></span>
         <label id='labelText'>{{labelText}}</label>
         <label id='typeText'>{{typeText}}</label>
         <editable-label id='editableLabel' text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>

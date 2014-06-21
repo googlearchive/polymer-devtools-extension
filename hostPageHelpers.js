@@ -56,3 +56,56 @@ function getObjectString (key, path) {
       serializeObject(obj)
   };
 }
+
+function addObjectObserver (key, path) {
+  var obj = window._polymerNamespace_.resolveObject(key, path);
+  function processChanges (changes) {
+    var processedChangeObject = {
+      path: path,
+      key: key,
+      changes: []
+    };
+    for (var i = 0; i < changes.length; i++) {
+      var change = changes[i];
+      var summary = {
+        name: change.name,
+        type: change.type
+      };
+      if (change.type !== 'delete') {
+        var wrappedObject = {
+          value: change.object[change.name]
+        }
+        summary.object = window._polymerNamespace_.serializer.serializeObject(wrappedObject);
+      }
+      processedChangeObject.changes.push(summary);
+    }
+    return JSON.stringify(processedChangeObject);
+  }
+  function observer (changes) {
+    window.dispatchEvent(new CustomEvent('object-changed', {
+      detail: processChanges(changes)
+    }));
+  }
+  Object.observe(obj, observer);
+
+  if (!window._polymerNamespace_.observerCache[key]) {
+    window._polymerNamespace_.observerCache[key] = {};
+  }
+  var hashLocation = window._polymerNamespace_.observerCache[key];
+  for (var i = 0; i < path.length; i++) {
+    if (!hashLocation[path[i]]) {
+      hashLocation[path[i]] = {};
+    }
+    hashLocation = hashLocation[path[i]];
+  }
+  hashLocation['__objectObserver__'] = observer;
+}
+
+function removeObjectObserver (key, path) {
+  var obj = window._polymerNamespace_.resolveObject(key, path);
+  var hashLocation = window._polymerNamespace_.observerCache[key];
+  for (var i = 0; i < path.length; i++) {
+    hashLocation = hashLocation[path[i]];
+  }
+  Object.unobserve(obj, hashLocation['__objectObserver__']);
+}

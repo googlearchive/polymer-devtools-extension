@@ -1,8 +1,9 @@
 (function () {
   var COLOR_POLYMER_SELECTED = '#cdcdc1';
   var COLOR_POLYMER_UNSELECTED = '#eeeee0';
+
   function newExpandBtnState(present) {
-    return present === '+' ? '-' : '+';
+    return present === '>' ? 'v' : '>';
   }
   Polymer('element-tree', {
     indent: 0,
@@ -10,7 +11,7 @@
     // Whether the element at the root is selected or not
     selected: false,
     baseWidth: 10,
-    expandBtnText: '-',
+    expandBtnText: 'v',
     // Polymer elements are shown differently and can be selected
     isPolymer: false,
     ready: function () {

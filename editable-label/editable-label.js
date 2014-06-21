@@ -29,6 +29,9 @@
     stopEditing: function () {
       if (this.editing) {
         this.toggleEditing();
+        if (this.lastText === this.text) {
+          return;
+        }
         this.fire('field-changed', {
           oldValue: this.lastText,
           newValue: this.text

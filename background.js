@@ -32,6 +32,14 @@
           name: 'refresh',
         });
       }
+    } else if (message.name === 'object-changed') {
+      if (sender.tab.id in tabIdToPortMap) {
+        var port = tabIdToPortMap[sender.tab.id];
+        port.postMessage({
+          name: 'object-changed',
+          changeList: message.changeList
+        });
+      }
     }
 	});
 })();

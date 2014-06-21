@@ -72,12 +72,15 @@
 
   function init () {
     // Make all the definitions in the host page
-    var toEval = 'window._polymerNamespace_ = {}; window._polymerNamespace_.highlight = ' + highlight.toString() + ';';
+    var toEval = 'window._polymerNamespace_ = {}; window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
+    toEval += 'window._polymerNamespace_.observerCache = {};';
+    toEval += 'window._polymerNamespace_.highlight = ' + highlight.toString() + ';';
     toEval += 'window._polymerNamespace_.unhighlight = ' + unhighlight.toString() + ';';
     toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
     toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
     toEval += 'window._polymerNamespace_.resolveObject = ' + resolveObject.toString() + ';';
-    toEval += 'window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
+    toEval += 'window._polymerNamespace_.addObjectObserver = ' + addObjectObserver.toString() + ';';
+    toEval += 'window._polymerNamespace_.removeObjectObserver = ' + removeObjectObserver.toString() + ';';
     // Inject code to get serialized DOM string
     toEval += '(' + getDOMString.toString() + ')();';
     var DOM;
@@ -162,6 +165,24 @@
           newPath.push(props[i]);
           objTreeNode.addChildProp(obj[props[i]], newPath);
         }
+        toEval = 'window._polymerNamespace_.addObjectObserver(' + key +
+          ', ' + path + ');';
+        chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+          if (error) {
+            // TODO
+          }
+        });
+      });
+    });
+    window.addEventListener('object-collapse', function (event) {
+      var path = serializeArray(event.detail.path);
+      var key = elementTree.selectedChild.key;
+      var toEval = 'window._polymerNamespace_.removeObjectObserver(' + key +
+        ', ' + path + ');';
+      chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+        if (error) {
+          // TODO
+        }
       });
     });
     var backgroundPageConnection = chrome.runtime.connect({
@@ -174,6 +195,31 @@
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
       if (message.name === 'refresh') {
         init();
+      } else if (message.name === 'object-changed') {
+        var changeObj = JSON.parse(message.changeList);
+        var path = changeObj.path;
+        var changes = changeObj.changes;
+        for (var i = 0; i < changes.length; i++) {
+          var change = changes[i];
+          var type = change.type;
+          var name = change.name;
+          // This is a wrapped object. `value` contains the actual object.
+          var newObj = JSON.parse(change.object).value.value;
+          newObj.name = name;
+          switch (type) {
+            case 'update':
+              var newPath = copyArray(path);
+              newPath.push(name);
+              var objectTreeNode = objectTree.getChildNode(newPath);
+              objectTreeNode.empty();
+              objectTreeNode.init(newObj, newPath);
+              break;
+            case 'add':
+              break;
+            case 'delete':
+              break;
+          }
+        }
       }
     });
   });

@@ -1,6 +1,4 @@
 function DOMSerializer () {
-  // TODO: improve unwantedClasses
-  var unwantedClasses = [Function];
   function isPolymerElement (element) {
     return element && ('element' in element) && (element.element.localName === 'polymer-element');
   }
@@ -8,74 +6,74 @@ function DOMSerializer () {
     return element.shadowRoot && 
       element.localName.indexOf('-') !== -1 || element.getAttribute('is');
   }
+  function propHasAccessor (obj, prop) {
+     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+     if (!descriptor) {
+      console.log(prop);
+      console.log(obj);
+     }
+     return !!descriptor.set || !!descriptor.get;
+  }
   /**
   * Converts an object to JSON only one level deep
   */
   function JSONize (obj) {
-    /**
-    * Checks if the property is unrequired in the obj.
-    * prop has to be an own property of obj
-    */
-    function isUnrequired (obj, prop) {
-      var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
-      if (descriptor.set || descriptor.get) {
-        // We don't want to show properties with setters since
-        // we can't be sure what they'll be after an edit
-        return true;
-      }
-      for (var i = 0; i < unwantedClasses.length; i++) {
-        if (obj[prop] instanceof unwantedClasses[i]) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     /**
-    * Copies a property from oldObj to newObj and add some metadata
+    * Copies a property from oldObj to newObj and add some metadata.
+    * protoObject is the exact object in the chain where the prop is present.
+    * It is necessary to determine if the prop has an accessor or not.
     */
-    function copyProperty (oldObj, newObj, prop) {
+    function copyProperty (protoObject, oldObj, newObj, prop) {
+      try {
+        oldObj[prop];
+      } catch (e) {
+        // We encountered an error trying to read the property.
+        // It must be a getter that is failing.
+        newObj[prop] = {
+          type: 'error',
+          hasAccessor: true,
+          error: true, 
+          value: error.message
+        };
+        return;
+      }
       if (oldObj[prop] === null) {
         newObj[prop] = {
           type: 'null',
+          hasAccessor: false,
           value: 'null'
         };
-      } else if (typeof oldObj[prop] === 'string') {
+      } else if (typeof oldObj[prop] === 'string' ||
+          typeof oldObj[prop] === 'number' ||
+          typeof oldObj[prop] === 'boolean' ||
+          typeof oldObj[prop] === 'function') {
         newObj[prop] = {
-          type: 'string',
-          value: oldObj[prop]
-        };
-      } else if (typeof oldObj[prop] === 'number') {
-        newObj[prop] = {
-          type: 'number',
-          value: oldObj[prop]
-        };
-      } else if (typeof oldObj[prop] === 'boolean') {
-        newObj[prop] = {
-          type: 'boolean',
-          value: oldObj[prop]
+          type: typeof oldObj[prop],
+          hasAccessor: propHasAccessor(protoObject, prop),
+          value: oldObj[prop].toString()
         };
       } else if (typeof oldObj[prop] === 'object' &&
-        !(oldObj[prop] instanceof Array)) {
+          !(oldObj[prop] instanceof Array)) {
         addedObjects.push(oldObj[prop]);
         newObj[prop] = {
           type: 'object',
+          hasAccessor: propHasAccessor(protoObject, prop),
+          length: oldObj[prop].length,
           value: {}
         };
-        // explore(oldObj[prop], newObj[prop].value);
       } else if (typeof oldObj[prop] === 'object') {
         addedObjects.push(oldObj[prop]);
         newObj[prop] = {
           type: 'array',
+          hasAccessor: propHasAccessor(protoObject, prop),
           length: oldObj[prop].length,
           value: []
         };
-        /*for (var i = 0; i < oldObj[prop].length; i++) {
-          newObj[prop].value.push(explore(oldObj[prop], newObj[prop].value));
-        }*/
       } else {
         newObj[prop] = {
           type: 'undefined',
+          hasAccessor: false,
           value: 'undefined'
         };
       }
@@ -83,20 +81,15 @@ function DOMSerializer () {
     }
 
     /**
-    * Gets the Polymer-specific properties of an object
+    * Gets the Polymer-specific *own* properties of an object
     */
     function getPolymerProps (element) {
-      var props = [];
-      var proto = element;
-      while (proto && !Polymer.isBase(proto)) {
-        props = props.concat(Object.getOwnPropertyNames(proto).filter(function(n) {
-          return n[0] !== '_' && n.slice(-1) !== '_' && !getPolymerProps.blacklist[n] &&
-            !isUnrequired(proto, n);
-        }));
-        proto = proto.__proto__;
-      }
+      var props = Object.getOwnPropertyNames(element).filter(function (n) {
+        return n[0] !== '_' && n.slice(-1) !== '_' && !getPolymerProps.blacklist[n];
+      });
       return props;
     }
+
     // TODO: Improve blacklist
     getPolymerProps.blacklist = {
       accessKey: true,
@@ -245,28 +238,34 @@ function DOMSerializer () {
     };
 
     /**
-    * Explores a Polymer element for proerties
+    * Explores a Polymer element for properties
     */
     function explorePolymerObject (element, destObj) {
       if (isPolymerElement(element)) {
-        var props = getPolymerProps(element);
-        for (var i = 0; i < props.length; i++) {
-          copyProperty(element, destObj, props[i]);
+        var proto = element;
+        while (proto && !Polymer.isBase(proto)) {
+          var props = getPolymerProps(proto);
+          for (var i = 0; i < props.length; i++) {
+            copyProperty(proto, element, destObj, props[i]);
+          }
+          proto = proto.__proto__;
         }
       }
     }
+
     /**
-    * Explores an object (non-Polymer) for proerties
+    * Explores an object (non-Polymer) for properties
     */
     function exploreObject (obj, destObj) {
       var props = Object.getOwnPropertyNames(obj);
       for (var i = 0; i < props.length; i++) {
         try {
-          copyProperty(obj, destObj, props[i]);
+          copyProperty(obj, obj, destObj, props[i]);
         } catch (e) {
           // TODO: Some properties throw when read. Find out more.
         }
       }
+      copyProperty(Object.prototype, obj, destObj, '__proto__');
     }
 
     /**
@@ -275,7 +274,7 @@ function DOMSerializer () {
     function exploreArray (arr, destObj) {
       for (var i = 0; i < arr.length; i++) {
         try {
-          copyProperty(arr, destObj, i);
+          copyProperty(arr, arr, destObj, i);
         } catch (e) {
           // TODO: Some properties throw when read. Find out more.
         }
@@ -293,8 +292,9 @@ function DOMSerializer () {
       if (obj instanceof Array) {
         res.type = 'array';
         exploreArray(obj, res.value);
-      } else {
-        res.type = 'object';
+      } else if (typeof obj === 'object' ||
+          typeof obj === 'function') {
+        res.type = typeof obj;
         exploreObject(obj, res.value);
       }
     }

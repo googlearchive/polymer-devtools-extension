@@ -1,47 +1,29 @@
-/*(function () {
-  function getPolymerMarkup(node) {
-    function checkPolymerElement(node) {
-      return node && ('element' in node) && (node.element.localName === 'polymer-element');
+
+function serializeArray (arr) {
+  var path = '[';
+  var lastIndex = arr.length - 1;
+  for (var i = 0; i <= lastIndex; i++) {
+    path += ('"' + arr[i] + '"');
+    if (i !== lastIndex) {
+      path += ', ';
     }
-    function recurseDOM(node) {
-      var markUp = '';
-      var isPolymerElement = checkPolymerElement(node);
-      if (isPolymerElement) {
-        markUp = '<li><p>' + node.tagName + '</p></li>';
-        node = node.shadowRoot;
-      }
-      if (isPolymerElement && node.children.length > 0) {
-        markUp += '<ul>';
-      }
-      for (var i = 0; i < node.children.length; i++) {
-        var childMarkUp = recurseDOM(node.children[i]);
-        if (childMarkUp.length > 0) {
-          markUp += childMarkUp;
-        }
-      }
-      if (isPolymerElement && node.children.length > 0) {
-        markUp += '</ul>';
-      }
-      return markUp;
-    }
-    return '<ul>' + recurseDOM(node) + '</ul>';
   }
-  window.addEventListener('polymer-ready', function () {
-    window.setTimeout(function () {
-      document.body.children[0].foo = 5;
-      var markUp = getPolymerMarkup(document.body);
-      chrome.runtime.sendMessage({
-        name: 'mark-up',
-        content: markUp
-      });
-    }, 2000);
-  });
-})();
-*/
+  path += ']';
+  return path;
+}
+
 // 'polymer-ready' event means that the host page runs a Polymer app and it was loaded.
 // We need to refresh our panel.
 window.addEventListener('polymer-ready', function () {
   chrome.runtime.sendMessage({
     name: 'refresh'
+  });
+});
+
+window.addEventListener('object-changed', function (event) {
+  console.log('sent');
+  chrome.runtime.sendMessage({
+    name: 'object-changed',
+    changeList: event.detail
   });
 });
