@@ -32,9 +32,11 @@
         if (this.lastText === this.text) {
           return;
         }
+        var that = this;
         this.fire('field-changed', {
-          oldValue: this.lastText,
-          newValue: this.text
+          oldValue: that.lastText,
+          newValue: that.text,
+          field: that
         });
         this.lastText = this.text;
       }

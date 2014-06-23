@@ -21,7 +21,6 @@ window.addEventListener('polymer-ready', function () {
 });
 
 window.addEventListener('object-changed', function (event) {
-  console.log('sent');
   chrome.runtime.sendMessage({
     name: 'object-changed',
     changeList: event.detail

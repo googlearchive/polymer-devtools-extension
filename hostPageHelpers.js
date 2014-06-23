@@ -26,9 +26,20 @@ function scrollIntoView (key) {
   }
 }
 
+function getPropPath (key, path) {
+  var propPath = [];
+  var indexMap = window._polymerNamespace_.indexToPropMap[key];
+  path.forEach(function (el) {
+    indexMap = indexMap[el];
+    propPath.push(indexMap.__name__);
+  });
+  return propPath;
+}
+
 function resolveObject (key, path) {
   var obj = window._polymerNamespace_.DOMCache[key];
-  path.forEach(function (el) {
+  var propPath = window._polymerNamespace_.getPropPath(key, path);
+  propPath.forEach(function (el) {
     obj = obj[el];
   });
   return obj;
@@ -42,29 +53,89 @@ function changeProperty (key, path, newValue) {
   }
 }
 
+function addToCache (obj, key) {
+  window._polymerNamespace_.DOMCache[key] = obj;
+}
+
+function getIndexMapObject (key, path) {
+  var start = window._polymerNamespace_.indexToPropMap[key];
+  for (var i = 0; i < path.length; i++) {
+    start = start[path[i]];
+  }
+  return start;
+}
+
+function addToIndexMap (propName, key, path) {
+  var lastIndex = path.pop();
+  var start = window._polymerNamespace_.getIndexMapObject(key, path);
+  start[lastIndex] = {
+    __name__: propName
+  };
+}
+
+function removeFromIndexMap (key, path) {
+  var lastIndex = path.pop();
+  var start = window._polymerNamespace_.getIndexMapObject(key, path);
+  var name = start.__name__;
+  start[lastIndex] = {
+    __name__: name
+  };
+}
+
 function getDOMString () {
   window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
   return {
-    'data': window._polymerNamespace_.serializer.serializeDOMObject(document.body)
+    'data': window._polymerNamespace_.serializer.serializeDOMObject(document.body,
+      function (domNode, converted) {
+        window._polymerNamespace_.lastDOMKey++;
+        window._polymerNamespace_.addToCache(domNode, window._polymerNamespace_.lastDOMKey);
+        window._polymerNamespace_.indexToPropMap[window._polymerNamespace_.lastDOMKey] = {};
+        converted.key = window._polymerNamespace_.lastDOMKey;
+        var propList = converted.JSONobj.value;
+        for (var i = 0; i < propList.length; i++) {
+          var propName = propList[i].name;
+          window._polymerNamespace_.addToIndexMap(propName, window._polymerNamespace_.lastDOMKey, [i]);
+        }
+      }
+    )
   };
 }
 
 function getObjectString (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
+  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
   return {
     'data': window._polymerNamespace_.serializer.
-      serializeObject(obj)
+      serializeObject(obj, function (converted) {
+        var propList = converted.value;
+        for (var i = 0; i < propList.length; i++) {
+          var propName = propList[i].name;
+          indexMap[i] = {
+            __name__: propName
+          };
+        }
+      })
   };
 }
 
 function addObjectObserver (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
+  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
   function processChanges (changes) {
     var processedChangeObject = {
       path: path,
       key: key,
       changes: []
     };
+    function serializeCallback (converted) {
+      var propList = converted.JSONobj.value;
+      for (var i = 0; i < propList.length; i++) {
+        var propName = propList[i].propName;
+        indexMap[i] = {
+          name: propName
+        };
+      }
+    }
     for (var i = 0; i < changes.length; i++) {
       var change = changes[i];
       var summary = {
@@ -74,8 +145,9 @@ function addObjectObserver (key, path) {
       if (change.type !== 'delete') {
         var wrappedObject = {
           value: change.object[change.name]
-        }
-        summary.object = window._polymerNamespace_.serializer.serializeObject(wrappedObject);
+        };
+        summary.object = window._polymerNamespace_.serializer.
+          serializeObject(wrappedObject, serializeCallback);
       }
       processedChangeObject.changes.push(summary);
     }
@@ -86,7 +158,8 @@ function addObjectObserver (key, path) {
       detail: processChanges(changes)
     }));
   }
-  Object.observe(obj, observer);
+
+    Object.observe(obj, observer);
 
   if (!window._polymerNamespace_.observerCache[key]) {
     window._polymerNamespace_.observerCache[key] = {};
@@ -108,4 +181,11 @@ function removeObjectObserver (key, path) {
     hashLocation = hashLocation[path[i]];
   }
   Object.unobserve(obj, hashLocation['__objectObserver__']);
+}
+
+function createCache() {
+  window._polymerNamespace_.DOMCache = {};
+  window._polymerNamespace_.indexToPropMap = {};
+  // The key of the last DOM element added
+  window._polymerNamespace_.lastDOMKey = 0;
 }

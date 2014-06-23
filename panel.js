@@ -81,6 +81,13 @@
     toEval += 'window._polymerNamespace_.resolveObject = ' + resolveObject.toString() + ';';
     toEval += 'window._polymerNamespace_.addObjectObserver = ' + addObjectObserver.toString() + ';';
     toEval += 'window._polymerNamespace_.removeObjectObserver = ' + removeObjectObserver.toString() + ';';
+    toEval += 'window._polymerNamespace_.createCache = ' + createCache.toString() + ';';
+    toEval += 'window._polymerNamespace_.addToIndexMap = ' + addToIndexMap.toString() + ';';
+    toEval += 'window._polymerNamespace_.getIndexMapObject = ' + getIndexMapObject.toString() + ';';
+    toEval += 'window._polymerNamespace_.getPropPath = ' + getPropPath.toString() + ';';
+    toEval += 'window._polymerNamespace_.addToCache = ' + addToCache.toString() + ';';
+    toEval += 'window._polymerNamespace_.removeFromIndexMap = ' + removeFromIndexMap.toString() + ';';
+    toEval += 'window._polymerNamespace_.createCache();';
     // Inject code to get serialized DOM string
     toEval += '(' + getDOMString.toString() + ')();';
     var DOM;
@@ -94,7 +101,6 @@
       polymerDOMCache = {};
       cacheDOM(DOM);
       elementTree.initFromDOMTree(DOM);
-      objectTree.empty();
     });
   }
 
@@ -130,12 +136,12 @@
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
-      objectTree.initFromObjectTree(polymerDOMCache[key].JSONobj);
+      objectTree.tree = (polymerDOMCache[key].JSONobj.value);
       highlightElement(key);
     });
     // When an element in the element-tree is unselected
     window.addEventListener('unselected', function (event) {
-      objectTree.empty();
+      objectTree.tree = [];
       unhighlightElement();
     });
     // When a property in the object-tree changes
@@ -157,14 +163,13 @@
       var toEval = '(' + getObjectString.toString() + ')(' + key + ', ' +
         path + ');';
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
-        var obj = JSON.parse(result.data).value;
-        var props = Object.getOwnPropertyNames(obj);
-        for (var i = 0; i < props.length; i++) {
-          var objTreeNode = event.detail.treeNode;
-          var newPath = copyArray(event.detail.path);
-          newPath.push(props[i]);
-          objTreeNode.addChildProp(obj[props[i]], newPath);
+        var props = JSON.parse(result.data).value;
+        var childTree = objectTree.tree;
+        for (var i = 0; i < event.detail.path.length - 1; i++) {
+          childTree = childTree[event.detail.path[i]].value;
         }
+        var arr = childTree[event.detail.path[i]].value;
+        arr.push.apply(arr, props);
         toEval = 'window._polymerNamespace_.addObjectObserver(' + key +
           ', ' + path + ');';
         chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
@@ -179,6 +184,8 @@
       var key = elementTree.selectedChild.key;
       var toEval = 'window._polymerNamespace_.removeObjectObserver(' + key +
         ', ' + path + ');';
+      toEval += 'window._polymerNamespace_.removeFromIndexMap(' + key + ', ' +
+        path + ');';
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         if (error) {
           // TODO
