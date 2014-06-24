@@ -12,24 +12,47 @@
     }
     return newArr;
   }
-  function isFieldValueValid (val) {
-    var validValues = ['true', 'false', 'undefined', 'null'];
-    if ((validValues.indexOf(val) !== -1) ||
-      (val.length >= 2 &&
+  function smartCast (val) {
+    if ((val.length >= 2 &&
       (val[0] === '"' && val[val.length - 1] === '"') ||
-      (val[0] === '\'' && val[val.length - 1] === '\'')) ||
-      !isNaN(parseInt(val, 10))) {
-      return true;
+      (val[0] === '\'' && val[val.length - 1] === '\''))) {
+      return val.substring(1, val.length - 1);
     }
-    return false;
+    switch (val) {
+      case 'true':
+        return true;
+      case 'false':
+        return false;
+      case 'null':
+        return null;
+      case 'undefined':
+        return undefined;
+    }
+    if (!isNaN(parseInt(val, 10))) {
+      return parseInt(val, 10);
+    }
+    throw 'Bad value';
+  }
+  /**
+  * Check if a value is valid
+  */
+  function isFieldValueValid (val) {
+    try {
+      smartCast(val);
+    } catch (e) {
+      return false;
+    }
+    return true;
   }
   Polymer('object-tree', {
-    collapsed: true,
     baseWidth: 14,
-    expandBtnImg: EXPAND_BTN_IMAGE,
     ready: function () {
       this.tree = [];
       this.path = [];
+      /**
+      * When one of the fields change, it will let the object-tree know
+      * with this event
+      */
       this.addEventListener('field-changed', function (event) {
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
@@ -45,9 +68,13 @@
         // Fire an event with all the information
         this.fire('property-changed', {
           path: path,
-          value: newValue
+          value: smartCast(newValue)
         });
       });
+      /**
+      * When the `tree` property is updated, Polymer might add
+      * some object-trees under this. Those child trees need to be initialized.
+      */
       this.addEventListener('child-added', function (event) {
         var child = event.detail.child;
         if (child === this) {
@@ -64,10 +91,15 @@
       });
       this.addEventListener('child-collapsed', function (event) {
         var index = event.detail.index;
+        // Empty the child tree.
         this.tree[index].value.length = 0;
         event.stopPropagation();
       });
     },
+    /**
+    * Called when Polymer instantiates this object tree because of
+    * data-binding (with template)
+    */
     domReady: function () {
       var that = this;
       this.fire('child-added', {

@@ -41,6 +41,9 @@
         this.lastText = this.text;
       }
     },
+    /**
+    * Handle `enter` key
+    */
     handleKeyPress: function (event) {
       if (event.keyCode === 13) {
         // Enter was pressed. It marks the end of editing.

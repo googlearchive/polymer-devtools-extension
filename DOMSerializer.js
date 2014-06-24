@@ -6,6 +6,9 @@ function DOMSerializer () {
     return element.shadowRoot && 
       element.localName.indexOf('-') !== -1 || element.getAttribute('is');
   }
+  /**
+  * Checks if a property is an acessor
+  */
   function propHasAccessor (obj, prop) {
      var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
      if (!descriptor) {
@@ -303,6 +306,9 @@ function DOMSerializer () {
     return res;
   }
 
+  /**
+  * Gets the composed DOM (Shadow DOM + Light DOM) of an element
+  */
   function getComposedDOM (root) {
     if (root.shadowRoot) {
       root = root.shadowRoot;
@@ -327,18 +333,12 @@ function DOMSerializer () {
   * Serializes a DOM element
   * Return object looks like this:
   * {
-  *   JSONObj: {
-  *     <prop>: {
-  *       type: <type>,
-  *       name: <name>,
-  *       value: <value>
-  *     }
-  *   },
   *   tagName: <tag-name>,
   *   key: <unique-key>,
   *   isPolymer: <true|false>,
   *   children: [<more such objects>]
   * }
+  * `callback` is execuated on every DOM element found
   */
   this.serializeDOMObject = function (root, callback) {
     function traverse (root) {
@@ -367,6 +367,22 @@ function DOMSerializer () {
     return JSON.stringify(traverse(root));
   };
 
+  /**
+  * Serializes any object (or function) one level deep.
+  * It checks for only own properties.
+  * Pass in a wrapped object and unwrap later if passing a non-object.
+  * Return object looks like this:
+  * [
+  *   {
+  *     type: <type>,
+  *     name: <name>,
+  *     value: <value>, (empty array if property is an object)
+  *     hasAccessor: <true|false>,
+  *     error: <true|false> (if there was an error while executing the getter (if there was one))
+  *   },
+  *   // More such objects for each property in the passed object
+  * ]
+  */ 
   this.serializeObject = function (obj, callback) {
     var res = JSONize(obj);
     callback && callback(res);

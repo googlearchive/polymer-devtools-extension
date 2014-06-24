@@ -1,6 +1,9 @@
 // All these helpers are meant to be injected into the host page as strings
 // after .toString()
 
+/**
+* Highlight an element in the page
+*/
 function highlight (key) {
   window._polymerNamespace_.unhighlight();
   window._polymerNamespace_.lastHighlightedKey = key;
@@ -11,6 +14,9 @@ function highlight (key) {
   element.style.backgroundColor = 'rgba(255,0,0,0.1)';
 }
 
+/**
+* Unhighlight the highlighted element in the page
+*/
 function unhighlight () {
   if (!window._polymerNamespace_.lastHighlightedKey) {
     return;
@@ -20,12 +26,18 @@ function unhighlight () {
   element.style.backgroundColor = window._polymerNamespace_.prevBackgroundColor;
 }
 
+/**
+* Scroll an element into view
+*/
 function scrollIntoView (key) {
   if (key in window._polymerNamespace_.DOMCache) {
     window._polymerNamespace_.DOMCache[key].scrollIntoView();
   }
 }
 
+/**
+* Get the property (property names) path from the index path (as it is stored in the UI)
+*/
 function getPropPath (key, path) {
   var propPath = [];
   var indexMap = window._polymerNamespace_.indexToPropMap[key];
@@ -36,6 +48,9 @@ function getPropPath (key, path) {
   return propPath;
 }
 
+/**
+* Find the object given a DOM element key and the index path
+*/
 function resolveObject (key, path) {
   var obj = window._polymerNamespace_.DOMCache[key];
   var propPath = window._polymerNamespace_.getPropPath(key, path);
@@ -45,6 +60,9 @@ function resolveObject (key, path) {
   return obj;
 }
 
+/**
+* Reflect a change in the host page
+*/
 function changeProperty (key, path, newValue) {
   var prop = window._polymerNamespace_.getPropPath(key, path).pop();
   path.pop();
@@ -58,6 +76,9 @@ function addToCache (obj, key) {
   window._polymerNamespace_.DOMCache[key] = obj;
 }
 
+/**
+* Go as deep as required by `path` into `indexToPropMap`
+*/
 function getIndexMapObject (key, path) {
   var start = window._polymerNamespace_.indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
@@ -66,6 +87,9 @@ function getIndexMapObject (key, path) {
   return start;
 }
 
+/**
+* Given the index map (at any depth), add a property name
+*/
 function addToSubIndexMap (indexMap, propName) {
   indexMap.__lastIndex__ = '__lastIndex__' in indexMap ? (indexMap.__lastIndex__ + 1) : 0;
   indexMap[indexMap.__lastIndex__] = {
@@ -74,6 +98,9 @@ function addToSubIndexMap (indexMap, propName) {
   indexMap['name-' + propName] = indexMap.__lastIndex__;
 }
 
+/**
+* Given the index map (at any depth), remove everything associated with an index
+*/
 function removeFromSubIndexMap (indexMap, index) {
   var propName = indexMap[index].__name__;
   for (var i = index + 1; i <= indexMap.__lastIndex__; i++) {
@@ -83,6 +110,9 @@ function removeFromSubIndexMap (indexMap, index) {
   delete indexMap[indexMap.__lastIndex__--];
 }
 
+/**
+* Add a property to `indexToPropMap`
+*/
 function addToIndexMap (propName, key, path) {
   var lastIndex = path.pop();
   var start = window._polymerNamespace_.getIndexMapObject(key, path);
@@ -93,6 +123,10 @@ function addToIndexMap (propName, key, path) {
   start.__lastIndex__ = start.__lastIndex__ ? (start.__lastIndex__ + 1) : 0;
 }
 
+/**
+* Empty a part of `indexToPropMap`. (Used when the part of the object
+* is no longer in view in the object tree.)
+*/
 function emptyIndexMap (key, path) {
   var start = window._polymerNamespace_.indexToPropMap[key];
   var lastIndex = path.pop();
@@ -111,13 +145,19 @@ function emptyIndexMap (key, path) {
   start[lastIndex].__lastIndex__ = -1;
 }
 
+/**
+* Serialize document.body
+*/
 function getDOMString () {
   window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
   return {
     'data': window._polymerNamespace_.serializer.serializeDOMObject(document.body,
       function (domNode, converted) {
+        // For every element found during traversal, we store it in a hash-table with a unique key.
         window._polymerNamespace_.lastDOMKey++;
         window._polymerNamespace_.addToCache(domNode, window._polymerNamespace_.lastDOMKey);
+        // Also make a map to store the actual property names to the indices corresponding to the names
+        // before passing it to the caller.
         window._polymerNamespace_.indexToPropMap[window._polymerNamespace_.lastDOMKey] = {};
         converted.key = window._polymerNamespace_.lastDOMKey;
       }
@@ -125,6 +165,9 @@ function getDOMString () {
   };
 }
 
+/**
+* Serialize an object one level deep
+*/
 function getObjectString (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
@@ -134,15 +177,36 @@ function getObjectString (key, path) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
           var propName = propList[i].name;
+          // Must associate each index to the corresponding property name.
           window._polymerNamespace_.addToSubIndexMap(indexMap, propName);
         }
       })
   };
 }
 
+/**
+* Add an object observer that reports changes to it using O.o()
+*/
 function addObjectObserver (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
+  /**
+  * Returns a change object that looks like this:
+  * {
+  *   path: <path of the object>,
+  *   key: <DOM element's key>,
+  *   changes: [
+  *     {
+  *       index: <the index by which the UI knows about the property>,
+  *       name: <the property's name>,
+  *       type: <the type of change (see O.o() docs),
+  *       object: <the changed object at the property wrapped in another object>
+  *     },
+  *     // one of every change
+  *   ]
+  * }
+  */
+
   function processChanges (changes) {
     var processedChangeObject = {
       path: path,
@@ -158,6 +222,8 @@ function addObjectObserver (key, path) {
       };
       switch (change.type) {
         case 'update':
+          // We might be dealing with non-Objects which DOMSerializer can't serialize.
+          // So we wrap it and then let the caller unwrap later.
           var wrappedObject = {
             value: change.object[change.name]
           };
@@ -165,6 +231,7 @@ function addObjectObserver (key, path) {
             serializeObject(wrappedObject);
           break;
         case 'delete':
+          // Update the index-to-propName map to reflect the deletion
           window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name]);
           break;
         case 'add':
@@ -188,6 +255,7 @@ function addObjectObserver (key, path) {
 
   Object.observe(obj, observer);
 
+  // Store the observer function so that we can unobserve when we need to.
   if (!window._polymerNamespace_.observerCache[key]) {
     window._polymerNamespace_.observerCache[key] = {};
   }
@@ -201,16 +269,23 @@ function addObjectObserver (key, path) {
   hashLocation['__objectObserver__'] = observer;
 }
 
+/**
+* Stop observing an object
+*/
 function removeObjectObserver (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
-  var hashLocation = window._polymerNamespace_.observerCache[key];
+  var parent = window._polymerNamespace_.observerCache;
+  var hashLocation = parent[key];
   for (var i = 0; i < path.length; i++) {
+    parent = hashLocation;
     hashLocation = hashLocation[path[i]];
   }
   Object.unobserve(obj, hashLocation['__objectObserver__']);
+  delete parent[path.length === 0 ? key : path[path.length - 1]];
 }
 
 function createCache() {
+  // TODO: Must create cache at different levels (for DOM mutations)
   window._polymerNamespace_.DOMCache = {};
   window._polymerNamespace_.indexToPropMap = {};
   // The key of the last DOM element added

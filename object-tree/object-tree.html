@@ -29,6 +29,7 @@
         margin-left: {{baseWidth}}px;
       }
     </style>
+    <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
     <p id='content'>
       <template repeat='{{prop, index in tree}}'>
         <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
