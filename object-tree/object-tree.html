@@ -3,7 +3,7 @@
 <polymer-element name='object-tree' attributes='indent basewidth' constructor='ObjectTree'>
   <template>
     <style>
-      #rootContent {
+      #content {
         white-space: nowrap;
         font-size: 14px;
       }
@@ -11,30 +11,40 @@
         display: inline-block;
         vertical-align: middle;
       }
-      #labelText {
+      .labelText {
         font-family: dejavu sans mono, monospace;
       }
-      #typeText {
+      .typeText {
         color: gray;
         font-family: "Arial", Courier, monospace;
         font-size: 12px;
       }
-      #expandBtn {
+      .expandBtn {
         text-align: center;
         cursor: pointer;
         width: 10px;
         height: 10px;
       }
+      .children {
+        margin-left: {{baseWidth}}px;
+      }
     </style>
-    <div id='content'>
-      <p id='rootContent'>
-        <img id='expandBtn' on-click='{{toggle}}' src='{{expandBtnImg}}'></span>
-        <label id='labelText'>{{labelText}}</label>
-        <label id='typeText'>{{typeText}}</label>
-        <editable-label id='editableLabel' text='{{contentText}}' hidden?='{{!valueNeeded}}'></editable-label>
-      </div>
-      <div id='childrenContent'></div>
-    </div>
+    <p id='content'>
+      <template repeat='{{prop, index in tree}}'>
+        <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
+          src='{{prop.type == "object" || prop.type == "array" || prop.type == "function" ? (prop.value.length > 0 ? "../res/collapse.png" : "../res/expand.png") : "../res/blank.png"}}' state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}'></span>
+        <img class='expandBtn' hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' src='../res/blank.png'></span>
+        <label class='labelText'>{{prop.name}}</label>
+        <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>{{prop.type}}</label>
+        <label class='typeText' hidden?='{{!prop.hasAccessor}}'>&lt;accessor&gt;</label>
+        <editable-label id='field{{index}}' text='{{prop.value}}'
+          hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
+        </editable-label>
+        <p class='children'>
+          <object-tree id='child{{index}}'></object-tree>
+        </p>
+      </template>
+    </p>
   </template>
   <script src='object-tree.js'></script>
 </polymer-element>

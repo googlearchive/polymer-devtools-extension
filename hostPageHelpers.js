@@ -46,7 +46,8 @@ function resolveObject (key, path) {
 }
 
 function changeProperty (key, path, newValue) {
-  var prop = path.pop();
+  var prop = window._polymerNamespace_.getPropPath(key, path).pop();
+  path.pop();
   var obj = window._polymerNamespace_.resolveObject(key, path);
   if (obj) {
     obj[prop] = newValue;
@@ -65,21 +66,49 @@ function getIndexMapObject (key, path) {
   return start;
 }
 
+function addToSubIndexMap (indexMap, propName) {
+  indexMap.__lastIndex__ = '__lastIndex__' in indexMap ? (indexMap.__lastIndex__ + 1) : 0;
+  indexMap[indexMap.__lastIndex__] = {
+    __name__: propName
+  };
+  indexMap['name-' + propName] = indexMap.__lastIndex__;
+}
+
+function removeFromSubIndexMap (indexMap, index) {
+  var propName = indexMap[index].__name__;
+  for (var i = index + 1; i <= indexMap.__lastIndex__; i++) {
+    indexMap[i - 1] = indexMap[i];
+  }
+  delete indexMap['name-' + propName];
+  delete indexMap[indexMap.__lastIndex__--];
+}
+
 function addToIndexMap (propName, key, path) {
   var lastIndex = path.pop();
   var start = window._polymerNamespace_.getIndexMapObject(key, path);
   start[lastIndex] = {
     __name__: propName
   };
+  start['name-' + propName] = propName;
+  start.__lastIndex__ = start.__lastIndex__ ? (start.__lastIndex__ + 1) : 0;
 }
 
-function removeFromIndexMap (key, path) {
+function emptyIndexMap (key, path) {
+  var start = window._polymerNamespace_.indexToPropMap[key];
   var lastIndex = path.pop();
-  var start = window._polymerNamespace_.getIndexMapObject(key, path);
-  var name = start.__name__;
+  if (!lastIndex) {
+    start = {};
+    start.__lastIndex__ = -1;
+    return;
+  }
+  for (var i = 0; i < path.length; i++) {
+    start = start[path[i]];
+  }
+  var name = start[lastIndex].__name__;
   start[lastIndex] = {
     __name__: name
   };
+  start[lastIndex].__lastIndex__ = -1;
 }
 
 function getDOMString () {
@@ -91,11 +120,6 @@ function getDOMString () {
         window._polymerNamespace_.addToCache(domNode, window._polymerNamespace_.lastDOMKey);
         window._polymerNamespace_.indexToPropMap[window._polymerNamespace_.lastDOMKey] = {};
         converted.key = window._polymerNamespace_.lastDOMKey;
-        var propList = converted.JSONobj.value;
-        for (var i = 0; i < propList.length; i++) {
-          var propName = propList[i].name;
-          window._polymerNamespace_.addToIndexMap(propName, window._polymerNamespace_.lastDOMKey, [i]);
-        }
       }
     )
   };
@@ -110,9 +134,7 @@ function getObjectString (key, path) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
           var propName = propList[i].name;
-          indexMap[i] = {
-            __name__: propName
-          };
+          window._polymerNamespace_.addToSubIndexMap(indexMap, propName);
         }
       })
   };
@@ -127,27 +149,32 @@ function addObjectObserver (key, path) {
       key: key,
       changes: []
     };
-    function serializeCallback (converted) {
-      var propList = converted.JSONobj.value;
-      for (var i = 0; i < propList.length; i++) {
-        var propName = propList[i].propName;
-        indexMap[i] = {
-          name: propName
-        };
-      }
-    }
     for (var i = 0; i < changes.length; i++) {
       var change = changes[i];
       var summary = {
-        name: change.name,
-        type: change.type
+        index: indexMap['name-' + change.name],
+        type: change.type,
+        name: change.name
       };
-      if (change.type !== 'delete') {
-        var wrappedObject = {
-          value: change.object[change.name]
-        };
-        summary.object = window._polymerNamespace_.serializer.
-          serializeObject(wrappedObject, serializeCallback);
+      switch (change.type) {
+        case 'update':
+          var wrappedObject = {
+            value: change.object[change.name]
+          };
+          summary.object = window._polymerNamespace_.serializer.
+            serializeObject(wrappedObject);
+          break;
+        case 'delete':
+          window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name]);
+          break;
+        case 'add':
+          var wrappedObject = {
+            value: change.object[change.name]
+          };
+          summary.object = window._polymerNamespace_.serializer.
+            serializeObject(wrappedObject);
+          window._polymerNamespace_.addToSubIndexMap(indexMap, change.name);
+          break;
       }
       processedChangeObject.changes.push(summary);
     }
@@ -159,7 +186,7 @@ function addObjectObserver (key, path) {
     }));
   }
 
-    Object.observe(obj, observer);
+  Object.observe(obj, observer);
 
   if (!window._polymerNamespace_.observerCache[key]) {
     window._polymerNamespace_.observerCache[key] = {};

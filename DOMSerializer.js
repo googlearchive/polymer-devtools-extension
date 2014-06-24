@@ -48,20 +48,19 @@ function DOMSerializer () {
         });
       } else if (typeof oldObj[prop] === 'string' ||
           typeof oldObj[prop] === 'number' ||
-          typeof oldObj[prop] === 'boolean' ||
-          typeof oldObj[prop] === 'function') {
+          typeof oldObj[prop] === 'boolean') {
         newObj.push({
           type: typeof oldObj[prop],
           hasAccessor: propHasAccessor(protoObject, prop),
           value: oldObj[prop].toString(),
           name: prop
         });
-      } else if (typeof oldObj[prop] === 'object' &&
-          !(oldObj[prop] instanceof Array)) {
+      } else if (((typeof oldObj[prop] === 'object' &&
+          !(oldObj[prop] instanceof Array)) ||
+          typeof oldObj[prop] === 'function')) {
         newObj.push({
-          type: 'object',
+          type: typeof oldObj[prop],
           hasAccessor: propHasAccessor(protoObject, prop),
-          length: oldObj[prop].length,
           value: [],
           name: prop
         });
@@ -349,7 +348,6 @@ function DOMSerializer () {
       } else {
         throw 'tagName is a required property';
       }
-      res.JSONobj = JSONize(root);
       callback && callback(root, res);
       if (isPolymerElement(root)) {
         res.isPolymer = true;

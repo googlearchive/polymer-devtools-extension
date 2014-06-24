@@ -5,6 +5,13 @@
   var EXPAND_BTN_IMAGE = '../res/expand.png';
   var COLLAPSE_BTN_IMAGE = '../res/collapse.png';
   var BLANK_IMAGE = '../res/blank.png';
+  function copyArray (arr) {
+    var newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+      newArr.push(arr[i]);
+    }
+    return newArr;
+  }
   function isFieldValueValid (val) {
     var validValues = ['true', 'false', 'undefined', 'null'];
     if ((validValues.indexOf(val) !== -1) ||
@@ -17,45 +24,22 @@
     return false;
   }
   Polymer('object-tree', {
-    indent: 0,
     collapsed: true,
     baseWidth: 14,
-    expandBtnImg: BLANK_IMAGE,
-    // Value of the property (to the right)
-    contentText: '',
-    // Text of the property (to the left)
-    labelText: '',
-    // Meta-information like <object> or <array>
-    typeText: '',
-    // Some keys are objects/arrays and don't need an immediate value
-    valueNeeded: false,
-    // Only objects and arrays need the expand button
-    expandBtnNeeded: false,
-    expandBtnNeededChanged: function (oldValue, newValue) {
-      if (newValue) {
-        this.expandBtnImg = this.collapsed ? EXPAND_BTN_IMAGE : COLLAPSE_BTN_IMAGE;
-      } else {
-        this.expandBtnImg = BLANK_IMAGE;
-      }
-    },
-    collapsedChanged: function (oldValue, newValue) {
-      if (this.expandBtnNeeded) {
-        this.expandBtnImg = newValue ? EXPAND_BTN_IMAGE : COLLAPSE_BTN_IMAGE;
-      }
-    },
+    expandBtnImg: EXPAND_BTN_IMAGE,
     ready: function () {
-      this.childElements = [];
-      this.childElementsMap = {};
-      this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
-      // When the editable-field changes
+      this.tree = [];
+      this.path = [];
       this.addEventListener('field-changed', function (event) {
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
-        var path = this.path;
+        var index = event.detail.field.id.substring(5);
+        var path = copyArray(this.path);
+        path.push(index);
         // Stop propagation since this will fire another event
         event.stopPropagation();
         if (!isFieldValueValid(newValue)) {
-          this.$.editableLabel.text = oldValue;
+          event.detail.field.text = oldValue;
           return;
         }
         // Fire an event with all the information
@@ -64,106 +48,50 @@
           value: newValue
         });
       });
-    },
-    addChild: function (element) {
-      this.childElements.push(element);
-      this.childElementsMap[element.labelText] = element;
-      this.$.childrenContent.appendChild(element);
-    },
-    /**
-    * Remove all children from the tree
-    */
-    removeChildren: function () {
-      while (this.$.childrenContent.firstChild) {
-        this.$.childrenContent.removeChild(this.$.childrenContent.firstChild);
-      }
-      this.childElements = [];
-      this.childElementsMap = {};
-    },
-    /**
-    * Add a property as a child
-    */
-    addChildProp: function (propObj, path) {
-      var child = new ObjectTree();
-      child.init(propObj, path);
-      this.addChild(child);
-    },
-    /**
-    * Empties the object-tree
-    */
-    empty: function () {
-      this.labelText = '';
-      this.typeText = '';
-      this.valueNeeded = false;
-      this.collapsed = true;
-      this.expandBtnNeeded = false;
-      this.removeChildren();
-    },
-    /**
-    * Init the node with an object
-    */
-    init: function (obj, path) {
-      this.labelText = obj.name;
-      this.path = path;
-      if (obj.type === 'object' || obj.type === 'array' || obj.type === 'function') {
-        this.typeText = '<' + obj.type + '>';
-        this.expandBtnNeeded = true;
-      } else {
-        this.valueNeeded = true;
-        this.contentText = obj.value;
-        if (obj.type === 'string') {
-          this.contentText = '"' + this.contentText + '"';
+      this.addEventListener('child-added', function (event) {
+        var child = event.detail.child;
+        if (child === this) {
+          return;
         }
-      }
-      if (obj.hasAccessor) {
-        this.typeText += ' <accessor>';
-      }
-    },
-    /**
-    * Pre-populates the object-tree with a given tree (1 level deep)
-    */
-    initFromObjectTree: function (tree) {
-      this.empty();
-      this.labelText = tree.name;
-      this.collapsed = false;
-      this.typeText = '<' + tree.type + '>';
-      for (var key in tree.value) {
-        if (tree.value.hasOwnProperty(key)) {
-          this.addChildProp(tree.value[key], [key]);
+        var index = event.detail.index;
+        if (this.tree[index].value.length - 1 < index) {
+          child.tree = this.tree[index].value;
+          var pathCopy = copyArray(this.path);
+          pathCopy.push(index);
+          child.path = pathCopy;
         }
-      }
+        event.stopPropagation();
+      });
+      this.addEventListener('child-collapsed', function (event) {
+        var index = event.detail.index;
+        this.tree[index].value.length = 0;
+        event.stopPropagation();
+      });
+    },
+    domReady: function () {
+      var that = this;
+      this.fire('child-added', {
+        child: that,
+        index: that.id.substring(5)
+      });
     },
     /**
     * Collapse/Uncollapse
     */
-    toggle: function () {
-      if (!this.expandBtnNeeded) {
-        return;
-      }
-      this.collapsed = !(this.collapsed);
-      var that = this;
-      if (this.collapsed) {
-        this.removeChildren();
-        this.fire('object-collapse', {
-          path: that.path,
-          treeNode: that
-        });
-      } else {
-        this.fire('object-expand', {
-          path: that.path,
-          treeNode: that
+    toggle: function (event) {
+      var targetId = event.target.id;
+      var state = event.target.getAttribute('state');
+      if (state === 'expanded') {
+        this.fire('child-collapsed', {
+          index: targetId.substring(3)
         });
       }
-    },
-    /**
-    * Get child node led to by following path
-    */
-    getChildNode: function (path) {
-      var node = this;
-      for (var i = 0; i < path.length; i++) {
-        node = node.childElementsMap[path[i]];
-      }
-      return node;
+      var path = copyArray(this.path);
+      path.push(targetId.substring(3));
+      var eventName = (state === 'collapsed') ? 'object-expand' : 'object-collapse';
+      this.fire(eventName, {
+        path: path
+      });
     }
   });
 })();

@@ -2,16 +2,22 @@
   <head>
     <script src="bower_components/platform/platform.js"></script>
     <script src="DOMSerializer.js"></script>
-    <script src="panel.js"></script>
     <script src="hostPageHelpers.js"></script>
+    <script src="evalHelper.js"></script>
+    <script src="panel.js"></script>
     <link rel="import" href="split-pane/split-pane.html">
     <link rel="import" href="element-tree/element-tree.html">
-    <link rel="import" href="object-tree-2/object-tree-2.html">
+    <link rel="import" href="object-tree/object-tree.html">
+    <style>
+      .split-pane-right {
+        margin-left: 10px;
+      }
+    </style>
   </head>
   <body>
     <split-pane>
-      <element-tree class='split-pane-left'></element-tree>
-      <object-tree class='split-pane-right'></object-tree>
+      <p class='split-pane-left'><element-tree></element-tree></p>
+      <p class='split-pane-right'><object-tree></object-tree></p>
     </split-pane>
   </body>
 </html>
