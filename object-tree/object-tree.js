@@ -54,15 +54,17 @@
       * with this event
       */
       this.addEventListener('field-changed', function (event) {
+        console.log('Oo');
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
         var index = event.detail.field.id.substring(5);
         var path = copyArray(this.path);
         path.push(index);
+        // Reset it to the old value since O.o() will update it anyway after reflection
+        event.detail.field.text = oldValue;
         // Stop propagation since this will fire another event
         event.stopPropagation();
         if (!isFieldValueValid(newValue)) {
-          event.detail.field.text = oldValue;
           return;
         }
         // Fire an event with all the information

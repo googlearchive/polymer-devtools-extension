@@ -280,6 +280,9 @@ function removeObjectObserver (key, path) {
     parent = hashLocation;
     hashLocation = hashLocation[path[i]];
   }
+  console.log('removing');
+  console.log(path);
+  console.log(hashLocation['__objectObserver__']);
   Object.unobserve(obj, hashLocation['__objectObserver__']);
   delete parent[path.length === 0 ? key : path[path.length - 1]];
 }
