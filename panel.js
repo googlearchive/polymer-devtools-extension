@@ -2,42 +2,8 @@
   // The cache equivalent to the DOM cache maintained in the host page.
   // Used to display object-tree in response to selection in element-tree.
   var polymerDOMCache;
-
-  /*function DOMToPolymerDOM (DOM) {
-    function recurseDOM (node) {
-      var isPolymerElement = 'isPolymer' in node;
-      var tree, i, child;
-      if (isPolymerElement) {
-        tree = {
-          tagName: node.tagName,
-          children: []
-        };
-        for (i = 0; i < node.children.length; i++) {
-          child = recurseDOM(node.children[i]);
-          if (child instanceof Array) {
-            tree.children.push.apply(tree, child);
-          } else {
-            tree.children.push(child);
-          }
-        }
-      } else {
-        tree = [];
-        for (i = 0; i < node.children.length; i++) {
-          child = recurseDOM(node.children[i]);
-          if (child instanceof Array) {
-            tree.push.apply(tree, child);
-          } else {
-            tree.push(child);
-          }
-        }
-      }
-      return tree;
-    }
-    var polymerDOM = {};
-    polymerDOM.tagName = '/';
-    polymerDOM.children = recurseDOM(DOM);
-    return polymerDOM;
-  }*/
+  var elementTree;
+  var objectTree;
 
   function copyArray (arr) {
     var newArr = [];
@@ -45,19 +11,6 @@
       newArr.push(arr[i]);
     }
     return newArr;
-  }
-
-  function serializeArray (arr) {
-    var path = '[';
-    var lastIndex = arr.length - 1;
-    for (var i = 0; i <= lastIndex; i++) {
-      path += ('"' + arr[i] + '"');
-      if (i !== lastIndex) {
-        path += ', ';
-      }
-    }
-    path += ']';
-    return path;
   }
 
   function cacheDOM (dom) {
@@ -71,36 +24,90 @@
   }
 
   function init () {
-    // Make all the definitions in the host page
-    var toEval = 'window._polymerNamespace_ = {}; window._polymerNamespace_.DOMSerializer = ' + DOMSerializer.toString() + ';';
-    toEval += 'window._polymerNamespace_.observerCache = {};';
-    toEval += 'window._polymerNamespace_.highlight = ' + highlight.toString() + ';';
-    toEval += 'window._polymerNamespace_.unhighlight = ' + unhighlight.toString() + ';';
-    toEval += 'window._polymerNamespace_.scrollIntoView = ' + scrollIntoView.toString() + ';';
-    toEval += 'window._polymerNamespace_.changeProperty = ' + changeProperty.toString() + ';';
-    toEval += 'window._polymerNamespace_.resolveObject = ' + resolveObject.toString() + ';';
-    toEval += 'window._polymerNamespace_.addObjectObserver = ' + addObjectObserver.toString() + ';';
-    toEval += 'window._polymerNamespace_.removeObjectObserver = ' + removeObjectObserver.toString() + ';';
-    toEval += 'window._polymerNamespace_.createCache = ' + createCache.toString() + ';';
-    toEval += 'window._polymerNamespace_.addToIndexMap = ' + addToIndexMap.toString() + ';';
-    toEval += 'window._polymerNamespace_.getIndexMapObject = ' + getIndexMapObject.toString() + ';';
-    toEval += 'window._polymerNamespace_.getPropPath = ' + getPropPath.toString() + ';';
-    toEval += 'window._polymerNamespace_.addToCache = ' + addToCache.toString() + ';';
-    toEval += 'window._polymerNamespace_.removeFromIndexMap = ' + removeFromIndexMap.toString() + ';';
-    toEval += 'window._polymerNamespace_.createCache();';
-    // Inject code to get serialized DOM string
-    toEval += '(' + getDOMString.toString() + ')();';
-    var DOM;
-    var elementTree = document.querySelector('element-tree');
-    var objectTree = document.querySelector('object-tree');
-    chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
-      if (error) {
-        throw error;
-      }
-      DOM = JSON.parse(result.data);
-      polymerDOMCache = {};
-      cacheDOM(DOM);
-      elementTree.initFromDOMTree(DOM);
+    window.addEventListener('eval-helper-ready', function () {
+      // Make all the definitions in the host page
+      EvalHelper.defineFunctions([
+        {
+          name: 'highlight',
+          string: highlight.toString()
+        },
+        {
+          name: 'unhighlight',
+          string: unhighlight.toString()
+        },
+        {
+          name: 'scrollIntoView',
+          string: scrollIntoView.toString()
+        },
+        {
+          name: 'changeProperty',
+          string: changeProperty.toString()
+        },
+        {
+          name: 'resolveObject',
+          string: resolveObject.toString()
+        },
+        {
+          name: 'addObjectObserver',
+          string: addObjectObserver.toString()
+        },
+        {
+          name: 'removeObjectObserver',
+          string: removeObjectObserver.toString()
+        },
+        {
+          name: 'createCache',
+          string: createCache.toString()
+        },
+        {
+          name: 'addToCache',
+          string: addToCache.toString()
+        },
+        {
+          name: 'getPropPath',
+          string: getPropPath.toString()
+        },
+        {
+          name: 'getIndexMapObject',
+          string: getIndexMapObject.toString()
+        },
+        {
+          name: 'addToSubIndexMap',
+          string: addToSubIndexMap.toString()
+        },
+        {
+          name: 'addToIndexMap',
+          string: addToIndexMap.toString()
+        },
+        {
+          name: 'emptyIndexMap',
+          string: emptyIndexMap.toString()
+        },
+        {
+          name: 'removeFromSubIndexMap',
+          string: removeFromSubIndexMap.toString()
+        },
+        {
+          name: 'DOMSerializer',
+          string: DOMSerializer.toString()
+        }
+      ], function (result, error) {
+        EvalHelper.executeFunction('createCache', [], function (result, error) {
+
+        });
+        var DOM;
+        var elementTree = document.querySelector('element-tree');
+        var objectTree = document.querySelector('object-tree');
+        chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+          if (error) {
+            throw error;
+          }
+          DOM = JSON.parse(result.data);
+          polymerDOMCache = {};
+          cacheDOM(DOM);
+          elementTree.initFromDOMTree(DOM);
+        });
+      });
     });
   }
 
@@ -129,19 +136,41 @@
     });
   }
 
+  function expandObject (path) {
+    var pathString = serializeArray(path);
+    var key = elementTree.selectedChild.key;
+    var toEval = '(' + getObjectString.toString() + ')(' + key + ', ' +
+      pathString + ');';
+    chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+      var props = JSON.parse(result.data).value;
+      var childTree = objectTree.tree;
+      for (var i = 0; i < path.length; i++) {
+        childTree = childTree[path[i]].value;
+      }
+      childTree.push.apply(childTree, props);
+      toEval = 'window._polymerNamespace_.addObjectObserver(' + key +
+        ', ' + pathString + ');';
+      chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
+        if (error) {
+          // TODO
+        }
+      });
+    });
+  }
+
   window.addEventListener('polymer-ready', function () {
     init();
-    var elementTree = document.querySelector('element-tree');
-    var objectTree = document.querySelector('object-tree');
+    elementTree = document.querySelector('element-tree');
+    objectTree = document.querySelector('object-tree');
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
-      objectTree.tree = (polymerDOMCache[key].JSONobj.value);
+      expandObject([]);
       highlightElement(key);
     });
     // When an element in the element-tree is unselected
     window.addEventListener('unselected', function (event) {
-      objectTree.tree = [];
+      objectTree.tree.length = 0;
       unhighlightElement();
     });
     // When a property in the object-tree changes
@@ -158,33 +187,14 @@
       });
     });
     window.addEventListener('object-expand', function (event) {
-      var path = serializeArray(event.detail.path);
-      var key = elementTree.selectedChild.key;
-      var toEval = '(' + getObjectString.toString() + ')(' + key + ', ' +
-        path + ');';
-      chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
-        var props = JSON.parse(result.data).value;
-        var childTree = objectTree.tree;
-        for (var i = 0; i < event.detail.path.length - 1; i++) {
-          childTree = childTree[event.detail.path[i]].value;
-        }
-        var arr = childTree[event.detail.path[i]].value;
-        arr.push.apply(arr, props);
-        toEval = 'window._polymerNamespace_.addObjectObserver(' + key +
-          ', ' + path + ');';
-        chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
-          if (error) {
-            // TODO
-          }
-        });
-      });
+      expandObject(event.detail.path);
     });
     window.addEventListener('object-collapse', function (event) {
       var path = serializeArray(event.detail.path);
       var key = elementTree.selectedChild.key;
       var toEval = 'window._polymerNamespace_.removeObjectObserver(' + key +
         ', ' + path + ');';
-      toEval += 'window._polymerNamespace_.removeFromIndexMap(' + key + ', ' +
+      toEval += 'window._polymerNamespace_.emptyIndexMap(' + key + ', ' +
         path + ');';
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         if (error) {
@@ -209,21 +219,25 @@
         for (var i = 0; i < changes.length; i++) {
           var change = changes[i];
           var type = change.type;
+          var index = change.index;
           var name = change.name;
           // This is a wrapped object. `value` contains the actual object.
-          var newObj = JSON.parse(change.object).value.value;
-          newObj.name = name;
+          var newObj;
+          if (type === 'delete') {
+            newObj = JSON.parse(change.object).value[0];
+            newObj.name = name;
+            childTree.splice(index, 1);
+          }
+          var childTree = objectTree.tree;
+          for (var i = 0; i < path.length; i++) {
+            childTree = childTree[path[i]].value;
+          }
           switch (type) {
             case 'update':
-              var newPath = copyArray(path);
-              newPath.push(name);
-              var objectTreeNode = objectTree.getChildNode(newPath);
-              objectTreeNode.empty();
-              objectTreeNode.init(newObj, newPath);
+              childTree[index] = newObj;
               break;
             case 'add':
-              break;
-            case 'delete':
+              childTree.push(newObj);
               break;
           }
         }
