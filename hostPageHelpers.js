@@ -72,6 +72,19 @@ function changeProperty (key, path, newValue) {
   }
 }
 
+/**
+* Get a property somewhere inside an element (repesented by path)
+*/
+function getProperty (key, path) {
+  var prop = window._polymerNamespace_.getPropPath(key, path).pop();
+  path.pop();
+  var obj = window._polymerNamespace_.resolveObject(key, path);
+  var wrappedObject = {
+    value: obj[prop]
+  };
+  return window._polymerNamespace_.serializer.serializeObject(wrappedObject);
+}
+
 function addToCache (obj, key) {
   window._polymerNamespace_.DOMCache[key] = obj;
 }
@@ -188,6 +201,7 @@ function getObjectString (key, path) {
 * Add an object observer that reports changes to it using O.o()
 */
 function addObjectObserver (key, path) {
+  console.log('adding observer');
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
   /**
@@ -248,6 +262,7 @@ function addObjectObserver (key, path) {
     return JSON.stringify(processedChangeObject);
   }
   function observer (changes) {
+    console.log('observing');
     window.dispatchEvent(new CustomEvent('object-changed', {
       detail: processChanges(changes)
     }));

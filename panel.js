@@ -40,6 +40,10 @@
           string: changeProperty.toString()
         },
         {
+          name: 'getProperty',
+          string: getProperty.toString()
+        },
+        {
           name: 'resolveObject',
           string: resolveObject.toString()
         },
@@ -179,6 +183,19 @@
         }
       );
     });
+    window.addEventListener('refresh-property', function (event) {
+      var index = event.detail.path[event.detail.path.length - 1];
+      var key = elementTree.selectedChild.key;
+      var childTree = event.detail.tree;
+      var path = event.detail.path;
+      var propName = event.detail.name;
+      EvalHelper.executeFunction('getProperty', [key, path], function (result, error) {
+        var newObj = JSON.parse(result).value[0];
+        newObj.hasAccessor = true;
+        newObj.name = propName;
+        childTree[index] = newObj;
+      });
+    });
     window.addEventListener('object-expand', function (event) {
       expandObject(event.detail.path);
     });
@@ -225,8 +242,8 @@
           // This is a wrapped object. `value` contains the actual object.
           var newObj;
           var childTree = objectTree.tree;
-          for (var i = 0; i < path.length; i++) {
-            childTree = childTree[path[i]].value;
+          for (var j = 0; j < path.length; j++) {
+            childTree = childTree[path[j]].value;
           }
           if (type !== 'delete') {
             newObj = JSON.parse(change.object).value[0];

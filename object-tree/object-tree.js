@@ -54,7 +54,6 @@
       * with this event
       */
       this.addEventListener('field-changed', function (event) {
-        console.log('Oo');
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
         var index = event.detail.field.id.substring(5);
@@ -125,6 +124,21 @@
       var eventName = (state === 'collapsed') ? 'object-expand' : 'object-collapse';
       this.fire(eventName, {
         path: path
+      });
+    },
+    /**
+    * Called when the refresh button is clicked on an accessor
+    */
+    refreshField: function (event) {
+      var targetIndex = event.target.id.substring(7);
+      var path = copyArray(this.path);
+      path.push(targetIndex);
+      var that = this;
+      this.fire('refresh-property', {
+        path: path,
+        index: targetIndex,
+        tree: that.tree,
+        name: event.target.getAttribute('data-name')
       });
     }
   });
