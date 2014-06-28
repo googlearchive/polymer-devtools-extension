@@ -1,0 +1,9 @@
+{
+  "name": "polymer-ui-tabs",
+  "private": true,
+  "dependencies": {
+    "polymer": "Polymer/polymer#^0.3.0",
+    "polymer-selector": "Polymer/polymer-selector#^0.3.0",
+    "polymer-flex-layout": "Polymer/polymer-flex-layout#^0.3.0"
+  }
+}

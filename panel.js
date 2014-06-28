@@ -4,6 +4,7 @@
   var polymerDOMCache;
   var elementTree;
   var objectTree;
+  var methodList;
   var EvalHelper;
   function cacheDOM (dom) {
     if (!dom) {
@@ -19,6 +20,7 @@
     var DOM;
     elementTree = document.querySelector('element-tree');
     objectTree = document.querySelector('object-tree');
+    methodList = document.querySelector('method-list');
     createEvalHelper(function (helper) {
       EvalHelper = helper;
       // Make all the definitions in the host page
@@ -147,12 +149,17 @@
     });
   }
 
+  function displayMethods (path) {
+    methodList.list = objectTree.tree;
+  }
+
   window.addEventListener('polymer-ready', function () {
     init();
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
       expandObject([]);
+      displayMethods();
       // Visually highlight the element in the page and scroll it into view
       highlightElement(key);
     });

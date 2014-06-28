@@ -262,6 +262,7 @@ function addObjectObserver (key, path) {
     return JSON.stringify(processedChangeObject);
   }
   function observer (changes) {
+    // TODO: deal with unwanted new properties
     console.log('observing');
     window.dispatchEvent(new CustomEvent('object-changed', {
       detail: processChanges(changes)

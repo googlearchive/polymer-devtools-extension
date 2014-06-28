@@ -1,0 +1,28 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-selector/v-core-selector.html">
+
+<polymer-element name='method-list'>
+  <template>
+    <style>
+      .list > * {
+        font-size: 14px;
+        background-color: #666;
+        color: white;
+      }
+      .list > * {
+        height: 30px;
+        line-height: 30px;
+        padding: 0 20px;
+      }
+      .list > *.core-selected {
+        background-color: #333;
+      }
+    </style>
+    <core-selector class='list' multi>
+      <template repeat='{{item in list}}'>
+        <div class id='{{item.name}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
+      </template>
+    </core-selector>
+  </template>
+  <script src='method-list.js'></script>
+</polymer-element>
