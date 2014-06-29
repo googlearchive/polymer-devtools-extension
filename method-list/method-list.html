@@ -1,5 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-selector/v-core-selector.html">
+<link rel="import" href="../bower_components/core-selector/core-selector.html">
 
 <polymer-element name='method-list'>
   <template>
@@ -10,8 +10,8 @@
         color: white;
       }
       .list > * {
-        height: 30px;
-        line-height: 30px;
+        height: 25px;
+        line-height: 25px;
         padding: 0 20px;
       }
       .list > *.core-selected {
@@ -19,8 +19,8 @@
       }
     </style>
     <core-selector class='list' multi>
-      <template repeat='{{item in list}}'>
-        <div class id='{{item.name}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
+      <template repeat='{{item, index in list}}'>
+        <div class id='method{{index}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
       </template>
     </core-selector>
   </template>

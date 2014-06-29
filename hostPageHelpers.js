@@ -36,6 +36,22 @@ function scrollIntoView (key) {
 }
 
 /**
+* Set a breakpoint at the beginning of a function
+*/
+function setBreakpoint (key, path) {
+  var method = window._polymerNamespace_.resolveObject(key, path);
+  debug(method);
+}
+
+/**
+* Clear the breakpoint at the beginning of a function
+*/
+function clearBreakpoint (key, path) {
+  var method = window._polymerNamespace_.resolveObject(key, path);
+  undebug(method);
+}
+
+/**
 * Get the property (property names) path from the index path (as it is stored in the UI)
 */
 function getPropPath (key, path) {
@@ -268,7 +284,6 @@ function addObjectObserver (key, path) {
       detail: processChanges(changes)
     }));
   }
-
   Object.observe(obj, observer);
 
   // Store the observer function so that we can unobserve when we need to.

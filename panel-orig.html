@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <script src="bower_components/platform/platform.js"></script>
+    <script src="DOMSerializer.js"></script>
+    <script src="hostPageHelpers.js"></script>
+    <script src="evalHelper.js"></script>
+    <script src="panel-orig.js"></script>
+    <link rel="import" href="bower_components/core-toolbar/core-toolbar.html">
+    <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+    <link rel="import" href="split-pane/split-pane.html">
+    <link rel="import" href="element-tree/element-tree.html">
+    <link rel="import" href="object-tree/object-tree.html">
+    <link rel="import" href="method-list/method-list.html">
+    <style>
+      .split-pane-right {
+        margin-left: 10px;
+      }
+      core-toolbar {
+        background: #ddddd0;
+        color: black;
+      }
+      paper-tabs {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body unresolved>
+    <split-pane>
+      <p class='split-pane-left'>
+        <element-tree>
+        </element-tree>
+      </p>
+      <p class='split-pane-right'>
+        <object-tree></object-tree>
+        <method-list></method-list>
+      </p>
+    </split-pane>
+  </body>
+</html>
