@@ -40,6 +40,14 @@ function scrollIntoView (key) {
 */
 function setBreakpoint (key, path) {
   var method = window._polymerNamespace_.resolveObject(key, path);
+  var methodName = window._polymerNamespace_.getPropPath(key, path).pop();
+  if (typeof method !== 'function') {
+    return;
+  }
+  if (!(key in window._polymerNamespace_.breakPointIndices)) {
+    window._polymerNamespace_.breakPointIndices[key] = {};
+  }
+  window._polymerNamespace_.breakPointIndices[key][methodName] = true;
   debug(method);
 }
 
@@ -48,6 +56,14 @@ function setBreakpoint (key, path) {
 */
 function clearBreakpoint (key, path) {
   var method = window._polymerNamespace_.resolveObject(key, path);
+  var methodName = window._polymerNamespace_.getPropPath(key, path).pop();
+  if (typeof method !== 'function') {
+    return;
+  }
+  if ((key in window._polymerNamespace_.breakPointIndices) &&
+    (methodName in window._polymerNamespace_.breakPointIndices[key])) {
+    delete window._polymerNamespace_.breakPointIndices[key][methodName];
+  }
   undebug(method);
 }
 
@@ -102,7 +118,11 @@ function getProperty (key, path) {
 }
 
 function addToCache (obj, key) {
-  window._polymerNamespace_.DOMCache[key] = obj;
+  if (obj.tagName === 'template' && obj.model) {
+    window._polymerNamespace_.DOMCache[key] = obj;
+  } else {
+    window._polymerNamespace_.DOMCache[key] = obj;
+  }
 }
 
 /**
@@ -205,6 +225,10 @@ function getObjectString (key, path) {
       serializeObject(obj, function (converted) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
+          if (path.length === 0 && (key in window._polymerNamespace_.breakPointIndices) &&
+            (propList[i].name in window._polymerNamespace_.breakPointIndices[key])) {
+            converted.value[i].setBreakpoint = true;
+          }
           var propName = propList[i].name;
           // Must associate each index to the corresponding property name.
           window._polymerNamespace_.addToSubIndexMap(indexMap, propName);
@@ -321,6 +345,7 @@ function removeObjectObserver (key, path) {
 function createCache() {
   // TODO: Must create cache at different levels (for DOM mutations)
   window._polymerNamespace_.DOMCache = {};
+  window._polymerNamespace_.breakPointIndices = {};
   window._polymerNamespace_.indexToPropMap = {};
   // The key of the last DOM element added
   window._polymerNamespace_.lastDOMKey = 0;

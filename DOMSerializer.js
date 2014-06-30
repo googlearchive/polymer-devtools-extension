@@ -246,10 +246,19 @@ function DOMSerializer () {
     * Explores a Polymer element for properties
     */
     function explorePolymerObject (element, destObj) {
+      var addedProps = {};
+      function checkAdded (el) {
+        return !(el in addedProps);
+      }
+      function addToAddedProps (el) {
+        addedProps[el] = true;
+      }
       if (isPolymerElement(element)) {
         var proto = element;
         while (proto && !Polymer.isBase(proto)) {
           var props = getPolymerProps(proto).sort();
+          props = props.filter(checkAdded);
+          props.forEach(addToAddedProps);
           for (var i = 0; i < props.length; i++) {
             copyProperty(proto, element, destObj, props[i]);
           }
@@ -349,7 +358,8 @@ function DOMSerializer () {
         throw 'tagName is a required property';
       }
       callback && callback(root, res);
-      if (isPolymerElement(root)) {
+      if (isPolymerElement(root) ||
+        (root.tagName === 'TEMPLATE' && root.model)) {
         res.isPolymer = true;
       }
       var children = getComposedDOM(root);

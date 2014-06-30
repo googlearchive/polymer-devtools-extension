@@ -909,7 +909,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div hidden>
 
 
-<polymer-element name="method-list" assetpath="method-list/">
+<polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
   <template>
     <style>
       .list > * {
@@ -928,7 +928,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
     <core-selector class="list" multi="">
       <template repeat="{{item, index in list}}">
-        <div class="" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>
+        <div class="{{ {&quot;core-selected&quot;: item.setBreakpoint} | tokenList }}" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>
       </template>
     </core-selector>
   </template>

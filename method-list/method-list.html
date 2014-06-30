@@ -1,7 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/core-selector/core-selector.html">
 
-<polymer-element name='method-list'>
+<polymer-element name='method-list' constructor='MethodList'>
   <template>
     <style>
       .list > * {
@@ -20,7 +20,7 @@
     </style>
     <core-selector class='list' multi>
       <template repeat='{{item, index in list}}'>
-        <div class id='method{{index}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
+        <div class='{{ {"core-selected": item.setBreakpoint} | tokenList }}' id='method{{index}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
       </template>
     </core-selector>
   </template>

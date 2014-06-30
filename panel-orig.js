@@ -149,6 +149,9 @@
         childTree = childTree[path[i]].value;
       }
       childTree.push.apply(childTree, props);
+      if (path.length === 0) {
+        methodList.list = objectTree.tree;
+      }
       EvalHelper.executeFunction('addObjectObserver', [key, path], function (result, error) {
         if (error) {
           throw error;
@@ -157,17 +160,12 @@
     });
   }
 
-  function displayMethods (path) {
-    methodList.list = objectTree.tree;
-  }
-
   window.addEventListener('polymer-ready', function () {
     init();
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
       expandObject([]);
-      displayMethods();
       // Visually highlight the element in the page and scroll it into view
       highlightElement(key);
     });
@@ -182,6 +180,10 @@
       });
       // Empty the object tree
       objectTree.tree.length = 0;
+      var parent = methodList.parentNode;
+      parent.removeChild(methodList);
+      methodList = new MethodList();
+      parent.appendChild(methodList);
       unhighlightElement();
     });
     // When a property in the object-tree changes
@@ -229,7 +231,7 @@
     window.addEventListener('breakpoint-toggle', function (event) {
       var key = elementTree.selectedChild.key;
       var index = event.detail.index;
-      var functionName = event.detail.isSet ? 'setBreakpoint' : 'unsetBreakpoint';
+      var functionName = event.detail.isSet ? 'setBreakpoint' : 'clearBreakpoint';
       EvalHelper.executeFunction(functionName, [key, [index]], function (result, error) {
         if (error) {
           throw error;
