@@ -32,12 +32,17 @@ function createEvalHelper (callback) {
         return object.toString();
     }
   }
+  var srcURLID = 0;
+  function getSrcURL (string) {
+    srcURLID++;
+    return '\n//@ sourceURL=src' + srcURLID + '.js';
+  }
   var helper = {
     /**
     * Define a function
     */
     defineFunction: function (name, string, callback) {
-      chrome.devtools.inspectedWindow.eval(NAMESPACE + name + ' = ' + string, function (result, error) {
+      chrome.devtools.inspectedWindow.eval(NAMESPACE + name + ' = ' + string + getSrcURL(), function (result, error) {
         callback && callback(result, error);
       });
     },
@@ -49,6 +54,7 @@ function createEvalHelper (callback) {
       for (var i = 0; i < functionObjects.length; i++) {
         toEval += NAMESPACE + functionObjects[i].name + ' = ' + functionObjects[i].string + ';';
       }
+      toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         callback && callback(result, error);
       });
@@ -66,6 +72,7 @@ function createEvalHelper (callback) {
       }
       params += ')';
       var toEval = (lhs ? (NAMESPACE + lhs  + ' = ') : '') + NAMESPACE + name + params + ';'
+      toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         callback && callback(result, error);
       });

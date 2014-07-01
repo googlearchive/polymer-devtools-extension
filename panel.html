@@ -5,7 +5,7 @@
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
-    <div hidden><!--
+    <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -227,8 +227,8 @@ polyfill-next-selector { content: ':host .indent'; }
 </template>
 
 </polymer-element>
-</div>
-    <div hidden><!--
+
+    <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -685,8 +685,8 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </template>
 
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 <!--Creates a double pane with a splitter in between-->
 
 <!--
@@ -801,8 +801,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="split-pane/split-pane.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 <polymer-element name="element-tree" attributes="indent text basewidth" constructor="ElementTree" assetpath="element-tree/">
   <template>
@@ -827,8 +827,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="element-tree/element-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 <!--A text label that is editable upon mouse-click-->
 
@@ -894,7 +894,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <label class="labelText" id="name{{index}}">{{prop.name}}</label>
         <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">{{prop.type}}</label>
         <label class="typeText" hidden?="{{!prop.hasAccessor}}">&lt;accessor&gt;</label>
-        <editable-label id="field{{index}}" text="{{prop.value}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
+        <editable-label id="field{{index}}" text="{{prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
         </editable-label>
         <img class="refreshBtn" id="refresh{{index}}" data-name="{{prop.name}}" on-click="{{refreshField}}" hidden?="{{!prop.hasAccessor}}" src="res/refresh.png">
         <p class="children">
@@ -905,8 +905,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="object-tree/object-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 
 <polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
@@ -934,7 +934,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="method-list/method-list.js"></script>
 </polymer-element>
-</div>
+
     <style>
       .split-pane-right {
         margin-left: 10px;

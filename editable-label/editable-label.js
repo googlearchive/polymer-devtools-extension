@@ -36,7 +36,8 @@
         this.fire('field-changed', {
           oldValue: that.lastText,
           newValue: that.text,
-          field: that
+          field: that,
+          name: that.getAttribute('data-name')
         });
         this.lastText = this.text;
       }

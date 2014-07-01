@@ -89,7 +89,9 @@
           key: this.key
         });
       } else {
+        var oldKey = null;
         if (this.root.selectedChild) {
+          oldKey = this.root.selectedChild.key;
           // First unselect the currently selected child
           this.root.selectedChild.toggleSelection();
         }
@@ -97,7 +99,8 @@
         this.$.name.style.backgroundColor = COLOR_POLYMER_SELECTED;
         this.selected = !(this.selected);
         this.fire('selected', {
-          key: this.key
+          key: this.key,
+          oldKey: oldKey
         });
       }
     }

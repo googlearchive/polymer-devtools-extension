@@ -108,17 +108,34 @@
         {
           name: 'clearBreakpoint',
           string: clearBreakpoint.toString()
+        },
+        {
+          name: 'filterProperty',
+          string: filterProperty.toString()
+        },
+        {
+          name: 'setBlacklist',
+          string: setBlacklist.toString()
+        },
+        {
+          name: 'isPolymerElement',
+          string: isPolymerElement.toString()
         }
       ], function (result, error) {
-        EvalHelper.executeFunction('createCache', [], function (result, error) {
+        EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
             throw error;
           }
-          EvalHelper.executeFunction('getDOMString', [], function (result, error) {
-            DOM = JSON.parse(result.data);
-            polymerDOMCache = {};
-            cacheDOM(DOM);
-            elementTree.initFromDOMTree(DOM);
+          EvalHelper.executeFunction('createCache', [], function (result, error) {
+            if (error) {
+              throw error;
+            }
+            EvalHelper.executeFunction('getDOMString', [], function (result, error) {
+              DOM = JSON.parse(result.data);
+              polymerDOMCache = {};
+              cacheDOM(DOM);
+              elementTree.initFromDOMTree(DOM);
+            });
           });
         });
       });
@@ -129,15 +146,27 @@
   * Highlight an element in the page
   */
   function highlightElement (key) {
-    EvalHelper.executeFunction('highlight', [key]);
-    EvalHelper.executeFunction('scrollIntoView', [key]);
+    EvalHelper.executeFunction('highlight', [key], function (result, error) {
+      if (error) {
+        throw error;
+      }
+    });
+    EvalHelper.executeFunction('scrollIntoView', [key], function (result, error) {
+      if (error) {
+        console.log(error);
+      }
+    });
   }
 
   /**
   * Unhighlight the highlighted element in the page
   */
   function unhighlightElement (key) {
-    EvalHelper.executeFunction('unhighlight', []);
+    EvalHelper.executeFunction('unhighlight', [], function (result, error) {
+      if (error) {
+        throw error;
+      }
+    });
   }
 
   function expandObject (path) {
@@ -160,58 +189,89 @@
     });
   }
 
+  function selectElement (key) {
+    expandObject([]);
+    // Visually highlight the element in the page and scroll it into view
+    highlightElement(key);
+  }
+  function unselectElement (key, callback) {
+    EvalHelper.executeFunction('removeObjectObserver', [key, []], function (result, error) {
+      if (error) {
+        throw error;
+      }
+      EvalHelper.executeFunction('emptyIndexMap', [key, []], function (result, error) {
+        if (error) {
+          throw error;
+        }
+        // Empty the object tree
+        objectTree.tree.length = 0;
+        var parent = methodList.parentNode;
+        parent.removeChild(methodList);
+        methodList = new MethodList();
+        parent.appendChild(methodList);
+        unhighlightElement();
+
+        callback && callback();
+      });
+    });
+  }
+  /**
+  * Refresh a property (*an accessor only*)
+  */
+  function refreshProperty (key, childTree, path, propName) {
+    var index = path[path.length - 1];
+    EvalHelper.executeFunction('getProperty', [key, path], function (result, error) {
+      var newObj = JSON.parse(result).value[0];
+      newObj.hasAccessor = true;
+      newObj.name = propName;
+      childTree[index] = newObj;
+    });
+  }
   window.addEventListener('polymer-ready', function () {
     init();
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
-      expandObject([]);
-      // Visually highlight the element in the page and scroll it into view
-      highlightElement(key);
+      if (event.detail.oldKey) {
+        unselectElement(event.detail.oldKey, function () {
+          selectElement(key);
+        });
+      } else {
+        selectElement(key);
+      }
     });
     // When an element in the element-tree is unselected
     window.addEventListener('unselected', function (event) {
       var key = event.detail.key;
-      EvalHelper.executeFunction('removeObjectObserver', [key, []], function (result, error) {
-        if (error) {
-          throw error;
-        }
-        EvalHelper.executeFunction('emptyIndexMap', [key, []]);
-      });
-      // Empty the object tree
-      objectTree.tree.length = 0;
-      var parent = methodList.parentNode;
-      parent.removeChild(methodList);
-      methodList = new MethodList();
-      parent.appendChild(methodList);
-      unhighlightElement();
+      unselectElement(key);
     });
     // When a property in the object-tree changes
     window.addEventListener('property-changed', function (event) {
       var newValue = event.detail.value;
       var path = event.detail.path;
       var key = elementTree.selectedChild.key;
+      var childTree = event.detail.tree;
+      var propName = event.detail.name;
       // Reflect a change in property in the host page
       EvalHelper.executeFunction('changeProperty', [key, path, newValue],
         function (result, error) {
           if (error) {
             throw error;
           }
+          if (event.detail.reEval) {
+            // The property requires a re-eval because it is accessor
+            // and O.o() won't update it.
+            refreshProperty(key, childTree, path, propName);
+          }
         }
       );
     });
     window.addEventListener('refresh-property', function (event) {
-      var index = event.detail.path[event.detail.path.length - 1];
       var key = elementTree.selectedChild.key;
       var childTree = event.detail.tree;
       var path = event.detail.path;
       var propName = event.detail.name;
-      EvalHelper.executeFunction('getProperty', [key, path], function (result, error) {
-        var newObj = JSON.parse(result).value[0];
-        newObj.hasAccessor = true;
-        newObj.name = propName;
-        childTree[index] = newObj;
-      });
+      refreshProperty(key, childTree, path, propName);
     });
     window.addEventListener('object-expand', function (event) {
       expandObject(event.detail.path);
@@ -225,7 +285,11 @@
         if (error) {
           throw error;
         }
-        EvalHelper.executeFunction('emptyIndexMap', [key, path]);
+        EvalHelper.executeFunction('emptyIndexMap', [key, path], function (result, error) {
+          if (error) {
+            throw error;
+          }
+        });
       });
     });
     window.addEventListener('breakpoint-toggle', function (event) {

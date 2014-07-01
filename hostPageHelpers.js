@@ -194,6 +194,169 @@ function emptyIndexMap (key, path) {
   start[lastIndex].__lastIndex__ = -1;
 }
 
+function isPolymerElement (element) {
+  return element && ('element' in element) && (element.element.localName === 'polymer-element');
+}
+
+function filterProperty (n) {
+  try {
+    console.log(n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n]);
+  } catch (e) {
+    console.log(e);
+  }
+  return n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n];
+}
+
+// IMPORTANT: First set filterProperty and then call setBlacklist.
+// TODO: Improve blacklist
+function setBlacklist () {
+  window._polymerNamespace_.filterProperty.blacklist = {
+  accessKey: true,
+  align: true,
+  attributes: true,
+  baseURI: true,
+  childElementCount: true,
+  childNodes: true,
+  children: true,
+  classList: true,
+  className: true,
+  clientHeight: true,
+  clientLeft: true,
+  clientTop: true,
+  clientWidth: true,
+  contentEditable: true,
+  dataset: true,
+  dir: true,
+  draggable: true,
+  firstChild: true,
+  firstElementChild: true,
+  hidden: true,
+  id: true,
+  innerHTML: true,
+  innerText: true,
+  inputMethodContext: true,
+  isContentEditable: true,
+  lang: true,
+  lastChild: true,
+  lastElementChild: true,
+  localName: true,
+  namespaceURI: true,
+  nextElementSibling: true,
+  nextSibling: true,
+  nodeName: true,
+  nodeType: true,
+  nodeValue: true,
+  offsetHeight: true,
+  offsetLeft: true,
+  offsetParent: true,
+  offsetTop: true,
+  offsetWidth: true,
+  onabort: true,
+  onbeforecopy: true,
+  onbeforecut: true,
+  onbeforepaste: true,
+  onblur: true,
+  oncancel: true,
+  oncanplay: true,
+  oncanplaythrough: true,
+  onchange: true,
+  onclick: true,
+  onclose: true,
+  oncontextmenu: true,
+  oncopy: true,
+  oncuechange: true,
+  oncut: true,
+  ondblclick: true,
+  ondrag: true,
+  ondragend: true,
+  ondragenter: true,
+  ondragleave: true,
+  ondragover: true,
+  ondragstart: true,
+  ondrop: true,
+  ondurationchange: true,
+  onemptied: true,
+  onended: true,
+  onerror: true,
+  onfocus: true,
+  oninput: true,
+  oninvalid: true,
+  onkeydown: true,
+  onkeypress: true,
+  onkeyup: true,
+  onload: true,
+  onloadeddata: true,
+  onloadedmetadata: true,
+  onloadstart: true,
+  onmousedown: true,
+  onmouseenter: true,
+  onmouseleave: true,
+  onmousemove: true,
+  onmouseout: true,
+  onmouseover: true,
+  onmouseup: true,
+  onmousewheel: true,
+  onpaste: true,
+  onpause: true,
+  onplay: true,
+  onplaying: true,
+  onprogress: true,
+  onratechange: true,
+  onreset: true,
+  onresize: true,
+  onscroll: true,
+  onsearch: true,
+  onseeked: true,
+  onseeking: true,
+  onselect: true,
+  onselectstart: true,
+  onshow: true,
+  onstalled: true,
+  onsubmit: true,
+  onsuspend: true,
+  ontimeupdate: true,
+  onvolumechange: true,
+  onwaiting: true,
+  onwebkitfullscreenchange: true,
+  onwebkitfullscreenerror: true,
+  onwheel: true,
+  outerHTML: true,
+  outerText: true,
+  ownerDocument: true,
+  parentElement: true,
+  parentNode: true,
+  prefix: true,
+  previousElementSibling: true,
+  previousSibling: true,
+  scrollHeight: true,
+  scrollLeft: true,
+  scrollTop: true,
+  scrollWidth: true,
+  shadowRoot: true,
+  spellcheck: true,
+  style: true,
+  tabIndex: true,
+  tagName: true,
+  textContent: true,
+  title: true,
+  translate: true,
+  webkitShadowRoot: true,
+  webkitdropzone: true,
+  resolvePath: true,
+
+  shadowRoots: true,
+  $: true,
+  controller: true,
+  eventDelegates: true,
+  reflect: true,
+
+  onautocomplete: true,
+  onautocompleteerror: true,
+  ontoggle: true,
+  hasBeenAttached: true
+  };
+}
+
 /**
 * Serialize document.body
 */
@@ -241,9 +404,34 @@ function getObjectString (key, path) {
 * Add an object observer that reports changes to it using O.o()
 */
 function addObjectObserver (key, path) {
+  /**
+  * Checks if a property is present in the higher prototype objects
+  * of an object.
+  */
+  function checkChainUpForProp (prop, obj) {
+    var proto = obj.__proto__;
+    while (proto) {
+      if (proto.hasOwnProperty(prop)) {
+        return true;
+      }
+      proto = proto.__proto__;
+    }
+    return false;
+  }
+  function checkChainDownForProp (prop, protoObj, obj) {
+    var proto = obj;
+    while (proto !== protoObj && proto) {
+      if (proto.hasOwnProperty(prop)) {
+        return true;
+      }
+      proto = proto.__proto__;
+    }
+    return false;
+  }
   console.log('adding observer');
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
+
   /**
   * Returns a change object that looks like this:
   * {
@@ -260,7 +448,6 @@ function addObjectObserver (key, path) {
   *   ]
   * }
   */
-
   function processChanges (changes) {
     var processedChangeObject = {
       path: path,
@@ -274,6 +461,11 @@ function addObjectObserver (key, path) {
         type: change.type,
         name: change.name
       };
+      if (change.object !== obj) {
+        if (checkChainDownForProp(change.name, change.obj, obj)) {
+          continue;
+        }
+      }
       switch (change.type) {
         case 'update':
           // We might be dealing with non-Objects which DOMSerializer can't serialize.
@@ -285,16 +477,42 @@ function addObjectObserver (key, path) {
             serializeObject(wrappedObject);
           break;
         case 'delete':
-          // Update the index-to-propName map to reflect the deletion
-          window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name]);
+          if (checkChainUpForProp(change.name, obj)) {
+            // Though it is a deletion at one level, the same property also exists
+            // in a higher prototype object, so this is an update in the view of the UI
+            // This applies only to Polymer elements because of how multiple prototype levels are traversed
+            // only for Polymer elements.
+            summary.type = 'update';
+            var wrappedObject = {
+              value: change.object[change.name]
+            };
+            summary.object = window._polymerNamespace_.serializer.
+              serializeObject(wrappedObject);
+          } else {
+            // Update the index-to-propName map to reflect the deletion
+            window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name]);
+          }
           break;
         case 'add':
+          if (window._polymerNamespace_.isPolymerElement(obj) &&
+            !window._polymerNamespace_.filterProperty(change.name)) {
+            continue;
+          }
           var wrappedObject = {
             value: change.object[change.name]
           };
           summary.object = window._polymerNamespace_.serializer.
             serializeObject(wrappedObject);
-          window._polymerNamespace_.addToSubIndexMap(indexMap, change.name);
+          if (window._polymerNamespace_.isPolymerElement(obj) &&
+            checkChainUpForProp(change.name, obj)) {
+            // Even though this is an addition at one level, this is an update in the view of the UI
+            // because another property of the same name is already shown.
+            // This applies only to Polymer elements because of how multiple prototype levels are traversed
+            // only for Polymer elements.
+            summary.type = 'update';
+          } else {
+            window._polymerNamespace_.addToSubIndexMap(indexMap, change.name);
+          }
           break;
       }
       processedChangeObject.changes.push(summary);
@@ -302,7 +520,6 @@ function addObjectObserver (key, path) {
     return JSON.stringify(processedChangeObject);
   }
   function observer (changes) {
-    // TODO: deal with unwanted new properties
     console.log('observing');
     window.dispatchEvent(new CustomEvent('object-changed', {
       detail: processChanges(changes)
@@ -310,6 +527,11 @@ function addObjectObserver (key, path) {
   }
   Object.observe(obj, observer);
 
+  var proto = obj.__proto__;
+  while (proto && !Polymer.isBase(proto)) {
+    Object.observe(proto, observer);
+    proto = proto.__proto__;
+  }
   // Store the observer function so that we can unobserve when we need to.
   if (!window._polymerNamespace_.observerCache[key]) {
     window._polymerNamespace_.observerCache[key] = {};
@@ -328,17 +550,35 @@ function addObjectObserver (key, path) {
 * Stop observing an object
 */
 function removeObjectObserver (key, path) {
+  function recursiveUnobserve (obj, hashLocation, indexMap) {
+    if (hashLocation['__objectObserver__']) {
+      Object.unobserve(obj, hashLocation['__objectObserver__']);
+      if (window._polymerNamespace_.isPolymerElement(obj)) {
+        var proto = obj.__proto__;
+        while (proto && !Polymer.isBase(proto)) {
+          Object.unobserve(proto, hashLocation['__objectObserver__']);
+          proto = proto.__proto__;
+        }
+      }
+      var props = Object.keys(hashLocation);
+      for (var i = 0; i < props.length; i++) {
+        if (props[i] === '__objectObserver__') {
+          continue;
+        }
+        recursiveUnobserve(obj[indexMap[props[i]].__name__], hashLocation[props[i]], indexMap[props[i]]);
+      }
+    }
+  }
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var parent = window._polymerNamespace_.observerCache;
   var hashLocation = parent[key];
+  var indexMap = window._polymerNamespace_.indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
     parent = hashLocation;
     hashLocation = hashLocation[path[i]];
+    indexMap = indexMap[i];
   }
-  console.log('removing');
-  console.log(path);
-  console.log(hashLocation['__objectObserver__']);
-  Object.unobserve(obj, hashLocation['__objectObserver__']);
+  recursiveUnobserve(obj, hashLocation, indexMap);
   delete parent[path.length === 0 ? key : path[path.length - 1]];
 }
 

@@ -12,6 +12,10 @@
     }
     return newArr;
   }
+  /**
+  * Converts a value represented as a string to an actual JS object.
+  * E.g. : "true" -> true and "5" -> 5
+  */
   function smartCast (val) {
     if ((val.length >= 2 &&
       (val[0] === '"' && val[val.length - 1] === '"') ||
@@ -66,10 +70,15 @@
         if (!isFieldValueValid(newValue)) {
           return;
         }
+        var that = this;
         // Fire an event with all the information
         this.fire('property-changed', {
           path: path,
-          value: smartCast(newValue)
+          value: smartCast(newValue),
+          // reEval is needed if it is an accessor and O.o() won't update it.
+          reEval: event.detail.field.getAttribute('data-hasAccessor') === 'true',
+          tree: that.tree,
+          name: event.detail.name
         });
       });
       /**
@@ -82,7 +91,7 @@
           return;
         }
         var index = event.detail.index;
-        if (this.tree[index].value.length - 1 < index) {
+        if (this.tree[index].value instanceof Array) {
           child.tree = this.tree[index].value;
           var pathCopy = copyArray(this.path);
           pathCopy.push(index);

@@ -45,7 +45,7 @@
         <label class='labelText' id='name{{index}}'>{{prop.name}}</label>
         <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>{{prop.type}}</label>
         <label class='typeText' hidden?='{{!prop.hasAccessor}}'>&lt;accessor&gt;</label>
-        <editable-label id='field{{index}}' text='{{prop.value}}'
+        <editable-label id='field{{index}}' text='{{prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
           hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
         </editable-label>
         <img class='refreshBtn' id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' hidden?='{{!prop.hasAccessor}}' src='../res/refresh.png'></img>
