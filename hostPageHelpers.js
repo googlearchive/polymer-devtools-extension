@@ -11,7 +11,7 @@ function highlight (key) {
   window._polymerNamespace_.prevOutline = element.style.outline;
   window._polymerNamespace_.prevBackgroundColor = element.style.backgroundColor;
   element.style.outline = '1px dashed red';
-  element.style.backgroundColor = 'rgba(255,0,0,0.1)';
+  element.style.backgroundColor = 'rgba(255,0,0,0.1) !important';
 }
 
 /**
@@ -180,8 +180,8 @@ function emptyIndexMap (key, path) {
   var start = window._polymerNamespace_.indexToPropMap[key];
   var lastIndex = path.pop();
   if (!lastIndex) {
-    start = {};
-    start.__lastIndex__ = -1;
+    window._polymerNamespace_.indexToPropMap[key] = {};
+    window._polymerNamespace_.indexToPropMap[key].__lastIndex__ = -1;
     return;
   }
   for (var i = 0; i < path.length; i++) {
@@ -576,7 +576,7 @@ function removeObjectObserver (key, path) {
   for (var i = 0; i < path.length; i++) {
     parent = hashLocation;
     hashLocation = hashLocation[path[i]];
-    indexMap = indexMap[i];
+    indexMap = indexMap[path[i]];
   }
   recursiveUnobserve(obj, hashLocation, indexMap);
   delete parent[path.length === 0 ? key : path[path.length - 1]];

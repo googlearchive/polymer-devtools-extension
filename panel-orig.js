@@ -333,8 +333,14 @@
           // This is a wrapped object. `value` contains the actual object.
           var newObj;
           var childTree = objectTree.tree;
-          for (var j = 0; j < path.length; j++) {
-            childTree = childTree[path[j]].value;
+          try {
+            // If the observer reports changes before child-tree is ready, we must
+            // only
+            for (var j = 0; j < path.length; j++) {
+              childTree = childTree[path[j]].value;
+            }
+          } catch (e) {
+            // TODO: is it okay to do this busy looping until child-tree is ready?
           }
           if (type !== 'delete') {
             newObj = JSON.parse(change.object).value[0];

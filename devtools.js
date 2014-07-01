@@ -1,4 +1,4 @@
-chrome.devtools.panels.create("Test",
+chrome.devtools.panels.create("Polymer",
   null,
   "panel.html",
   null

@@ -5,6 +5,11 @@
   function newExpandBtnState(present) {
     return present === '>' ? 'v' : '>';
   }
+
+  function setColor (tree, color) {
+    tree.$.name.style.backgroundColor = color;
+  }
+
   Polymer('element-tree', {
     indent: 0,
     collapsed: false,
@@ -83,7 +88,7 @@
       if (this.selected) {
         // selectedChild holds the element in the tree that is currently selected
         this.root.selectedChild = null;
-        this.$.name.style.backgroundColor = COLOR_POLYMER_UNSELECTED;
+        setColor(this, COLOR_POLYMER_UNSELECTED);
         this.selected = !(this.selected);
         this.fire('unselected', {
           key: this.key
@@ -93,10 +98,11 @@
         if (this.root.selectedChild) {
           oldKey = this.root.selectedChild.key;
           // First unselect the currently selected child
-          this.root.selectedChild.toggleSelection();
+          this.root.selectedChild.selected = false;
+          setColor(this.root.selectedChild, COLOR_POLYMER_UNSELECTED);
         }
         this.root.selectedChild = this;
-        this.$.name.style.backgroundColor = COLOR_POLYMER_SELECTED;
+        setColor(this, COLOR_POLYMER_SELECTED);
         this.selected = !(this.selected);
         this.fire('selected', {
           key: this.key,

@@ -358,6 +358,9 @@ function DOMSerializer () {
       } else {
         throw 'tagName is a required property';
       }
+      if (root.tagName === 'SCRIPT') {
+        return null;
+      }
       callback && callback(root, res);
       if (isPolymerElement(root) ||
         (root.tagName === 'TEMPLATE' && root.model)) {
@@ -370,7 +373,10 @@ function DOMSerializer () {
       }
       for (var i = 0; i < children.length; i++) {
         if (children[i]) {
-          res.children.push(traverse(children[i]));
+          var child = traverse(children[i]);
+          if (child) {
+            res.children.push(child);
+          }
         }
       }
       return res;
