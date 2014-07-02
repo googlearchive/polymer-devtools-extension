@@ -6,155 +6,6 @@ function DOMSerializer () {
     return element.shadowRoot && 
       element.localName.indexOf('-') !== -1 || element.getAttribute('is');
   }
-  function filterProperty (n) {
-    return n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n];
-  }
-  // TODO: Improve blacklist
-  filterProperty.blacklist = {
-    accessKey: true,
-    align: true,
-    attributes: true,
-    baseURI: true,
-    childElementCount: true,
-    childNodes: true,
-    children: true,
-    classList: true,
-    className: true,
-    clientHeight: true,
-    clientLeft: true,
-    clientTop: true,
-    clientWidth: true,
-    contentEditable: true,
-    dataset: true,
-    dir: true,
-    draggable: true,
-    firstChild: true,
-    firstElementChild: true,
-    hidden: true,
-    id: true,
-    innerHTML: true,
-    innerText: true,
-    inputMethodContext: true,
-    isContentEditable: true,
-    lang: true,
-    lastChild: true,
-    lastElementChild: true,
-    localName: true,
-    namespaceURI: true,
-    nextElementSibling: true,
-    nextSibling: true,
-    nodeName: true,
-    nodeType: true,
-    nodeValue: true,
-    offsetHeight: true,
-    offsetLeft: true,
-    offsetParent: true,
-    offsetTop: true,
-    offsetWidth: true,
-    onabort: true,
-    onbeforecopy: true,
-    onbeforecut: true,
-    onbeforepaste: true,
-    onblur: true,
-    oncancel: true,
-    oncanplay: true,
-    oncanplaythrough: true,
-    onchange: true,
-    onclick: true,
-    onclose: true,
-    oncontextmenu: true,
-    oncopy: true,
-    oncuechange: true,
-    oncut: true,
-    ondblclick: true,
-    ondrag: true,
-    ondragend: true,
-    ondragenter: true,
-    ondragleave: true,
-    ondragover: true,
-    ondragstart: true,
-    ondrop: true,
-    ondurationchange: true,
-    onemptied: true,
-    onended: true,
-    onerror: true,
-    onfocus: true,
-    oninput: true,
-    oninvalid: true,
-    onkeydown: true,
-    onkeypress: true,
-    onkeyup: true,
-    onload: true,
-    onloadeddata: true,
-    onloadedmetadata: true,
-    onloadstart: true,
-    onmousedown: true,
-    onmouseenter: true,
-    onmouseleave: true,
-    onmousemove: true,
-    onmouseout: true,
-    onmouseover: true,
-    onmouseup: true,
-    onmousewheel: true,
-    onpaste: true,
-    onpause: true,
-    onplay: true,
-    onplaying: true,
-    onprogress: true,
-    onratechange: true,
-    onreset: true,
-    onresize: true,
-    onscroll: true,
-    onsearch: true,
-    onseeked: true,
-    onseeking: true,
-    onselect: true,
-    onselectstart: true,
-    onshow: true,
-    onstalled: true,
-    onsubmit: true,
-    onsuspend: true,
-    ontimeupdate: true,
-    onvolumechange: true,
-    onwaiting: true,
-    onwebkitfullscreenchange: true,
-    onwebkitfullscreenerror: true,
-    onwheel: true,
-    outerHTML: true,
-    outerText: true,
-    ownerDocument: true,
-    parentElement: true,
-    parentNode: true,
-    prefix: true,
-    previousElementSibling: true,
-    previousSibling: true,
-    scrollHeight: true,
-    scrollLeft: true,
-    scrollTop: true,
-    scrollWidth: true,
-    shadowRoot: true,
-    spellcheck: true,
-    style: true,
-    tabIndex: true,
-    tagName: true,
-    textContent: true,
-    title: true,
-    translate: true,
-    webkitShadowRoot: true,
-    webkitdropzone: true,
-    resolvePath: true,
-
-    shadowRoots: true,
-    $: true,
-    controller: true,
-    eventDelegates: true,
-    reflect: true,
-
-    onautocomplete: true,
-    onautocompleteerror: true,
-    ontoggle: true,
-    hasBeenAttached: true
-  };
 
   /**
   * Checks if a property is an acessor
@@ -170,7 +21,7 @@ function DOMSerializer () {
   /**
   * Converts an object to JSON only one level deep
   */
-  function JSONize (obj) {
+  function JSONize (obj, filter) {
 
     /**
     * Copies a property from oldObj to newObj and adds some metadata.
@@ -239,7 +90,10 @@ function DOMSerializer () {
     * Gets the Polymer-specific *own* properties of an object
     */
     function getPolymerProps (element) {
-      var props = Object.getOwnPropertyNames(element).filter(filterProperty);
+      var props = Object.getOwnPropertyNames(element);
+      if (filter) {
+        props = props.filter(filter);
+      }
       return props;
     }
 
@@ -274,10 +128,12 @@ function DOMSerializer () {
     function exploreObject (obj, destObj) {
       var props = Object.getOwnPropertyNames(obj).sort();
       for (var i = 0; i < props.length; i++) {
-        try {
-          copyProperty(obj, obj, destObj, props[i]);
-        } catch (e) {
-          // TODO: Some properties throw when read. Find out more.
+        if (!filter || filter(props[i])) {
+          try {
+            copyProperty(obj, obj, destObj, props[i]);
+          } catch (e) {
+            // TODO: Some properties throw when read. Find out more.
+          }
         }
       }
       // copyProperty(Object.prototype, obj, destObj, '__proto__');
@@ -349,8 +205,9 @@ function DOMSerializer () {
   *   children: [<more such objects>]
   * }
   * `callback` is execuated on every DOM element found
+  * `isPolymer` is supposed to tell if an element is a Polymer element
   */
-  this.serializeDOMObject = function (root, callback) {
+  this.serializeDOMObject = function (root, callback, isPolymer) {
     function traverse (root) {
       var res = {};
       if ('tagName' in root) {
@@ -400,8 +257,8 @@ function DOMSerializer () {
   *   // More such objects for each property in the passed object
   * ]
   */ 
-  this.serializeObject = function (obj, callback) {
-    var res = JSONize(obj);
+  this.serializeObject = function (obj, callback, filter) {
+    var res = JSONize(obj, filter);
     callback && callback(res);
     return JSON.stringify(res);
   };

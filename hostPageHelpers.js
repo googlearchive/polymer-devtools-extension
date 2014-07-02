@@ -199,11 +199,6 @@ function isPolymerElement (element) {
 }
 
 function filterProperty (n) {
-  try {
-    console.log(n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n]);
-  } catch (e) {
-    console.log(e);
-  }
   return n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n];
 }
 
@@ -353,7 +348,8 @@ function setBlacklist () {
   onautocomplete: true,
   onautocompleteerror: true,
   ontoggle: true,
-  hasBeenAttached: true
+  hasBeenAttached: true,
+  element: true
   };
 }
 
@@ -383,6 +379,12 @@ function getDOMString () {
 function getObjectString (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
+  var filter = null;
+  if (window._polymerNamespace_.isPolymerElement(obj)) {
+    filter = function (prop) {
+      return window._polymerNamespace_.filterProperty(prop);
+    };
+  }
   return {
     'data': window._polymerNamespace_.serializer.
       serializeObject(obj, function (converted) {
@@ -396,7 +398,8 @@ function getObjectString (key, path) {
           // Must associate each index to the corresponding property name.
           window._polymerNamespace_.addToSubIndexMap(indexMap, propName);
         }
-      })
+      },
+      filter)
   };
 }
 
@@ -554,6 +557,7 @@ function removeObjectObserver (key, path) {
     if (hashLocation['__objectObserver__']) {
       Object.unobserve(obj, hashLocation['__objectObserver__']);
       if (window._polymerNamespace_.isPolymerElement(obj)) {
+        // Polymer objects have listeners on multiple proto levels
         var proto = obj.__proto__;
         while (proto && !Polymer.isBase(proto)) {
           Object.unobserve(proto, hashLocation['__objectObserver__']);
@@ -578,6 +582,7 @@ function removeObjectObserver (key, path) {
     hashLocation = hashLocation[path[i]];
     indexMap = indexMap[path[i]];
   }
+  // All objects under this have to be unobserved
   recursiveUnobserve(obj, hashLocation, indexMap);
   delete parent[path.length === 0 ? key : path[path.length - 1]];
 }
