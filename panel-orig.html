@@ -5,7 +5,6 @@
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
-    <link rel="import" href="bower_components/core-toolbar/core-toolbar.html">
     <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
     <link rel="import" href="split-pane/split-pane.html">
     <link rel="import" href="element-tree/element-tree.html">
@@ -15,25 +14,15 @@
       .split-pane-right {
         margin-left: 10px;
       }
-      core-toolbar {
-        background: #ddddd0;
-        color: black;
-      }
       paper-tabs {
+        background-color: gray;
         width: 100%;
       }
     </style>
   </head>
   <body unresolved>
-    <split-pane>
-      <p class='split-pane-left'>
-        <element-tree>
-        </element-tree>
-      </p>
-      <p class='split-pane-right'>
-        <object-tree></object-tree>
-        <method-list></method-list>
-      </p>
-    </split-pane>
+    <element-tree></element-tree>
+    <object-tree></object-tree>
+    <method-list></method-list>
   </body>
 </html>

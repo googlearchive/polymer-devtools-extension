@@ -353,21 +353,60 @@ function setBlacklist () {
   };
 }
 
+function processMutations (mutations) {
+  var processed = {
+    removedKeys: [],
+    added: []
+  };
+  for (var i = 0; i < mutations.length; i++) {
+    var mutation = mutations[i];
+    if (mutation.type !== 'childList') {
+      // We are interested only in childList mutations
+      continue;
+    }
+    var added = mutation.addedNodes;
+    for (var i = 0; i < added.length; i++) {
+      if (added[i].tagName) {
+        processed.added.push(window._polymerNamespace_.getDOMString(added[i]));
+      }
+    }
+    var removed = mutation.removedNodes;
+    for (var i = )
+  }
+}
 /**
-* Serialize document.body
+* Serialize el or document.body (if `el` isn't passed)
 */
-function getDOMString () {
+function getDOMString (el) {
+  window._polymerNamespace_.mutationObserverCache = {};
   window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
   return {
-    'data': window._polymerNamespace_.serializer.serializeDOMObject(document.body,
+    'data': window._polymerNamespace_.serializer.serializeDOMObject(el || document.body,
       function (domNode, converted) {
-        // For every element found during traversal, we store it in a hash-table with a unique key.
-        window._polymerNamespace_.lastDOMKey++;
-        window._polymerNamespace_.addToCache(domNode, window._polymerNamespace_.lastDOMKey);
-        // Also make a map to store the actual property names to the indices corresponding to the names
-        // before passing it to the caller.
-        window._polymerNamespace_.indexToPropMap[window._polymerNamespace_.lastDOMKey] = {};
-        converted.key = window._polymerNamespace_.lastDOMKey;
+        if (!domNode.__keyPolymer__) {
+          // For every element found during traversal, we store it in a hash-table with a unique key.
+          window._polymerNamespace_.lastDOMKey++;
+          var key = window._polymerNamespace_.lastDOMKey;
+          window._polymerNamespace_.addToCache(domNode, key);
+          // Also make a map to store the actual property names to the indices corresponding to the names
+          // before passing it to the caller.
+          window._polymerNamespace_.indexToPropMap[key] = {};
+          domNode.__keyPolymer__ = key;
+          converted.key = key;
+
+          if (key === 1 || domNode.shadowRoot) {
+            var observer = new mutationObserver(function (mutations) {
+              mutations.forEach(function (mutation) {
+                window.dispatchEvent('dom-mutation', {
+                  detail: {
+                    mutations: window._polymerNamespace_.processMutations(mutations)
+                  }
+                });
+              });
+            });
+            window._polymerNamespace_.mutationObserverCache[key] = observer;
+          }
+        }
       }
     )
   };
@@ -380,6 +419,11 @@ function getObjectString (key, path) {
   var obj = window._polymerNamespace_.resolveObject(key, path);
   var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
   var filter = null;
+  if (path.length === 0) {
+    filter = function (prop) {
+      return prop !== '__keyPolymer__';
+    }
+  }
   if (window._polymerNamespace_.isPolymerElement(obj)) {
     filter = function (prop) {
       return window._polymerNamespace_.filterProperty(prop);
@@ -588,10 +632,10 @@ function removeObjectObserver (key, path) {
 }
 
 function createCache() {
-  // TODO: Must create cache at different levels (for DOM mutations)
   window._polymerNamespace_.DOMCache = {};
   window._polymerNamespace_.breakPointIndices = {};
   window._polymerNamespace_.indexToPropMap = {};
   // The key of the last DOM element added
   window._polymerNamespace_.lastDOMKey = 0;
+  window._polymerNamespace_.mutationObserverCache = {};
 }

@@ -1,11 +1,4 @@
-<html>
-  <head>
-    <script src="bower_components/platform/platform.js"></script>
-    <script src="DOMSerializer.js"></script>
-    <script src="hostPageHelpers.js"></script>
-    <script src="evalHelper.js"></script>
-    <script src="panel-orig.js"></script>
-    <!--
+<!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -119,7 +112,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<script src="bower_components/polymer/polymer.js"></script>
+<script src="../polymer/polymer.js"></script>
 <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -129,7 +122,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<polymer-element name="polymer-body" extends="body" assetpath="bower_components/polymer/">
+<polymer-element name="polymer-body" extends="body" assetpath="../polymer/">
 
 </polymer-element>
 
@@ -208,12 +201,12 @@ contains the selection state.
 -->
 
 
-<polymer-element name="core-selection" attributes="multi" hidden assetpath="bower_components/core-selection/">
+<polymer-element name="core-selection" attributes="multi" hidden assetpath="../core-selection/">
   
 </polymer-element>
 
 
-<polymer-element name="core-selector" attributes="selected multi valueattr selectedClass selectedProperty selectedAttribute selectedItem selectedModel selectedIndex notap target itemsSelector activateEvent" assetpath="bower_components/core-selector/">
+<polymer-element name="core-selector" attributes="selected multi valueattr selectedClass selectedProperty selectedAttribute selectedItem selectedModel selectedIndex notap target itemsSelector activateEvent" assetpath="../core-selector/">
 
   <template>
     <core-selection id="selection" multi="{{multi}}" on-core-select="{{selectionSelect}}"></core-selection>
@@ -318,7 +311,7 @@ Apply `circle` class to make the rippling effect within a circle.
 
 
 
-<polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity" assetpath="bower_components/paper-ripple/">
+<polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity" assetpath="../paper-ripple/">
 <template>
 
   <style>
@@ -348,7 +341,7 @@ Apply `circle` class to make the rippling effect within a circle.
 </polymer-element>
 
 
-<polymer-element name="paper-tab" attributes="noink" assetpath="bower_components/paper-tabs/">
+<polymer-element name="paper-tab" attributes="noink" assetpath="">
 <template>
 
   <style>/*
@@ -414,66 +407,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </polymer-element>
 
 
-<polymer-element name="paper-tabs" extends="core-selector" attributes="noink nobar" assetpath="bower_components/paper-tabs/">
+<polymer-element name="paper-tabs" extends="core-selector" attributes="noink nobar" assetpath="">
 <template>
 
-  <style>/*
-Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
-
-:host {
-  display: block;
-  position: relative;
-  font-size: 14px;
-  font-weight: 500;
-  height: 48px;
-}
-
-#tabsContainer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  white-space: nowrap;
-}
-
-#selectionBar {
-  position: absolute;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  background-color: #ffff8d;
-  transition: width, left;
-}
-
-#selectionBar[hidden] {
-  display: hidden;
-}
-
-#selectionBar.expand {
-  transition-duration: 0.15s;
-  transition-timing-function: cubic-bezier(0.4, 0.0, 1, 1);
-}
-
-#selectionBar.contract {
-  transition-duration: 0.1s;
-  transition-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1);
-}
-
-polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
-::content > * {
-  -ms-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
-}
-</style>
+  <link rel="stylesheet" href="paper-tabs.css">
   
   <div id="tabsContainer" horizontal="" layout="">
   
@@ -485,275 +422,4 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </template>
 
 </polymer-element>
-
-    
-<!--Creates a double pane with a splitter in between-->
-
-<!--
-Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
-
-<!--
-`core-splitter` provides a spilt bar and dragging on the split bar
-will resize the sibling element.  Use its `direction` property to indicate
-which sibling element to be resized and the orientation.  Usually you would want
-to use `core-splitter` along with flex layout so that the other sibling
-element can be _flexible_.
-
-Example:
-
-    <div horizontal layout>
-      <div>left</div>
-      <core-splitter direction="left"></core-splitter>
-      <div flex>right</div>
-    </div>
-    
-In the above example, dragging the splitter will resize the _left_ element.  And
-since the parent container is a flexbox and the _right_ element has 
-`flex`, the _right_ elemnt will be auto-resized.
-
-For horizontal splitter set `direction` to "up" or "down".
-
-Example:
-
-    <div vertical layout>
-      <div>top</div>
-      <core-splitter direction="up"></core-splitter>
-      <div flex>bottom</div>
-    </div>
-
-@group Polymer Core Elements
-@element core-splitter
-@homepage github.io
--->
-
-
-
-<polymer-element name="core-splitter" attributes="direction locked" on-trackstart="{{trackStart}}" on-track="{{track}}" assetpath="bower_components/core-splitter/">
-    
-<template>
-
-  <style>/*
-Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
-*/
-
-:host {
-  display: block;
-  width: 12px;
-  background: #efefef url(bower_components/core-splitter/handle.svg) no-repeat center;
-  box-shadow: inset 0 0 2px 1px #ccc;
-  cursor: col-resize;
-}
-  
-:host(.horizontal) {
-  width: auto;
-  height: 12px;
-  cursor: row-resize;
-  background-image: url(bower_components/core-splitter/handle-h.svg);
-}
-  
-:host(:hover, :active) {
-  background-color: #ddd;
-}</style>
-  
-</template>
-
-</polymer-element>
-
-
-<polymer-element name="split-pane" assetpath="split-pane/">
-  <template>
-    <style>
-      #content {
-        display: flex;
-        flex-direction: row;
-      }
-      #left {
-        width: 60%;
-        height: 100%;
-        overflow: auto;
-      }
-      #right {
-        height: 100%;
-        overflow: auto;
-        flex: 1;
-      }
-    </style>
-    <div horizontal="" layout="" id="content">
-      <div id="left">
-        <content select=".split-pane-left"></content>
-      </div>
-      <core-splitter></core-splitter>
-      <div id="right">
-        <content select=".split-pane-right"></content>
-      </div>
-    </div>
-  </template>
-  <script src="split-pane/split-pane.js"></script>
-</polymer-element>
-
-    
-
-<polymer-element name="element-tree" attributes="indent text basewidth" constructor="ElementTree" assetpath="element-tree/">
-  <template>
-    <style>
-      #name {
-        font-size: 14px;
-        font-family: dejavu sans mono, monospace;
-        cursor: default;
-      }
-      #expandBtn {
-        color: #aaaaaa;
-        cursor: pointer;
-      }
-    </style>
-    <div id="content">
-      <p>
-        <span id="expandBtn" on-click="{{toggle}}">{{expandBtnText}}</span>
-        <span id="name" on-click="{{toggleSelection}}">{{text}}</span>
-      </p>
-      <div id="childrenContent"></div>
-    </div>
-  </template>
-  <script src="element-tree/element-tree.js"></script>
-</polymer-element>
-
-    
-
-<!--A text label that is editable upon mouse-click-->
-
-<polymer-element name="editable-label" attributes="width text hidden" assetpath="editable-label/">
-  <template>
-    <style>
-      #static {
-        border: 1px solid #E6F0EA;
-        min-width: 10px;
-        height: 20px;
-        float: left;
-      }
-    </style>
-    <div hidden?="{{hidden}}">
-      <div id="static" on-click="{{startEditing}}">{{text}}</div>
-      <input id="dynamic" type="text" value="{{text}}" size="{{width}}" on-blur="{{stopEditing}}" on-keypress="{{handleKeyPress}}">
-    </div>
-  </template>
-  <script src="editable-label/editable-label.js"></script>
-</polymer-element>
-
-
-<polymer-element name="object-tree" attributes="indent basewidth" constructor="ObjectTree" assetpath="object-tree/">
-  <template>
-    <style>
-      #content {
-        white-space: nowrap;
-        font-size: 14px;
-      }
-      editable-label {
-        display: inline-block;
-        vertical-align: middle;
-      }
-      .labelText {
-        font-family: dejavu sans mono, monospace;
-      }
-      .typeText {
-        color: gray;
-        font-family: "Arial", Courier, monospace;
-        font-size: 12px;
-      }
-      .expandBtn {
-        text-align: center;
-        cursor: pointer;
-        width: 10px;
-        height: 10px;
-      }
-      .refreshBtn {
-        text-align: center;
-        cursor: pointer;
-        width: 10px;
-        height: 10px;
-      }
-      .children {
-        margin-left: {{baseWidth}}px;
-      }
-    </style>
-    <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
-    <p id="content">
-      <template repeat="{{prop, index in tree}}">
-        <img class="expandBtn" id="img{{index}}" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" on-click="{{toggle}}" src="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot; ? (prop.value.length &gt; 0 ? &quot;../res/collapse.png&quot; : &quot;../res/expand.png&quot;) : &quot;../res/blank.png&quot;}}" state="{{prop.value.length &gt; 0 ? &quot;expanded&quot; : &quot;collapsed&quot;}}">
-        <img class="expandBtn" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}" src="res/blank.png">
-        <label class="labelText" id="name{{index}}">{{prop.name}}</label>
-        <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">{{prop.type}}</label>
-        <label class="typeText" hidden?="{{!prop.hasAccessor}}">&lt;accessor&gt;</label>
-        <editable-label id="field{{index}}" text="{{prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
-        </editable-label>
-        <img class="refreshBtn" id="refresh{{index}}" data-name="{{prop.name}}" on-click="{{refreshField}}" hidden?="{{!prop.hasAccessor}}" src="res/refresh.png">
-        <p class="children">
-          <object-tree id="child{{index}}"></object-tree>
-        </p>
-      </template>
-    </p>
-  </template>
-  <script src="object-tree/object-tree.js"></script>
-</polymer-element>
-
-    
-
-
-<polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
-  <template>
-    <style>
-      .list > * {
-        font-size: 14px;
-        background-color: #666;
-        color: white;
-      }
-      .list > * {
-        height: 25px;
-        line-height: 25px;
-        padding: 0 20px;
-      }
-      .list > *.core-selected {
-        background-color: #333;
-      }
-    </style>
-    <core-selector class="list" multi="">
-      <template repeat="{{item, index in list}}">
-        <div class="{{ {&quot;core-selected&quot;: item.setBreakpoint} | tokenList }}" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>
-      </template>
-    </core-selector>
-  </template>
-  <script src="method-list/method-list.js"></script>
-</polymer-element>
-
-    <style>
-      .split-pane-right {
-        margin-left: 10px;
-      }
-      paper-tabs {
-        background-color: gray;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body unresolved="">
-    <div hidden>
-      <element-tree></element-tree>
-      <object-tree></object-tree>
-      <method-list></method-list>
-    </div>
-    <paper-tabs noink="" selected="0">
-      <paper-tab>Item 1</paper-tab>
-      <paper-tab>Item 2</paper-tab>
-    </paper-tabs>
-  <script src="panel.js"></script></body>
-</html>
+<script src="v-paper-tabs.js"></script>

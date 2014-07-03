@@ -14,6 +14,6 @@
     "commit": "47915391168c2399342e0dc6fc2855f406a0503d"
   },
   "_source": "git://github.com/Polymer/polymer-ui-collapsible.git",
-  "_target": "0.2.4",
+  "_target": "~0.2.4",
   "_originalSource": "Polymer/polymer-ui-collapsible"
 }
