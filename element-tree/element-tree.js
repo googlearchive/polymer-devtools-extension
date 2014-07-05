@@ -32,6 +32,13 @@
     */
     empty: function () {
       this.text = '';
+      if (this.selected) {
+        this.root.selectedChild = null;
+        this.selected = false;
+      }
+      if (this.keyMap && this.keyMap[this.key]) {
+        delete this.keyMap[this.key];
+      }
       for (var i = 0; i < this.childElements.length; i++) {
         this.childElements[i].empty();
         this.$.childrenContent.innerHTML = '';
@@ -44,11 +51,13 @@
     * @root: not passed in first call, but passed internally to
     * pass around the root of the entire tree.
     */
-    initFromDOMTree: function (tree, root) {
+    initFromDOMTree: function (tree, root, keyMap) {
       this.empty();
       this.text = tree.tagName;
       this.isPolymer = tree.isPolymer;
       this.key = tree.key;
+      this.keyMap = keyMap || {};
+      this.keyMap[this.key] = this;
       if (this.isPolymer) {
         this.$.name.style.backgroundColor = COLOR_POLYMER_UNSELECTED;
       }
@@ -57,7 +66,7 @@
         // Create a new ElementTree to hold a child
         var child = new ElementTree();
         child.indent = this.indent + this.baseWidth;
-        child.initFromDOMTree(tree.children[i], this.root);
+        child.initFromDOMTree(tree.children[i], this.root, this.keyMap);
         this.addChild(child);
       }
     },
@@ -109,6 +118,9 @@
           oldKey: oldKey
         });
       }
+    },
+    getChildTreeForKey: function (key) {
+      return this.keyMap ? this.keyMap[key] : null;
     }
   });
 })();

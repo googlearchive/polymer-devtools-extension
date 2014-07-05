@@ -354,32 +354,31 @@ function setBlacklist () {
 }
 
 function processMutations (mutations) {
-  var processed = {
-    removedKeys: [],
-    added: []
-  };
+  var changedElementKeys = {};
+  var changedElements = [];
   for (var i = 0; i < mutations.length; i++) {
     var mutation = mutations[i];
     if (mutation.type !== 'childList') {
       // We are interested only in childList mutations
       continue;
     }
-    var added = mutation.addedNodes;
-    for (var i = 0; i < added.length; i++) {
-      if (added[i].tagName) {
-        processed.added.push(window._polymerNamespace_.getDOMString(added[i]));
-      }
+    var changedElement = mutation.target;
+    if (changedElement.host) {
+      changedElement = changedElement.host;
     }
-    var removed = mutation.removedNodes;
-    for (var i = )
+    if (changedElement.__keyPolymer__ in changedElementKeys) {
+      continue;
+    }
+    changedElements.push(window._polymerNamespace_.getDOMString(changedElement));
+    changedElementKeys[changedElements.__keyPolymer__] = true;
   }
+  return JSON.stringify(changedElements);
 }
+
 /**
 * Serialize el or document.body (if `el` isn't passed)
 */
 function getDOMString (el) {
-  window._polymerNamespace_.mutationObserverCache = {};
-  window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
   return {
     'data': window._polymerNamespace_.serializer.serializeDOMObject(el || document.body,
       function (domNode, converted) {
@@ -395,17 +394,25 @@ function getDOMString (el) {
           converted.key = key;
 
           if (key === 1 || domNode.shadowRoot) {
-            var observer = new mutationObserver(function (mutations) {
-              mutations.forEach(function (mutation) {
-                window.dispatchEvent('dom-mutation', {
-                  detail: {
-                    mutations: window._polymerNamespace_.processMutations(mutations)
-                  }
-                });
-              });
+            var observer = new MutationObserver(function (mutations) {
+              window.dispatchEvent(new CustomEvent('dom-mutation', {
+                detail: window._polymerNamespace_.processMutations(mutations)
+              }));
             });
             window._polymerNamespace_.mutationObserverCache[key] = observer;
+            var config = {
+              childList: true,
+              subtree: true
+            };
+            if (key === 1) {
+              observer.observe(domNode, config);
+            }
+            if (domNode.shadowRoot) {
+              observer.observe(domNode.shadowRoot, config);
+            }
           }
+        } else {
+          converted.key = domNode.__keyPolymer__;
         }
       }
     )
@@ -422,7 +429,7 @@ function getObjectString (key, path) {
   if (path.length === 0) {
     filter = function (prop) {
       return prop !== '__keyPolymer__';
-    }
+    };
   }
   if (window._polymerNamespace_.isPolymerElement(obj)) {
     filter = function (prop) {
@@ -638,4 +645,5 @@ function createCache() {
   // The key of the last DOM element added
   window._polymerNamespace_.lastDOMKey = 0;
   window._polymerNamespace_.mutationObserverCache = {};
+  window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
 }

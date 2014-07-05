@@ -256,7 +256,7 @@ function DOMSerializer () {
   *   },
   *   // More such objects for each property in the passed object
   * ]
-  */ 
+  */
   this.serializeObject = function (obj, callback, filter) {
     var res = JSONize(obj, filter);
     callback && callback(res);

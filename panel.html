@@ -5,7 +5,7 @@
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
-    <!--
+    <div hidden><!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -485,8 +485,8 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </template>
 
 </polymer-element>
-
-    
+</div>
+    <div hidden>
 <!--Creates a double pane with a splitter in between-->
 
 <!--
@@ -601,8 +601,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="split-pane/split-pane.js"></script>
 </polymer-element>
-
-    
+</div>
+    <div hidden>
 
 <polymer-element name="element-tree" attributes="indent text basewidth" constructor="ElementTree" assetpath="element-tree/">
   <template>
@@ -627,8 +627,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="element-tree/element-tree.js"></script>
 </polymer-element>
-
-    
+</div>
+    <div hidden>
 
 <!--A text label that is editable upon mouse-click-->
 
@@ -705,8 +705,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="object-tree/object-tree.js"></script>
 </polymer-element>
-
-    
+</div>
+    <div hidden>
 
 
 <polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
@@ -734,7 +734,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="method-list/method-list.js"></script>
 </polymer-element>
-
+</div>
     <style>
       .split-pane-right {
         margin-left: 10px;
@@ -746,14 +746,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
   </head>
   <body unresolved="">
-    <div hidden>
-      <element-tree></element-tree>
-      <object-tree></object-tree>
-      <method-list></method-list>
-    </div>
-    <paper-tabs noink="" selected="0">
-      <paper-tab>Item 1</paper-tab>
-      <paper-tab>Item 2</paper-tab>
-    </paper-tabs>
+    <split-pane>
+      <p class="split-pane-left">
+        <element-tree></element-tree>
+      </p>
+      <p class="split-pane-right">
+        <object-tree></object-tree>
+        <method-list></method-list>
+      </p>
+    </split-pane>
   <script src="panel.js"></script></body>
 </html>

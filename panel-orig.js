@@ -120,6 +120,10 @@
         {
           name: 'isPolymerElement',
           string: isPolymerElement.toString()
+        },
+        {
+          name: 'processMutations',
+          string: processMutations.toString()
         }
       ], function (result, error) {
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
@@ -356,6 +360,24 @@
             case 'add':
               childTree.push(newObj);
               break;
+          }
+        }
+      } else if (message.name === 'dom-mutation') {
+        // A DOM element has changed. Must re-render it in the element tree.
+        
+        var mutations = JSON.parse(message.changeList);
+        for (var i = 0; i < mutations.length; i++) {
+          var newElement = JSON.parse(mutations[i].data);
+          var key = newElement.key;
+          var childTree = elementTree.getChildTreeForKey(key);
+          if (childTree.selected) {
+            unselectElement(childTree.key, function () {
+              childTree.empty();
+              childTree.initFromDOMTree(newElement);
+            });
+          } else {
+            childTree.empty();
+            childTree.initFromDOMTree(newElement);
           }
         }
       }
