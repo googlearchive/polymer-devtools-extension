@@ -215,7 +215,7 @@ function DOMSerializer () {
       } else {
         throw 'tagName is a required property';
       }
-      if (root.tagName === 'SCRIPT') {
+      if (root.tagName === 'SCRIPT' || root.tagName === 'STYLE') {
         return null;
       }
       callback && callback(root, res);

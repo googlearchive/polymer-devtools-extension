@@ -2,12 +2,8 @@
   var COLOR_POLYMER_SELECTED = '#cdcdc1';
   var COLOR_POLYMER_UNSELECTED = '#eeeee0';
 
-  function newExpandBtnState(present) {
-    return present === '>' ? 'v' : '>';
-  }
-
-  function setColor (tree, color) {
-    tree.$.name.style.backgroundColor = color;
+  function newExpandBtnImg(collapsed) {
+    return collapsed ? '../res/expand.png' : '../res/collapse.png';
   }
 
   Polymer('element-tree', {
@@ -16,7 +12,7 @@
     // Whether the element at the root is selected or not
     selected: false,
     baseWidth: 10,
-    expandBtnText: 'v',
+    expandBtnImg: 'res/collapse.png',
     // Polymer elements are shown differently and can be selected
     isPolymer: false,
     ready: function () {
@@ -53,13 +49,13 @@
     */
     initFromDOMTree: function (tree, root, keyMap) {
       this.empty();
-      this.text = tree.tagName;
+      this.text = '<' + tree.tagName + '>';
       this.isPolymer = tree.isPolymer;
       this.key = tree.key;
-      this.keyMap = keyMap || {};
+      this.keyMap = keyMap || this.keyMap || {};
       this.keyMap[this.key] = this;
       if (this.isPolymer) {
-        this.$.name.style.backgroundColor = COLOR_POLYMER_UNSELECTED;
+        this.$.name.setAttribute('polymer', 'polymer');
       }
       this.root = root || this;
       for (var i = 0; i < tree.children.length; i++) {
@@ -78,7 +74,7 @@
         return;
       }
       this.collapsed = !(this.collapsed);
-      this.expandBtnText = newExpandBtnState(this.expandBtnText);
+      this.expandBtnImg = newExpandBtnImg(this.collapsed);
       for (var i = 0; i < this.childElements.length; i++) {
         if (this.collapsed) {
           this.childElements[i].$.content.style.display = 'none';
@@ -97,7 +93,7 @@
       if (this.selected) {
         // selectedChild holds the element in the tree that is currently selected
         this.root.selectedChild = null;
-        setColor(this, COLOR_POLYMER_UNSELECTED);
+        this.$.thisElement.removeAttribute('selected');
         this.selected = !(this.selected);
         this.fire('unselected', {
           key: this.key
@@ -108,10 +104,10 @@
           oldKey = this.root.selectedChild.key;
           // First unselect the currently selected child
           this.root.selectedChild.selected = false;
-          setColor(this.root.selectedChild, COLOR_POLYMER_UNSELECTED);
+          this.root.selectedChild.$.thisElement.removeAttribute('selected');
         }
         this.root.selectedChild = this;
-        setColor(this, COLOR_POLYMER_SELECTED);
+        this.$.thisElement.setAttribute('selected', 'selected');
         this.selected = !(this.selected);
         this.fire('selected', {
           key: this.key,
@@ -119,8 +115,28 @@
         });
       }
     },
+    /*
+    * Gets the child tree for an element's key
+    **/
     getChildTreeForKey: function (key) {
       return this.keyMap ? this.keyMap[key] : null;
+    },
+    /** 
+    * Tells the extension to highlight the element that was hovered on. 
+    */
+    mouseOver: function () {
+      if (!this.selected) {
+        this.fire('highlight', {
+          key: this.key
+        });
+      }
+    },
+    mouseOut: function () {
+      if (!this.selected) {
+        this.fire('unhighlight', {
+          key: this.key
+        });
+      }
     }
   });
 })();

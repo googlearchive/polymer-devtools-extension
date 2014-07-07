@@ -6,7 +6,10 @@
     <style>
       #content {
         white-space: nowrap;
-        font-size: 14px;
+        font-size: 12px;
+      }
+      .property {
+         padding: 3px;
       }
       editable-label {
         display: inline-block;
@@ -23,8 +26,8 @@
       .expandBtn {
         text-align: center;
         cursor: pointer;
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
       }
       .refreshBtn {
         text-align: center;
@@ -37,23 +40,25 @@
       }
     </style>
     <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
-    <p id='content'>
+    <div id='content'>
       <template repeat='{{prop, index in tree}}'>
-        <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
-          src='{{prop.type == "object" || prop.type == "array" || prop.type == "function" ? (prop.value.length > 0 ? "../res/collapse.png" : "../res/expand.png") : "../res/blank.png"}}' state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}'></img>
-        <img class='expandBtn' hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' src='../res/blank.png'></img>
-        <label class='labelText' id='name{{index}}'>{{prop.name}}</label>
-        <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>{{prop.type}}</label>
-        <label class='typeText' hidden?='{{!prop.hasAccessor}}'>&lt;accessor&gt;</label>
-        <editable-label id='field{{index}}' text='{{prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
-          hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
-        </editable-label>
-        <img class='refreshBtn' id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' hidden?='{{!prop.hasAccessor}}' src='../res/refresh.png'></img>
-        <p class='children'>
+        <div class='property'>
+          <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
+            src='{{prop.type == "object" || prop.type == "array" || prop.type == "function" ? (prop.value.length > 0 ? "../res/collapse.png" : "../res/expand.png") : "../res/blank.png"}}' state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}'></img>
+          <img class='expandBtn' hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' src='../res/blank.png'></img>
+          <label class='labelText' id='name{{index}}'>{{prop.name}}</label>
+          <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>{{prop.type}}</label>
+          <label class='typeText' hidden?='{{!prop.hasAccessor}}'>&lt;accessor&gt;</label>
+          <editable-label id='field{{index}}' text='{{prop.type == "string" ? ("\"" + prop.value + "\"") : prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
+            hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
+          </editable-label>
+          <img class='refreshBtn' id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' hidden?='{{!prop.hasAccessor}}' src='../res/refresh.png'></img>
+        </div>
+        <div class='children'>
           <object-tree id='child{{index}}'></object-tree>
-        </p>
+        </div>
       </template>
-    </p>
+    </div>
   </template>
   <script src='object-tree.js'></script>
 </polymer-element>

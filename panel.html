@@ -608,20 +608,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style>
       #name {
-        font-size: 14px;
+        font-size: 12px;
         font-family: dejavu sans mono, monospace;
         cursor: default;
+        width: 96%;
+        color: #C04747;
+        height: 16px;
       }
       #expandBtn {
-        color: #aaaaaa;
+        text-align: center;
         cursor: pointer;
+        width: 8px;
+        height: 8px;
+      }
+      #thisElement {
+        padding: 1px;
+      }
+      #thisElement:hover {
+        background-color: #C7E4ED;
+      }
+      #thisElement[selected] {
+        background-color: rgb(178, 224, 178);
+        color: white;
+      }
+      #name[polymer] {
+        color: rgb(19, 106, 185);
+      }
+      #name[polymer]:hover {
+        color: rgb(8, 8, 231);
+      }
+      #name:hover {
+        color: #8F1904;
       }
     </style>
     <div id="content">
-      <p>
-        <span id="expandBtn" on-click="{{toggle}}">{{expandBtnText}}</span>
-        <span id="name" on-click="{{toggleSelection}}">{{text}}</span>
-      </p>
+      <div id="thisElement" on-mouseover="{{mouseOver}}" on-mouseout="{{mouseOut}}">
+        <img id="expandBtn" on-click="{{toggle}}" src="{{expandBtnImg}}">
+        <span on-click="{{toggleSelection}}" id="name">{{text}}</span>
+      </div>
       <div id="childrenContent"></div>
     </div>
   </template>
@@ -638,7 +662,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       #static {
         border: 1px solid #E6F0EA;
         min-width: 10px;
-        height: 20px;
+        height: 13px;
         float: left;
       }
     </style>
@@ -656,7 +680,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style>
       #content {
         white-space: nowrap;
-        font-size: 14px;
+        font-size: 12px;
+      }
+      .property {
+         padding: 3px;
       }
       editable-label {
         display: inline-block;
@@ -673,8 +700,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .expandBtn {
         text-align: center;
         cursor: pointer;
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
       }
       .refreshBtn {
         text-align: center;
@@ -687,21 +714,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
-    <p id="content">
+    <div id="content">
       <template repeat="{{prop, index in tree}}">
-        <img class="expandBtn" id="img{{index}}" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" on-click="{{toggle}}" src="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot; ? (prop.value.length &gt; 0 ? &quot;../res/collapse.png&quot; : &quot;../res/expand.png&quot;) : &quot;../res/blank.png&quot;}}" state="{{prop.value.length &gt; 0 ? &quot;expanded&quot; : &quot;collapsed&quot;}}">
-        <img class="expandBtn" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}" src="res/blank.png">
-        <label class="labelText" id="name{{index}}">{{prop.name}}</label>
-        <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">{{prop.type}}</label>
-        <label class="typeText" hidden?="{{!prop.hasAccessor}}">&lt;accessor&gt;</label>
-        <editable-label id="field{{index}}" text="{{prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
-        </editable-label>
-        <img class="refreshBtn" id="refresh{{index}}" data-name="{{prop.name}}" on-click="{{refreshField}}" hidden?="{{!prop.hasAccessor}}" src="res/refresh.png">
-        <p class="children">
+        <div class="property">
+          <img class="expandBtn" id="img{{index}}" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" on-click="{{toggle}}" src="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot; ? (prop.value.length &gt; 0 ? &quot;../res/collapse.png&quot; : &quot;../res/expand.png&quot;) : &quot;../res/blank.png&quot;}}" state="{{prop.value.length &gt; 0 ? &quot;expanded&quot; : &quot;collapsed&quot;}}">
+          <img class="expandBtn" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}" src="res/blank.png">
+          <label class="labelText" id="name{{index}}">{{prop.name}}</label>
+          <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">{{prop.type}}</label>
+          <label class="typeText" hidden?="{{!prop.hasAccessor}}">&lt;accessor&gt;</label>
+          <editable-label id="field{{index}}" text="{{prop.type == &quot;string&quot; ? (&quot;\&quot;&quot; + prop.value + &quot;\&quot;&quot;) : prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
+          </editable-label>
+          <img class="refreshBtn" id="refresh{{index}}" data-name="{{prop.name}}" on-click="{{refreshField}}" hidden?="{{!prop.hasAccessor}}" src="res/refresh.png">
+        </div>
+        <div class="children">
           <object-tree id="child{{index}}"></object-tree>
-        </p>
+        </div>
       </template>
-    </p>
+    </div>
   </template>
   <script src="object-tree/object-tree.js"></script>
 </polymer-element>

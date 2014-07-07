@@ -4,20 +4,44 @@
   <template>
     <style>
       #name {
-        font-size: 14px;
+        font-size: 12px;
         font-family: dejavu sans mono, monospace;
         cursor: default;
+        width: 96%;
+        color: #C04747;
+        height: 16px;
       }
       #expandBtn {
-        color: #aaaaaa;
+        text-align: center;
         cursor: pointer;
+        width: 8px;
+        height: 8px;
+      }
+      #thisElement {
+        padding: 1px;
+      }
+      #thisElement:hover {
+        background-color: #C7E4ED;
+      }
+      #thisElement[selected] {
+        background-color: rgb(178, 224, 178);
+        color: white;
+      }
+      #name[polymer] {
+        color: rgb(19, 106, 185);
+      }
+      #name[polymer]:hover {
+        color: rgb(8, 8, 231);
+      }
+      #name:hover {
+        color: #8F1904;
       }
     </style>
     <div id='content'>
-      <p>
-        <span id='expandBtn' on-click='{{toggle}}'>{{expandBtnText}}</span>
-        <span id='name' on-click='{{toggleSelection}}'>{{text}}</span>
-      </p>
+      <div id='thisElement' on-mouseover='{{mouseOver}}' on-mouseout='{{mouseOut}}'>
+        <img id='expandBtn' on-click='{{toggle}}' src='{{expandBtnImg}}'></img>
+        <span on-click='{{toggleSelection}}' id='name'>{{text}}</span>
+      </div>
       <div id='childrenContent'></div>
     </div>
   </template>

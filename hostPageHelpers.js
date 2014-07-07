@@ -3,27 +3,35 @@
 
 /**
 * Highlight an element in the page
+* isHover: true if element is to be highlighted because it was hovered
+* over in the element-tree.
 */
-function highlight (key) {
-  window._polymerNamespace_.unhighlight();
-  window._polymerNamespace_.lastHighlightedKey = key;
+function highlight (key, isHover) {
   var element = window._polymerNamespace_.DOMCache[key];
-  window._polymerNamespace_.prevOutline = element.style.outline;
-  window._polymerNamespace_.prevBackgroundColor = element.style.backgroundColor;
+  if (isHover) {
+    window._polymerNamespace_.prevHoveredOutline = element.style.outline;
+    window._polymerNamespace_.prevHoveredBackgroundColor = element.style.backgroundColor;
+  } else {
+    window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    window._polymerNamespace_.lastSelectedKey = key;
+    window._polymerNamespace_.prevSelectedOutline = element.style.outline;
+    window._polymerNamespace_.prevSelectedBackgroundColor = element.style.backgroundColor;
+  }
   element.style.outline = '1px dashed red';
-  element.style.backgroundColor = 'rgba(255,0,0,0.1) !important';
+  element.style.backgroundColor = 'rgba(255,0,0,0.1)';
 }
 
 /**
 * Unhighlight the highlighted element in the page
+* isHover: true if element is to be unhighlighted because it was hovered
+* out in the element-tree.
 */
-function unhighlight () {
-  if (!window._polymerNamespace_.lastHighlightedKey) {
-    return;
-  }
-  var element = window._polymerNamespace_.DOMCache[window._polymerNamespace_.lastHighlightedKey];
-  element.style.outline = window._polymerNamespace_.prevOutline;
-  element.style.backgroundColor = window._polymerNamespace_.prevBackgroundColor;
+function unhighlight (key, isHover) {
+  var element = window._polymerNamespace_.DOMCache[key];
+  element.style.outline = isHover ? window._polymerNamespace_.prevHoveredOutline :
+    window._polymerNamespace_.prevSelectedOutline;
+  element.style.backgroundColor = isHover ? window._polymerNamespace_.prevHoveredBackgroundColor :
+    window._polymerNamespace_.prevSelectedBackgroundColor;
 }
 
 /**

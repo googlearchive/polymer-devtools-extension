@@ -148,9 +148,11 @@
 
   /**
   * Highlight an element in the page
+  * isHover: true if element is to be highlighted because it was hovered
+  * over in the element-tree.
   */
-  function highlightElement (key) {
-    EvalHelper.executeFunction('highlight', [key], function (result, error) {
+  function highlightElement (key, isHover) {
+    EvalHelper.executeFunction('highlight', [key, isHover], function (result, error) {
       if (error) {
         throw error;
       }
@@ -163,10 +165,12 @@
   }
 
   /**
-  * Unhighlight the highlighted element in the page
+  * Unhighlight a highlighted element in the page
+  * isHover: true if element is to be unhighlighted because it was hovered
+  * out in the element-tree.
   */
-  function unhighlightElement (key) {
-    EvalHelper.executeFunction('unhighlight', [], function (result, error) {
+  function unhighlightElement (key, isHover) {
+    EvalHelper.executeFunction('unhighlight', [key, isHover], function (result, error) {
       if (error) {
         throw error;
       }
@@ -305,6 +309,16 @@
           throw error;
         }
       });
+    });
+    // Happens when an element is hovered over
+    window.addEventListener('highlight', function (event) {
+      var key = event.detail.key;
+      highlightElement(key, true);
+    });
+    // Happens when an element is hovered out
+    window.addEventListener('unhighlight', function (event) {
+      var key = event.detail.key;
+      unhighlightElement(key, true);
     });
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
