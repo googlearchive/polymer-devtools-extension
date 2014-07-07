@@ -7,18 +7,21 @@ function createEvalHelper (callback) {
   * Convert any object to a string
   */
   function serialize (object) {
-      function serializeArray (arr) {
-        var path = '[';
-        var lastIndex = arr.length - 1;
-        for (var i = 0; i <= lastIndex; i++) {
-          path += ('"' + arr[i] + '"');
-          if (i !== lastIndex) {
-            path += ', ';
-          }
+    function serializeArray (arr) {
+      var path = '[';
+      var lastIndex = arr.length - 1;
+      for (var i = 0; i <= lastIndex; i++) {
+        path += ('"' + arr[i] + '"');
+        if (i !== lastIndex) {
+          path += ', ';
         }
-        path += ']';
-        return path;
       }
+      path += ']';
+      return path;
+    }
+    if (object === null) {
+      return 'null';
+    }
     switch (typeof object) {
       case 'number':
         return object;
@@ -28,6 +31,8 @@ function createEvalHelper (callback) {
         return JSON.stringify(object);
       case 'array':
         return serializeArray(object);
+      case 'undefined':
+        return 'undefined';
       default:
         return object.toString();
     }

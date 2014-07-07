@@ -12,7 +12,9 @@ function highlight (key, isHover) {
     window._polymerNamespace_.prevHoveredOutline = element.style.outline;
     window._polymerNamespace_.prevHoveredBackgroundColor = element.style.backgroundColor;
   } else {
-    window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    if (window._polymerNamespace_.lastSelectedKey) {
+      window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    }
     window._polymerNamespace_.lastSelectedKey = key;
     window._polymerNamespace_.prevSelectedOutline = element.style.outline;
     window._polymerNamespace_.prevSelectedBackgroundColor = element.style.backgroundColor;
