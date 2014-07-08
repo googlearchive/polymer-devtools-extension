@@ -1,3 +1,7 @@
+// Contains a class DOMSerializer used to serialize DOM tree, objects, properties
+
+// TODO: Remove all logic that pertains to Polymer elements from here and pass them as callbacks
+
 function DOMSerializer () {
   function isPolymerElement (element) {
     return element && ('element' in element) && (element.element.localName === 'polymer-element');
@@ -129,9 +133,11 @@ function DOMSerializer () {
           props.forEach(addToAddedProps);
           for (var i = 0; i < props.length; i++) {
             copyProperty(proto, element, destObj, props[i]);
+            // Add a flag to show Polymer implementation properties separately
             if (props[i] in polymerSpecificProps) {
               destObj[destObj.length - 1].polymer = true;
             }
+            // Add a flag to show that published properties differently
             if (props[i] in element.publish) {
               destObj[destObj.length - 1].published = true;
             }
@@ -226,10 +232,10 @@ function DOMSerializer () {
   *   isPolymer: <true|false>,
   *   children: [<more such objects>]
   * }
-  * `callback` is execuated on every DOM element found
-  * `isPolymer` is supposed to tell if an element is a Polymer element
+  * @callback: is execuated on every DOM element found
+  * @isPolymer is supposed to tell if an element is a Polymer element
   */
-  this.serializeDOMObject = function (root, callback, isPolymer) {
+  this.serializeDOMObject = function (root, callback) {
     function traverse (root) {
       var res = {};
       if ('tagName' in root) {
@@ -267,17 +273,23 @@ function DOMSerializer () {
   * Serializes any object (or function) one level deep.
   * It checks for only own properties.
   * Pass in a wrapped object and unwrap later if passing a non-object.
+  * @callback: this is called once just before serializing the newly created one-level
+  *   deep object mirror
   * Return object looks like this:
-  * [
-  *   {
-  *     type: <type>,
-  *     name: <name>,
-  *     value: <value>, (empty array if property is an object)
-  *     hasAccessor: <true|false>,
-  *     error: <true|false> (if there was an error while executing the getter (if there was one))
-  *   },
-  *   // More such objects for each property in the passed object
-  * ]
+  * {
+  *   type: 'object',
+  *   name: 'Root',
+  *   value: [
+  *     {
+  *       type: <type>,
+  *       name: <name>,
+  *       value: <value>, (empty array if property is an object)
+  *       hasAccessor: <true|false>,
+  *       error: <true|false> (if there was an error while executing the getter (if there was one))
+  *     },
+  *     // More such objects for each property in the passed object
+  *   ]
+  * }
   */
   this.serializeObject = function (obj, callback, filter) {
     var res = JSONize(obj, filter);
@@ -288,6 +300,18 @@ function DOMSerializer () {
   /**
   * Takes an object and a property name and serializes just that property's value.
   * It returns a wrapped object with the same property containing the required property.
+  * Returns an object that looks like this:
+  * {
+  *   type: 'object',
+  *   name: 'Root',
+  *   value: [
+  *     // `value` array size is 1 and just contains the property asked for
+  *     {
+  *       name: <prop-name>,
+  *       ...
+  *     }
+  *   ]
+  * }
   */
   this.serializeProperty = function (prop, obj) {
     // Get to the object in the prototype chain that actually contains the property

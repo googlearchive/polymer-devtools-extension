@@ -85,7 +85,7 @@ function createEvalHelper (callback) {
   };
 
   // Wait till the namespace is created.
-  chrome.devtools.inspectedWindow.eval('window._polymerNamespace_ = {};window._polymerNamespace_.observerCache = {};',
+  chrome.devtools.inspectedWindow.eval('window._polymerNamespace_ = {};',
     function (result, error) {
       callback(helper);
     }

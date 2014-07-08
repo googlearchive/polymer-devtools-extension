@@ -604,6 +604,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     
 
+<!-- Reasons for not implementing it like object-tree:
+  - The entire DOM tree is fetched at once as opposed to how objects are fetched level-by-level in object-tree
+  - Information is lost and refetched everytime the object-tree is collapsed whereas here, it is not.
+    DOM mutations are fewer and we are better of responding to changes
+
+  Use:
+    - declare <element-tree></element-tree>
+    - tree.initFromDOMTree(treeObject)
+    - tree.empty() to empty tree
+    - tree.getChildTreeForKey(key) to get child tree
+
+    Listen to:
+    1. unselected : when an element is unselected (explicitly with the mouse)
+    2. selected : when an element is selected
+    3. highlight : when an element is hovered over
+    4. unhighlight : when an element is hovered out of
+-->
 <polymer-element name="element-tree" attributes="indent text basewidth" constructor="ElementTree" assetpath="element-tree/">
   <template>
     <style>
@@ -678,6 +695,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script src="editable-label/editable-label.js"></script>
 </polymer-element>
 
+<!--
+  Use:
+    - Declare <object-tree></object-tree>
+    - tree.tree = treeObj; // Set the driving model tree object
+    - Update treeObj as required and the object-tree is updated automatically
+
+    - Listen to:
+      1. object-expand : When an object is expanded
+      2. object-collapse : When an object is collapsed
+      3. property-changed: When a property is changed
+      4. refresh-property: When a property is to be refreshed
+-->
 <polymer-element name="object-tree" attributes="indent basewidth" constructor="ObjectTree" assetpath="object-tree/">
   <template>
     <style>
@@ -766,6 +795,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: #333;
       }
     </style>
+    <!--TODO: Fix core-selector (it is buggy) or write your own.-->
     <core-selector class="list" multi="">
       <template repeat="{{item, index in list}}">
         <div class="{{ {&quot;core-selected&quot;: item.setBreakpoint} | tokenList }}" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>

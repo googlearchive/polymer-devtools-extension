@@ -480,6 +480,10 @@ function addObjectObserver (key, path) {
     }
     return false;
   }
+  /**
+  * Checks if a property is present in the lower prototype objects
+  * of an object.
+  */
   function checkChainDownForProp (prop, protoObj, obj) {
     var proto = obj;
     while (proto !== protoObj && proto) {
@@ -511,7 +515,6 @@ function addObjectObserver (key, path) {
   * }
   */
   function processChanges (changes) {
-    console.log(changes);
     var processedChangeObject = {
       path: path,
       key: key,
@@ -649,6 +652,7 @@ function removeObjectObserver (key, path) {
 
 function createCache() {
   window._polymerNamespace_.DOMCache = {};
+  window._polymerNamespace_.observerCache = {};
   window._polymerNamespace_.breakPointIndices = {};
   window._polymerNamespace_.indexToPropMap = {};
   // The key of the last DOM element added
