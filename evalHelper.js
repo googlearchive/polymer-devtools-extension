@@ -84,10 +84,31 @@ function createEvalHelper (callback) {
     }
   };
 
-  // Wait till the namespace is created.
+  function cleanUp () {
+    window.removeEventListener('clean-up', window._polymerNamespace_.cleanUp);
+    var keys = Object.keys(window._polymerNamespace_.DOMCache);
+    for (var i = 0; i < keys.length; i++) {
+      // Remove the key property that we had added to all DOM objects
+      delete window._polymerNamespace_.DOMCache[keys[i]].__keyPolymer__;
+    }
+    delete window._polymerNamespace_;
+  }
+  // Wait till the namespace is created and clean-up handler is created.
   chrome.devtools.inspectedWindow.eval('window._polymerNamespace_ = {};',
     function (result, error) {
-      callback(helper);
+      console.log(error);
+      // Define cleanUp
+      helper.defineFunction('cleanUp', cleanUp.toString(), function (result, error) {
+        console.log(error);
+        // Add an event listener that removes itself
+        chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", window._polymerNamespace_.cleanUp);',
+          function (result, error) {
+            // We are ready to let helper be used
+            console.log(error);
+            callback(helper);
+          }
+        );
+      });
     }
   );
 }

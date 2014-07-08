@@ -328,70 +328,74 @@
       tabId: chrome.devtools.inspectedWindow.tabId
     });
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
-      if (message.name === 'refresh') {
-        // A page refresh has happened
-        init();
-      } else if (message.name === 'object-changed') {
-        // An object has changed. Must update object-tree
+      switch (message.name) {
+        case 'refresh':
+          // A page refresh has happened
+          init();
+          break;
+        case 'object-changed':
+          // An object has changed. Must update object-tree
 
-        // The list of changes
-        var changeObj = JSON.parse(message.changeList);
-        // The path where the change happened
-        var path = changeObj.path;
-        var changes = changeObj.changes;
-        for (var i = 0; i < changes.length; i++) {
-          var change = changes[i];
-          var type = change.type;
-          // Index refers to the index in object-tree corresponding to the property
-          var index = change.index;
-          // Name refers to the actual property name
-          var name = change.name;
-          // This is a wrapped object. `value` contains the actual object.
-          var newObj;
-          var childTree = objectTree.tree;
-          try {
-            // If the observer reports changes before child-tree is ready, we must
-            // only
-            for (var j = 0; j < path.length; j++) {
-              childTree = childTree[path[j]].value;
+          // The list of changes
+          var changeObj = JSON.parse(message.changeList);
+          // The path where the change happened
+          var path = changeObj.path;
+          var changes = changeObj.changes;
+          for (var i = 0; i < changes.length; i++) {
+            var change = changes[i];
+            var type = change.type;
+            // Index refers to the index in object-tree corresponding to the property
+            var index = change.index;
+            // Name refers to the actual property name
+            var name = change.name;
+            // This is a wrapped object. `value` contains the actual object.
+            var newObj;
+            var childTree = objectTree.tree;
+            try {
+              // If the observer reports changes before child-tree is ready, we must
+              // only
+              for (var j = 0; j < path.length; j++) {
+                childTree = childTree[path[j]].value;
+              }
+            } catch (e) {
+              // TODO: is it okay to do this busy looping until child-tree is ready?
             }
-          } catch (e) {
-            // TODO: is it okay to do this busy looping until child-tree is ready?
+            if (type !== 'delete') {
+              newObj = JSON.parse(change.object).value[0];
+              newObj.name = name;
+            } else {
+              childTree.splice(index, 1);
+              return;
+            }
+            switch (type) {
+              case 'update':
+                childTree[index] = newObj;
+                break;
+              case 'add':
+                childTree.push(newObj);
+                break;
+            }
           }
-          if (type !== 'delete') {
-            newObj = JSON.parse(change.object).value[0];
-            newObj.name = name;
-          } else {
-            childTree.splice(index, 1);
-            return;
-          }
-          switch (type) {
-            case 'update':
-              childTree[index] = newObj;
-              break;
-            case 'add':
-              childTree.push(newObj);
-              break;
-          }
-        }
-      } else if (message.name === 'dom-mutation') {
-        // A DOM element has changed. Must re-render it in the element tree.
-        
-        var mutations = JSON.parse(message.changeList);
-        for (var i = 0; i < mutations.length; i++) {
-          var newElement = JSON.parse(mutations[i].data);
-          var key = newElement.key;
-          var childTree = elementTree.getChildTreeForKey(key);
-          if (childTree.selected) {
-            unselectElement(childTree.key, function () {
+          break;
+        case 'dom-mutation':
+          // A DOM element has changed. Must re-render it in the element tree.
+          
+          var mutations = JSON.parse(message.changeList);
+          for (var i = 0; i < mutations.length; i++) {
+            var newElement = JSON.parse(mutations[i].data);
+            var key = newElement.key;
+            var childTree = elementTree.getChildTreeForKey(key);
+            if (childTree.selected) {
+              unselectElement(childTree.key, function () {
+                childTree.empty();
+                childTree.initFromDOMTree(newElement);
+              });
+            } else {
               childTree.empty();
               childTree.initFromDOMTree(newElement);
-            });
-          } else {
-            childTree.empty();
-            childTree.initFromDOMTree(newElement);
+            }
           }
-        }
+          break;
       }
     });
   });

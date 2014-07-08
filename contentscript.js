@@ -20,3 +20,9 @@ window.addEventListener('dom-mutation', function (event) {
     changeList: event.detail
   });
 });
+
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.name === 'clean-up') {
+    window.dispatchEvent(new CustomEvent('clean-up'));
+  }
+});

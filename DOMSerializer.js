@@ -11,7 +11,7 @@ function DOMSerializer () {
       element.localName.indexOf('-') !== -1 || element.getAttribute('is');
   }
 
-  // Properties used by Polymer (on the implementation side)
+  // Polymer-specific stuff (to flag them differently)
   var polymerSpecificProps = {
     observe: true,
     publish: true,
@@ -24,13 +24,12 @@ function DOMSerializer () {
   };
 
   /**
-  * Checks if a property is an acessor
+  * Checks if a property is an acessor. obj.hasOwnProperty(prop) has to be true.
   */
   function propHasAccessor (obj, prop) {
      var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
      if (!descriptor) {
-      console.log(prop);
-      console.log(obj);
+      console.error(prop);
      }
      return !!descriptor.set || !!descriptor.get;
   }

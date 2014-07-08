@@ -377,6 +377,9 @@ function processMutations (mutations) {
     if (changedElement.__keyPolymer__ in changedElementKeys) {
       continue;
     }
+    // We should ideally remove all the removed nodes from `DOMCache` but it
+    // would involve finding all children of a removed node (recursively through the 
+    // composed DOM). So we let them be.
     changedElements.push(window._polymerNamespace_.getDOMString(changedElement));
     changedElementKeys[changedElements.__keyPolymer__] = true;
   }
