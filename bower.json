@@ -11,8 +11,8 @@
   ],
   "dependencies": {
     "polymer": "Polymer/polymer#~0.2.4",
-    "polymer-ui-arrow": "Polymer/polymer-ui-arrow#~0.2.4",
     "platform": "Polymer/platform#~0.2.4",
-    "polymer-ui-collapsible": "Polymer/polymer-ui-collapsible#~0.2.4"
+    "core-elements": "Polymer/core-elements#~0.3.3",
+    "paper-elements": "Polymer/paper-elements#~0.3.3"
   }
 }

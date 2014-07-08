@@ -91,20 +91,22 @@ function createEvalHelper (callback) {
       // Remove the key property that we had added to all DOM objects
       delete window._polymerNamespace_.DOMCache[keys[i]].__keyPolymer__;
     }
+    // Unhighlight any selected element
+    if (window._polymerNamespace_.lastSelectedKey) {
+      window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    }
+    // TODO: Unhighlight hovered elements too
     delete window._polymerNamespace_;
   }
   // Wait till the namespace is created and clean-up handler is created.
   chrome.devtools.inspectedWindow.eval('window._polymerNamespace_ = {};',
     function (result, error) {
-      console.log(error);
       // Define cleanUp
       helper.defineFunction('cleanUp', cleanUp.toString(), function (result, error) {
-        console.log(error);
         // Add an event listener that removes itself
         chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", window._polymerNamespace_.cleanUp);',
           function (result, error) {
             // We are ready to let helper be used
-            console.log(error);
             callback(helper);
           }
         );
