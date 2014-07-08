@@ -1,0 +1,83 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../editable-label/editable-label.html">
+
+<!--
+  Use:
+    - Declare <object-tree></object-tree>
+    - tree.tree = treeObj; // Set the driving model tree object
+    - Update treeObj as required and the object-tree is updated automatically
+
+    - Listen to:
+      1. object-expand : When an object is expanded
+      2. object-collapse : When an object is collapsed
+      3. property-changed: When a property is changed
+      4. refresh-property: When a property is to be refreshed
+-->
+<polymer-element name='object-tree' attributes='indent basewidth' constructor='ObjectTree'>
+  <template>
+    <style>
+      #content {
+        white-space: nowrap;
+        font-size: 12px;
+        -webkit-user-select: none;
+      }
+      .property {
+         padding: 3px;
+      }
+      editable-label {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .labelText {
+        font-family: dejavu sans mono, monospace;
+        color: rgb(19, 106, 185);
+      }
+      .labelText[isPolymer] {
+        font-family: Courier, monospace;
+        color: #6A02BF;
+        font-size: 13px;
+      }
+      .typeText {
+        color: gray;
+        font-family: "Arial", Courier, monospace;
+        font-size: 11px;
+      }
+      .expandBtn {
+        text-align: center;
+        cursor: pointer;
+        width: 8px;
+        height: 8px;
+      }
+      .refreshBtn {
+        text-align: center;
+        cursor: pointer;
+        width: 10px;
+        height: 10px;
+      }
+      .children {
+        margin-left: {{baseWidth}}px;
+      }
+    </style>
+    <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
+    <div id='content'>
+      <template repeat='{{prop, index in tree}}'>
+        <div class='property'>
+          <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
+            src='{{prop.type == "object" || prop.type == "array" || prop.type == "function" ? (prop.value.length > 0 ? "../res/collapse.png" : "../res/expand.png") : "../res/blank.png"}}' state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}'></img>
+          <img class='expandBtn' hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' src='../res/blank.png'></img>
+          <label class='labelText' id='name{{index}}' isPolymer?='{{prop.polymer}}'>{{prop.name}}</label>
+          <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>&lt;{{prop.type}}&gt;</label>
+          <label class='typeText' hidden?='{{!prop.published}}'>&lt;published&gt;</label>
+          <editable-label id='field{{index}}' text='{{prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
+            hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
+          </editable-label>
+          <img class='refreshBtn' id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' hidden?='{{!prop.hasAccessor}}' src='../res/refresh.png'></img>
+        </div>
+        <div class='children'>
+          <object-tree id='child{{index}}'></object-tree>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script src='object-tree.js'></script>
+</polymer-element>

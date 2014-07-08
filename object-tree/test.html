@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="../bower_components/platform/platform.js"></script>
+    <script src="../bower_components/polymer/polymer.js"></script>
+  	<link rel="import" href="object-tree-2.html">
+  </head>
+  <body>
+    <object-tree></object-tree>
+    <script>
+      var x = [
+        {
+          name: 'foo',
+          type: 'number',
+          value: 5
+        },
+        {
+          name: 'foo2',
+          type: 'number',
+          value: 6
+        },
+        {
+          name: 'foo3',
+          type: 'object',
+          value: [
+            {
+              name: 'foo4',
+              type: 'number',
+              value: 8
+            }
+          ]
+        }
+      ];
+      window.addEventListener('polymer-ready', function () {
+        window.tree = document.querySelector('object-tree');
+        // tree.init(x, []);
+        /*window.addEventListener('object-expand', function (event) {
+          var path = event.detail.path;
+          var tmp = x;
+          for (var i = 0; i < path.length - 1; i++) {
+            tmp = x[path].value;
+          }
+          tmp[path[path.length - 1]].value.push({
+            name: 'foo5',
+            type: 'number',
+            value: 10
+          });
+        });*/
+      });
+    </script>
+  </body>
+</html>

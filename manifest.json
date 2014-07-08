@@ -1,0 +1,22 @@
+{
+  "name" : "Test extension",
+  "version" : "1.0",
+  "description" : "Test extension.",
+  "background" : {
+    "scripts": ["background.js"]
+  },
+  "devtools_page": "devtools.html",
+  "content_scripts" : [
+    {
+      "matches" : [ 
+         "http://*/*",
+         "https://*/*"
+      ],
+      "js" : ["contentscript.js"],
+      "run_at" : "document_idle"
+    }
+  ],
+  "permissions": ["http://*/*", "https://*/*"],
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+  "manifest_version": 2
+}

@@ -1,0 +1,30 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-selector/core-selector.html">
+
+<polymer-element name='method-list' constructor='MethodList'>
+  <template>
+    <style>
+      .list > * {
+        font-size: 14px;
+        background-color: #666;
+        color: white;
+        -webkit-user-select: none;
+      }
+      .list > * {
+        height: 25px;
+        line-height: 25px;
+        padding: 0 20px;
+      }
+      .list > *.core-selected {
+        background-color: #333;
+      }
+    </style>
+    <!--TODO: Fix core-selector (it is buggy) or write your own.-->
+    <core-selector class='list' multi>
+      <template repeat='{{item, index in list}}'>
+        <div class='{{ {"core-selected": item.setBreakpoint} | tokenList }}' id='method{{index}}' hidden?='{{item.type != "function"}}'>{{item.name}}</div>
+      </template>
+    </core-selector>
+  </template>
+  <script src='method-list.js'></script>
+</polymer-element>
