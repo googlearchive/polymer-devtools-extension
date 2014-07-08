@@ -57,7 +57,7 @@ function createEvalHelper (callback) {
     defineFunctions: function (functionObjects, callback) {
       var toEval = '';
       for (var i = 0; i < functionObjects.length; i++) {
-        toEval += NAMESPACE + functionObjects[i].name + ' = ' + functionObjects[i].string + ';';
+        toEval += NAMESPACE + functionObjects[i].name + ' = ' + functionObjects[i].string + ';\n\n';
       }
       toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {

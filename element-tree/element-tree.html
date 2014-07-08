@@ -1,17 +1,25 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
+<!-- Reasons for not implementing it like object-tree:
+  - The entire DOM tree is fetched at once as opposed to how objects are fetched level-by-level in object-tree
+  - Information is lost and refetched everytime the object-tree is collapsed whereas here, it is not.
+    DOM mutations are fewer and we are better of responding to changes
+
+  Use:
+    - declare <element-tree></element-tree>
+    - tree.initFromDOMTree(treeObject)
+    - tree.empty() to empty tree
+    - tree.getChildTreeForKey(key) to get child tree
+
+    Listen to:
+    1. unselected : when an element is unselected (explicitly with the mouse)
+    2. selected : when an element is selected
+    3. highlight : when an element is hovered over
+    4. unhighlight : when an element is hovered out of
+-->
 <polymer-element name='element-tree' attributes='indent text basewidth' constructor='ElementTree'>
   <template>
     <style>
-      #name {
-        font-size: 12px;
-        font-family: dejavu sans mono, monospace;
-        cursor: default;
-        width: 96%;
-        color: #C04747;
-        height: 16px;
-        display: inline-block;
-      }
       #expandBtn {
         text-align: center;
         cursor: pointer;
@@ -20,6 +28,7 @@
       }
       #thisElement {
         padding: 1px;
+        -webkit-user-select: none;
       }
       #thisElement:hover {
         background-color: #C7E4ED;
@@ -27,6 +36,15 @@
       #thisElement[selected] {
         background-color: rgb(178, 224, 178);
         color: white;
+      }
+      #name {
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
+        cursor: default;
+        width: 96%;
+        color: #C04747;
+        height: 16px;
+        display: inline-block;
       }
       #name[polymer] {
         color: rgb(19, 106, 185);

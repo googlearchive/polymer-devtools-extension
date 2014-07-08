@@ -217,7 +217,7 @@
         parent.removeChild(methodList);
         methodList = new MethodList();
         parent.appendChild(methodList);
-        unhighlightElement();
+        unhighlightElement(key, false);
 
         callback && callback();
       });
@@ -230,8 +230,6 @@
     var index = path[path.length - 1];
     EvalHelper.executeFunction('getProperty', [key, path], function (result, error) {
       var newObj = JSON.parse(result).value[0];
-      newObj.hasAccessor = true;
-      newObj.name = propName;
       childTree[index] = newObj;
     });
   }

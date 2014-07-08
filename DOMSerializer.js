@@ -7,6 +7,18 @@ function DOMSerializer () {
       element.localName.indexOf('-') !== -1 || element.getAttribute('is');
   }
 
+  // Properties used by Polymer (on the implementation side)
+  var polymerSpecificProps = {
+    observe: true,
+    publish: true,
+    created: true,
+    ready: true,
+    attached: true,
+    domReady: true,
+    detached: true,
+    attributeChanged: true
+  };
+
   /**
   * Checks if a property is an acessor
   */
@@ -18,73 +30,74 @@ function DOMSerializer () {
      }
      return !!descriptor.set || !!descriptor.get;
   }
+
+  /**
+  * Copies a property from oldObj to newObj and adds some metadata.
+  * protoObject is the exact object in the chain where the prop is present.
+  * It is necessary to determine if the prop is an accessor or not.
+  */
+  function copyProperty (protoObject, oldObj, newObj, prop) {
+    try {
+      oldObj[prop];
+    } catch (e) {
+      // We encountered an error trying to read the property.
+      // It must be a getter that is failing.
+      newObj.push({
+        type: 'error',
+        hasAccessor: true,
+        error: true,
+        value: error.message,
+        name: prop
+      });
+      return;
+    }
+    if (oldObj[prop] === null) {
+      newObj.push({
+        type: 'null',
+        hasAccessor: false,
+        value: 'null',
+        name: prop
+      });
+    } else if (typeof oldObj[prop] === 'string' ||
+        typeof oldObj[prop] === 'number' ||
+        typeof oldObj[prop] === 'boolean') {
+      newObj.push({
+        type: typeof oldObj[prop],
+        hasAccessor: propHasAccessor(protoObject, prop),
+        value: oldObj[prop].toString(),
+        name: prop
+      });
+    } else if (((typeof oldObj[prop] === 'object' &&
+        !(oldObj[prop] instanceof Array)) ||
+        typeof oldObj[prop] === 'function')) {
+      newObj.push({
+        type: typeof oldObj[prop],
+        hasAccessor: propHasAccessor(protoObject, prop),
+        value: [],
+        name: prop
+      });
+    } else if (typeof oldObj[prop] === 'object') {
+      newObj.push({
+        type: 'array',
+        hasAccessor: propHasAccessor(protoObject, prop),
+        length: oldObj[prop].length,
+        value: [],
+        name: prop
+      });
+    } else {
+      newObj.push({
+        type: 'undefined',
+        hasAccessor: false,
+        value: 'undefined',
+        name: prop
+      });
+    }
+  }
+
   /**
   * Converts an object to JSON only one level deep
   */
   function JSONize (obj, filter) {
-
-    /**
-    * Copies a property from oldObj to newObj and adds some metadata.
-    * protoObject is the exact object in the chain where the prop is present.
-    * It is necessary to determine if the prop is an accessor or not.
-    */
-    function copyProperty (protoObject, oldObj, newObj, prop) {
-      try {
-        oldObj[prop];
-      } catch (e) {
-        // We encountered an error trying to read the property.
-        // It must be a getter that is failing.
-        newObj.push({
-          type: 'error',
-          hasAccessor: true,
-          error: true,
-          value: error.message,
-          name: prop
-        });
-        return;
-      }
-      if (oldObj[prop] === null) {
-        newObj.push({
-          type: 'null',
-          hasAccessor: false,
-          value: 'null',
-          name: prop
-        });
-      } else if (typeof oldObj[prop] === 'string' ||
-          typeof oldObj[prop] === 'number' ||
-          typeof oldObj[prop] === 'boolean') {
-        newObj.push({
-          type: typeof oldObj[prop],
-          hasAccessor: propHasAccessor(protoObject, prop),
-          value: oldObj[prop].toString(),
-          name: prop
-        });
-      } else if (((typeof oldObj[prop] === 'object' &&
-          !(oldObj[prop] instanceof Array)) ||
-          typeof oldObj[prop] === 'function')) {
-        newObj.push({
-          type: typeof oldObj[prop],
-          hasAccessor: propHasAccessor(protoObject, prop),
-          value: [],
-          name: prop
-        });
-      } else if (typeof oldObj[prop] === 'object') {
-        newObj.push({
-          type: 'array',
-          hasAccessor: propHasAccessor(protoObject, prop),
-          length: oldObj[prop].length,
-          value: [],
-          name: prop
-        });
-      } else {
-        newObj.push({
-          type: 'undefined',
-          hasAccessor: false,
-          value: 'undefined',
-          name: prop
-        });
-      }
-    }
 
     /**
     * Gets the Polymer-specific *own* properties of an object
@@ -111,14 +124,23 @@ function DOMSerializer () {
       if (isPolymerElement(element)) {
         var proto = element;
         while (proto && !Polymer.isBase(proto)) {
-          var props = getPolymerProps(proto).sort();
+          var props = getPolymerProps(proto);
           props = props.filter(checkAdded);
           props.forEach(addToAddedProps);
           for (var i = 0; i < props.length; i++) {
             copyProperty(proto, element, destObj, props[i]);
+            if (props[i] in polymerSpecificProps) {
+              destObj[destObj.length - 1].polymer = true;
+            }
+            if (props[i] in element.publish) {
+              destObj[destObj.length - 1].published = true;
+            }
           }
           proto = proto.__proto__;
         }
+        destObj.sort(function (a, b) {
+          return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+        });
       }
     }
 
@@ -260,6 +282,38 @@ function DOMSerializer () {
   this.serializeObject = function (obj, callback, filter) {
     var res = JSONize(obj, filter);
     callback && callback(res);
+    return JSON.stringify(res);
+  };
+
+  /**
+  * Takes an object and a property name and serializes just that property's value.
+  * It returns a wrapped object with the same property containing the required property.
+  */
+  this.serializeProperty = function (prop, obj) {
+    // Get to the object in the prototype chain that actually contains the property
+    var actualObject = obj;
+    while (actualObject) {
+      if (actualObject.hasOwnProperty(prop)) {
+        break;
+      }
+      actualObject = actualObject.__proto__;
+    }
+    var res = {
+      name: 'Root',
+      type: 'object',
+      value: []
+    };
+    // Add the property to this wrapper object
+    copyProperty(actualObject, obj, res.value, prop);
+    if (isPolymerElement(obj)) {
+      // If it is a Polymer element, we may need to add a few flags to it
+      if (prop in polymerSpecificProps) {
+        res.value[0].polymer = true;
+      }
+      if (prop in obj.publish) {
+        res.value[0].published = true;
+      }
+    }
     return JSON.stringify(res);
   };
 }

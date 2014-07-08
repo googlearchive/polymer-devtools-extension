@@ -5,7 +5,7 @@
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
-    <div hidden><!--
+    <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -485,8 +485,8 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </template>
 
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 <!--Creates a double pane with a splitter in between-->
 
 <!--
@@ -601,21 +601,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="split-pane/split-pane.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 <polymer-element name="element-tree" attributes="indent text basewidth" constructor="ElementTree" assetpath="element-tree/">
   <template>
     <style>
-      #name {
-        font-size: 12px;
-        font-family: dejavu sans mono, monospace;
-        cursor: default;
-        width: 96%;
-        color: #C04747;
-        height: 16px;
-        display: inline-block;
-      }
       #expandBtn {
         text-align: center;
         cursor: pointer;
@@ -624,6 +615,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       #thisElement {
         padding: 1px;
+        -webkit-user-select: none;
       }
       #thisElement:hover {
         background-color: #C7E4ED;
@@ -631,6 +623,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       #thisElement[selected] {
         background-color: rgb(178, 224, 178);
         color: white;
+      }
+      #name {
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
+        cursor: default;
+        width: 96%;
+        color: #C04747;
+        height: 16px;
+        display: inline-block;
       }
       #name[polymer] {
         color: rgb(19, 106, 185);
@@ -652,8 +653,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="element-tree/element-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 <!--A text label that is editable upon mouse-click-->
 
@@ -665,6 +666,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         min-width: 10px;
         height: 13px;
         float: left;
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
       }
     </style>
     <div hidden?="{{hidden}}">
@@ -675,13 +678,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script src="editable-label/editable-label.js"></script>
 </polymer-element>
 
-
 <polymer-element name="object-tree" attributes="indent basewidth" constructor="ObjectTree" assetpath="object-tree/">
   <template>
     <style>
       #content {
         white-space: nowrap;
         font-size: 12px;
+        -webkit-user-select: none;
       }
       .property {
          padding: 3px;
@@ -692,11 +695,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       .labelText {
         font-family: dejavu sans mono, monospace;
+        color: rgb(19, 106, 185);
+      }
+      .labelText[isPolymer] {
+        font-family: Courier, monospace;
+        color: #6A02BF;
+        font-size: 13px;
       }
       .typeText {
         color: gray;
         font-family: "Arial", Courier, monospace;
-        font-size: 12px;
+        font-size: 11px;
       }
       .expandBtn {
         text-align: center;
@@ -720,10 +729,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div class="property">
           <img class="expandBtn" id="img{{index}}" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" on-click="{{toggle}}" src="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot; ? (prop.value.length &gt; 0 ? &quot;../res/collapse.png&quot; : &quot;../res/expand.png&quot;) : &quot;../res/blank.png&quot;}}" state="{{prop.value.length &gt; 0 ? &quot;expanded&quot; : &quot;collapsed&quot;}}">
           <img class="expandBtn" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}" src="res/blank.png">
-          <label class="labelText" id="name{{index}}">{{prop.name}}</label>
-          <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">{{prop.type}}</label>
-          <label class="typeText" hidden?="{{!prop.hasAccessor}}">&lt;accessor&gt;</label>
-          <editable-label id="field{{index}}" text="{{prop.type == &quot;string&quot; ? (&quot;\&quot;&quot; + prop.value + &quot;\&quot;&quot;) : prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
+          <label class="labelText" id="name{{index}}" ispolymer?="{{prop.polymer}}">{{prop.name}}</label>
+          <label class="typeText" hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}">&lt;{{prop.type}}&gt;</label>
+          <label class="typeText" hidden?="{{!prop.published}}">&lt;published&gt;</label>
+          <editable-label id="field{{index}}" text="{{prop.value}}" data-hasaccessor="{{prop.hasAccessor}}" data-name="{{prop.name}}" hidden?="{{prop.type == &quot;object&quot; || prop.type == &quot;array&quot; || prop.type == &quot;function&quot;}}">
           </editable-label>
           <img class="refreshBtn" id="refresh{{index}}" data-name="{{prop.name}}" on-click="{{refreshField}}" hidden?="{{!prop.hasAccessor}}" src="res/refresh.png">
         </div>
@@ -735,8 +744,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="object-tree/object-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 
 <polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
@@ -746,6 +755,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         font-size: 14px;
         background-color: #666;
         color: white;
+        -webkit-user-select: none;
       }
       .list > * {
         height: 25px;
@@ -764,7 +774,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="method-list/method-list.js"></script>
 </polymer-element>
-</div>
+
     <style>
       .split-pane-right {
         margin-left: 10px;

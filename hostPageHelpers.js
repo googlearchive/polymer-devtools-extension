@@ -12,6 +12,7 @@ function highlight (key, isHover) {
     window._polymerNamespace_.prevHoveredOutline = element.style.outline;
     window._polymerNamespace_.prevHoveredBackgroundColor = element.style.backgroundColor;
   } else {
+    window._polymerNamespace_.unhighlight(key, true);
     if (window._polymerNamespace_.lastSelectedKey) {
       window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
     }
@@ -121,10 +122,7 @@ function getProperty (key, path) {
   var prop = window._polymerNamespace_.getPropPath(key, path).pop();
   path.pop();
   var obj = window._polymerNamespace_.resolveObject(key, path);
-  var wrappedObject = {
-    value: obj[prop]
-  };
-  return window._polymerNamespace_.serializer.serializeObject(wrappedObject);
+  return window._polymerNamespace_.serializer.serializeProperty(prop, obj);
 }
 
 function addToCache (obj, key) {
@@ -513,6 +511,7 @@ function addObjectObserver (key, path) {
   * }
   */
   function processChanges (changes) {
+    console.log(changes);
     var processedChangeObject = {
       path: path,
       key: key,
