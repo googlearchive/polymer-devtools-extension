@@ -1,9 +1,7 @@
 (function () {
-  var COLOR_POLYMER_SELECTED = '#cdcdc1';
-  var COLOR_POLYMER_UNSELECTED = '#eeeee0';
 
-  function newExpandBtnImg(collapsed) {
-    return collapsed ? '../res/expand.png' : '../res/collapse.png';
+  function newExpandBtnIcon(collapsed) {
+    return collapsed ? 'chevron-right' : 'expand-more';
   }
 
   Polymer('element-tree', {
@@ -12,7 +10,7 @@
     // Whether the element at the root is selected or not
     selected: false,
     baseWidth: 10,
-    expandBtnImg: 'res/collapse.png',
+    expandBtnIcon: newExpandBtnIcon(false),
     // Polymer elements are shown differently and can be selected
     isPolymer: false,
     ready: function () {
@@ -74,7 +72,7 @@
         return;
       }
       this.collapsed = !(this.collapsed);
-      this.expandBtnImg = newExpandBtnImg(this.collapsed);
+      this.expandBtnImg = newExpandBtnIcon(this.collapsed);
       for (var i = 0; i < this.childElements.length; i++) {
         if (this.collapsed) {
           this.childElements[i].$.content.style.display = 'none';

@@ -1,5 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../editable-label/editable-label.html">
+<link rel="import" href="../bower_components/core-icons/core-icons.html">
 
 <!--
   Use:
@@ -42,36 +43,37 @@
         font-family: "Arial", Courier, monospace;
         font-size: 11px;
       }
-      .expandBtn {
-        text-align: center;
+      .btn {
         cursor: pointer;
-        width: 8px;
-        height: 8px;
-      }
-      .refreshBtn {
-        text-align: center;
-        cursor: pointer;
-        width: 10px;
-        height: 10px;
       }
       .children {
         margin-left: {{baseWidth}}px;
+      }
+      .propMarker {
+        margin-right: 4px;
+        margin-left: 4px;
       }
     </style>
     <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
     <div id='content'>
       <template repeat='{{prop, index in tree}}'>
         <div class='property'>
-          <img class='expandBtn' id='img{{index}}' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' on-click='{{toggle}}' 
-            src='{{prop.type == "object" || prop.type == "array" || prop.type == "function" ? (prop.value.length > 0 ? "../res/collapse.png" : "../res/expand.png") : "../res/blank.png"}}' state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}'></img>
-          <img class='expandBtn' hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' src='../res/blank.png'></img>
+          <span hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' class='btn'>
+            <core-icon id='img{{index}}' icon='{{prop.value.length > 0 ? "expand-more" : "chevron-right"}}' on-click='{{toggle}}' 
+              state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}' size='15'></core-icon>
+          </span>
+          <span hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' class='propMarker'>
+            <core-icon icon='check-circle-blank' size='4'></core-icon>
+          </span>
           <label class='labelText' id='name{{index}}' isPolymer?='{{prop.polymer}}'>{{prop.name}}</label>
           <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>&lt;{{prop.type}}&gt;</label>
           <label class='typeText' hidden?='{{!prop.published}}'>&lt;published&gt;</label>
           <editable-label id='field{{index}}' text='{{prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
             hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
           </editable-label>
-          <img class='refreshBtn' id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' hidden?='{{!prop.hasAccessor}}' src='../res/refresh.png'></img>
+          <span hidden?='{{!prop.hasAccessor}}' class='btn'>
+            <core-icon id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' icon='refresh' size='12'></core-icon>
+          </span>
         </div>
         <div class='children'>
           <object-tree id='child{{index}}'></object-tree>

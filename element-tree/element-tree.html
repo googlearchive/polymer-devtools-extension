@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-icons/core-icons.html">
 
 <!-- Reasons for not implementing it like object-tree:
   - The entire DOM tree is fetched at once as opposed to how objects are fetched level-by-level in object-tree
@@ -21,10 +22,7 @@
   <template>
     <style>
       #expandBtn {
-        text-align: center;
         cursor: pointer;
-        width: 8px;
-        height: 8px;
       }
       #thisElement {
         padding: 1px;
@@ -41,7 +39,7 @@
         font-size: 12px;
         font-family: dejavu sans mono, monospace;
         cursor: default;
-        width: 96%;
+        width: 92%;
         color: #C04747;
         height: 16px;
         display: inline-block;
@@ -58,7 +56,7 @@
     </style>
     <div id='content'>
       <div id='thisElement' on-mouseover='{{mouseOver}}' on-mouseout='{{mouseOut}}'>
-        <img id='expandBtn' on-click='{{toggle}}' src='{{expandBtnImg}}'></img>
+        <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
         <span on-click='{{toggleSelection}}' id='name'>{{text}}</span>
       </div>
       <div id='childrenContent'></div>
