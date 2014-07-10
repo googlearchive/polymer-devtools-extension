@@ -21,6 +21,13 @@ window.addEventListener('dom-mutation', function (event) {
   });
 });
 
+window.addEventListener('inspected-element-changed', function (event) {
+  chrome.runtime.sendMessage({
+    name: 'inspected-element-changed',
+    key: event.detail.key
+  });
+});
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.name === 'clean-up') {
     window.dispatchEvent(new CustomEvent('clean-up'));

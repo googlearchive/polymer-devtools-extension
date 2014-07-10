@@ -1,0 +1,11 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-icon-button/core-icon-button.html">
+
+<!--A core-icon-button that behaves like a toggle button-->
+
+<polymer-element name='persistent-button' attributes='size icon'>
+  <template>
+    <core-icon-button id='btn' icon='{{icon}}' size='{{size}}' on-click='{{toggle}}'></core-icon-button>
+  </template>
+  <script src='persistent-button.js'></script>
+</polymer-element>

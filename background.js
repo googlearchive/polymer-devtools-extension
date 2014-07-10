@@ -41,24 +41,32 @@
   // All the communcation
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     var port = tabIdToPortMap[sender.tab.id];
+    if (!port) {
+      return;
+    }
     switch (message.name) {
       case 'refresh':
-        port && port.postMessage({
+        port.postMessage({
           name: 'refresh',
         });
         break;
       case 'object-changed':
-        port && port.postMessage({
+        port.postMessage({
           name: 'object-changed',
           changeList: message.changeList
         });
         break;
       case 'dom-mutation':
-        port && port.postMessage({
+        port.postMessage({
           name: 'dom-mutation',
           changeList: message.changeList
         });
         break;
+      case 'inspected-element-changed':
+        port.postMessage({
+          name: 'inspected-element-changed',
+          key: message.key
+        });
     }
 	});
 })();

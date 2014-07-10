@@ -124,7 +124,15 @@
         {
           name: 'processMutations',
           string: processMutations.toString()
-        }
+        },
+        {
+          name: 'inspectorSelectionChangeListener',
+          string: inspectorSelectionChangeListener.toString()
+        }/*,
+        {
+          name: 'addElementSelectionCSS',
+          string: addElementSelectionCSS.toString()
+        }*/
       ], function (result, error) {
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
@@ -318,14 +326,19 @@
       var key = event.detail.key;
       unhighlightElement(key, true);
     });
+    window.addEventListener('button-active', function (event) {
+      /*EvalHelper.executeFunction('addElementSelectionCSS' [], function (result, error) {
+        if (error) {
+          throw error;
+        }
+      });*/
+    });
+    window.addEventListener('button-inactive', function (event) {
+
+    });
+
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
-    });
-    // Send a message to background page so that the background page can associate panel
-    // to the current host page
-    backgroundPageConnection.postMessage({
-      name: 'panel-init',
-      tabId: chrome.devtools.inspectedWindow.tabId
     });
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
       switch (message.name) {
@@ -396,7 +409,31 @@
             }
           }
           break;
+        case 'inspected-element-changed':
+        // An element got selected in the inspector, must select in element-tree
+          var childTree = elementTree.getChildTreeForKey(message.key);
+          if (!childTree.selected) {
+            childTree.toggleSelection();
+          }
+          break;
       }
+    });
+    
+    // Send a message to background page so that the background page can associate panel
+    // to the current host page
+    backgroundPageConnection.postMessage({
+      name: 'panel-init',
+      tabId: chrome.devtools.inspectedWindow.tabId
+    });
+
+    // When an element selection changes in the inspector, we try to update the new pane with
+    // the same element selected
+    chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
+      EvalHelper.executeFunction('inspectorSelectionChangeListener', [], function (result, error) {
+        if (error) {
+          console.log(error);
+        }
+      });
     });
   });
 })();

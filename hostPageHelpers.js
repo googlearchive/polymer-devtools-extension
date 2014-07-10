@@ -46,6 +46,18 @@ function scrollIntoView (key) {
   }
 }
 
+/*function addElementSelectionCSS (key) {
+  function mouseEnter (event) {
+    event.stopPropagation();
+  }
+  function mouseLeave (event) {
+    event.stopPropagation();
+  }
+  var element = window._polymerNamespace_.DOMCache[key];
+    element.
+}
+*/
+
 /**
 * Set a breakpoint at the beginning of a function
 */
@@ -130,6 +142,21 @@ function addToCache (obj, key) {
     window._polymerNamespace_.DOMCache[key] = obj;
   } else {
     window._polymerNamespace_.DOMCache[key] = obj;
+  }
+}
+
+/**
+* Called when the selection in the inspector changes
+*/
+function inspectorSelectionChangeListener () {
+  if (window._polymerNamespace_.isPolymerElement($0)) {
+    if ($0.__keyPolymer__) {
+      window.dispatchEvent(new CustomEvent('inspected-element-changed', {
+        detail : {
+          key: $0.__keyPolymer__
+        }
+      }));
+    }
   }
 }
 
