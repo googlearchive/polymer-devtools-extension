@@ -1506,25 +1506,34 @@ html /deep/ core-icon[size=""] > svg {
 <polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
   <template>
     <style>
-      .list > * {
-        font-size: 14px;
-        background-color: #666;
-        color: white;
+      .method {
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
+        background-color: white;
+        color: rgb(19, 106, 185);
         -webkit-user-select: none;
-      }
-      .list > * {
-        height: 25px;
-        line-height: 25px;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border: 1px solid #C7E4ED;
+        height: 22px;
+        line-height: 22px;
         padding: 0 20px;
+        cursor: pointer;
       }
-      .list > *.core-selected {
-        background-color: #333;
+      .method.core-selected {
+        background-color: rgb(178, 224, 178);
       }
+      .method.core-selected:hover {
+        background-color: rgb(178, 224, 178);
+      }
+      .method:hover {
+        background-color: #C7E4ED;
+      }
+
     </style>
     <!--TODO: Fix core-selector (it is buggy) or write your own.-->
     <core-selector class="list" multi="">
       <template repeat="{{item, index in list}}">
-        <div class="{{ {&quot;core-selected&quot;: item.setBreakpoint} | tokenList }}" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>
+        <div class="method {{ {&quot;core-selected&quot;: item.setBreakpoint} | tokenList }}" id="method{{index}}" hidden?="{{item.type != &quot;function&quot;}}">{{item.name}}</div>
       </template>
     </core-selector>
   </template>
@@ -1539,6 +1548,9 @@ html /deep/ core-icon[size=""] > svg {
         background-color: gray;
         width: 100%;
       }
+      #methodListContainer {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body unresolved="">
@@ -1548,7 +1560,9 @@ html /deep/ core-icon[size=""] > svg {
       </div>
       <div class="split-pane-right">
         <object-tree></object-tree>
-        <method-list></method-list>
+        <div id="methodListContainer">
+          <method-list></method-list>
+        </div>
       </div>
     </split-pane>
   <script src="panel.js"></script></body>

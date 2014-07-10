@@ -1,20 +1,10 @@
 (function () {
   // The cache equivalent to the DOM cache maintained in the host page.
   // Used to display object-tree in response to selection in element-tree.
-  var polymerDOMCache;
   var elementTree;
   var objectTree;
   var methodList;
   var EvalHelper;
-  function cacheDOM (dom) {
-    if (!dom) {
-      return;
-    }
-    polymerDOMCache[dom.key] = dom;
-    for (var i = 0; i < dom.children.length; i++) {
-      cacheDOM(dom.children[i]);
-    }
-  }
 
   function init () {
     var DOM;
@@ -144,8 +134,6 @@
             }
             EvalHelper.executeFunction('getDOMString', [], function (result, error) {
               DOM = JSON.parse(result.data);
-              polymerDOMCache = {};
-              cacheDOM(DOM);
               elementTree.initFromDOMTree(DOM);
             });
           });
