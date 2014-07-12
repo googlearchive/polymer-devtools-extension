@@ -9,7 +9,12 @@
   function init () {
     var DOM;
     elementTree = document.querySelector('element-tree');
-    objectTree = document.querySelector('object-tree');
+    // objectTree shows the properties of a selected element in the tree
+    objectTree = document.querySelector('object-tree#main-tree');
+    // modelTree shows the model behind a seleccted element (if any)
+    modelTree = document.querySelector('object-tree#model-tree');
+    // methodList is the list of methods of the selected element. It is used
+    // to add breakpoints
     methodList = document.querySelector('method-list');
     createEvalHelper(function (helper) {
       EvalHelper = helper;
@@ -173,19 +178,22 @@
     });
   }
 
-  function expandObject (path) {
+  /**
+  * isModel tells if it is model-tree that we are expanding
+  */
+  function expandObject (path, isModel) {
     var key = elementTree.selectedChild.key;
-    EvalHelper.executeFunction('getObjectString', [key, path], function (result, error) {
+    EvalHelper.executeFunction('getObjectString', [key, path, isModel], function (result, error) {
       var props = JSON.parse(result.data).value;
-      var childTree = objectTree.tree;
+      var childTree = isModel ? modelTree.tree : objectTree.tree;
       for (var i = 0; i < path.length; i++) {
         childTree = childTree[path[i]].value;
       }
       childTree.push.apply(childTree, props);
-      if (path.length === 0) {
+      if (!isModel && path.length === 0) {
         methodList.list = objectTree.tree;
       }
-      EvalHelper.executeFunction('addObjectObserver', [key, path], function (result, error) {
+      EvalHelper.executeFunction('addObjectObserver', [key, path, isModel], function (result, error) {
         if (error) {
           throw error;
         }
@@ -194,37 +202,51 @@
   }
 
   function selectElement (key) {
-    expandObject([]);
+    // When an element is selected, we try to open both the main and model trees
+    expandObject([], false);
+    expandObject([], true);
     // Visually highlight the element in the page and scroll it into view
     highlightElement(key);
   }
   function unselectElement (key, callback) {
-    EvalHelper.executeFunction('removeObjectObserver', [key, []], function (result, error) {
-      if (error) {
-        throw error;
-      }
-      EvalHelper.executeFunction('emptyIndexMap', [key, []], function (result, error) {
+    function removeObject (isModel, callback) {
+      EvalHelper.executeFunction('removeObjectObserver', [key, [], isModel], function (result, error) {
         if (error) {
           throw error;
         }
-        // Empty the object tree
-        objectTree.tree.length = 0;
-        var parent = methodList.parentNode;
-        parent.removeChild(methodList);
-        methodList = new MethodList();
-        parent.appendChild(methodList);
-        unhighlightElement(key, false);
+        EvalHelper.executeFunction('emptyIndexMap', [key, [], isModel], function (result, error) {
+          if (error) {
+            throw error;
+          }
+          // Empty the object/model tree
+          if (!isModel) {
+            objectTree.tree.length = 0;
+            var parent = methodList.parentNode;
+            parent.removeChild(methodList);
+            methodList = new MethodList();
+            parent.appendChild(methodList);
+            unhighlightElement(key, false);
+          } else {
+            modelTree.tree.length = 0;
+          }
 
-        callback && callback();
+          callback && callback();
+        });
       });
+    }
+    // First remove everything associated with the actual object
+    removeObject(false, function () {
+      // Then remove everything associated with the model
+      removeObject(true, callback);
     });
   }
   /**
   * Refresh a property (*an accessor only*)
+  * isModel tells if this is with regard to the model tree
   */
-  function refreshProperty (key, childTree, path, propName) {
+  function refreshProperty (key, childTree, path, isModel) {
     var index = path[path.length - 1];
-    EvalHelper.executeFunction('getProperty', [key, path], function (result, error) {
+    EvalHelper.executeFunction('getProperty', [key, path, isModel], function (result, error) {
       var newObj = JSON.parse(result).value[0];
       childTree[index] = newObj;
     });
@@ -253,9 +275,9 @@
       var path = event.detail.path;
       var key = elementTree.selectedChild.key;
       var childTree = event.detail.tree;
-      var propName = event.detail.name;
+      var isModel = (event.target.id === 'model-tree');
       // Reflect a change in property in the host page
-      EvalHelper.executeFunction('changeProperty', [key, path, newValue],
+      EvalHelper.executeFunction('changeProperty', [key, path, newValue, isModel],
         function (result, error) {
           if (error) {
             throw error;
@@ -263,7 +285,7 @@
           if (event.detail.reEval) {
             // The property requires a re-eval because it is accessor
             // and O.o() won't update it.
-            refreshProperty(key, childTree, path, propName);
+            refreshProperty(key, childTree, path, isModel);
           }
         }
       );
@@ -272,22 +294,24 @@
       var key = elementTree.selectedChild.key;
       var childTree = event.detail.tree;
       var path = event.detail.path;
-      var propName = event.detail.name;
-      refreshProperty(key, childTree, path, propName);
+      var isModel = (event.target.id === 'model-tree');
+      refreshProperty(key, childTree, path, isModel);
     });
     window.addEventListener('object-expand', function (event) {
-      expandObject(event.detail.path);
+      var isModel = (event.target.id === 'model-tree');
+      expandObject(event.detail.path, isModel);
     });
     // An object has been collapsed. We must remove the object observer
     // and empty the index-propName map in the host page for this object
     window.addEventListener('object-collapse', function (event) {
       var key = elementTree.selectedChild.key;
       var path = event.detail.path;
-      EvalHelper.executeFunction('removeObjectObserver', [key, path], function (result, error) {
+      var isModel = (event.target.id === 'model-tree');
+      EvalHelper.executeFunction('removeObjectObserver', [key, path, isModel], function (result, error) {
         if (error) {
           throw error;
         }
-        EvalHelper.executeFunction('emptyIndexMap', [key, path], function (result, error) {
+        EvalHelper.executeFunction('emptyIndexMap', [key, path, isModel], function (result, error) {
           if (error) {
             throw error;
           }
@@ -314,16 +338,6 @@
       var key = event.detail.key;
       unhighlightElement(key, true);
     });
-    window.addEventListener('button-active', function (event) {
-      /*EvalHelper.executeFunction('addElementSelectionCSS' [], function (result, error) {
-        if (error) {
-          throw error;
-        }
-      });*/
-    });
-    window.addEventListener('button-inactive', function (event) {
-
-    });
 
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
@@ -342,6 +356,7 @@
           // The path where the change happened
           var path = changeObj.path;
           var changes = changeObj.changes;
+          var isModel = changeObj.isModel;
           for (var i = 0; i < changes.length; i++) {
             var change = changes[i];
             var type = change.type;
@@ -351,7 +366,7 @@
             var name = change.name;
             // This is a wrapped object. `value` contains the actual object.
             var newObj;
-            var childTree = objectTree.tree;
+            var childTree = isModel ? modelTree.tree : objectTree.tree;
             try {
               // If the observer reports changes before child-tree is ready, we must
               // only

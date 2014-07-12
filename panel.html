@@ -1432,7 +1432,7 @@ html /deep/ core-icon[size=""] > svg {
       3. property-changed: When a property is changed
       4. refresh-property: When a property is to be refreshed
 -->
-<polymer-element name="object-tree" attributes="indent basewidth" constructor="ObjectTree" assetpath="object-tree/">
+<polymer-element name="object-tree" attributes="hidden basewidth" constructor="ObjectTree" assetpath="object-tree/">
   <template>
     <style>
       #content {
@@ -1473,7 +1473,7 @@ html /deep/ core-icon[size=""] > svg {
       }
     </style>
     <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
-    <div id="content">
+    <div id="content" hidden?="{{hidden}}">
       <template repeat="{{prop, index in tree}}">
         <div class="property">
           <span hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" class="btn">
@@ -1559,7 +1559,8 @@ html /deep/ core-icon[size=""] > svg {
         <element-tree></element-tree>
       </div>
       <div class="split-pane-right">
-        <object-tree></object-tree>
+        <object-tree id="main-tree"></object-tree>
+        <object-tree id="model-tree"></object-tree>
         <div id="methodListContainer">
           <method-list></method-list>
         </div>

@@ -85,9 +85,6 @@
     * Element selection/unselection
     */
     toggleSelection: function () {
-      if (!this.isPolymer) {
-        return;
-      }
       if (this.selected) {
         // selectedChild holds the element in the tree that is currently selected
         this.root.selectedChild = null;

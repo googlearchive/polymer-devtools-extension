@@ -14,7 +14,7 @@
       3. property-changed: When a property is changed
       4. refresh-property: When a property is to be refreshed
 -->
-<polymer-element name='object-tree' attributes='indent basewidth' constructor='ObjectTree'>
+<polymer-element name='object-tree' attributes='hidden basewidth' constructor='ObjectTree'>
   <template>
     <style>
       #content {
@@ -55,7 +55,7 @@
       }
     </style>
     <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
-    <div id='content'>
+    <div id='content' hidden?='{{hidden}}'>
       <template repeat='{{prop, index in tree}}'>
         <div class='property'>
           <span hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' class='btn'>

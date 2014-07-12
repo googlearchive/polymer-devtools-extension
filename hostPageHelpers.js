@@ -92,10 +92,12 @@ function clearBreakpoint (key, path) {
 
 /**
 * Get the property (property names) path from the index path (as it is stored in the UI)
+* isModel tells if we should into the model data structures
 */
-function getPropPath (key, path) {
+function getPropPath (key, path, isModel) {
   var propPath = [];
-  var indexMap = window._polymerNamespace_.indexToPropMap[key];
+  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
+    window._polymerNamespace_.indexToPropMap[key];
   path.forEach(function (el) {
     indexMap = indexMap[el];
     propPath.push(indexMap.__name__);
@@ -105,10 +107,12 @@ function getPropPath (key, path) {
 
 /**
 * Find the object given a DOM element key and the index path
+* isModel tells if we should into the model data structures
 */
-function resolveObject (key, path) {
-  var obj = window._polymerNamespace_.DOMCache[key];
-  var propPath = window._polymerNamespace_.getPropPath(key, path);
+function resolveObject (key, path, isModel) {
+  var obj = isModel ? window._polymerNamespace_.DOMModelCache[key] :
+    window._polymerNamespace_.DOMCache[key];
+  var propPath = window._polymerNamespace_.getPropPath(key, path, isModel);
   propPath.forEach(function (el) {
     obj = obj[el];
   });
@@ -117,11 +121,12 @@ function resolveObject (key, path) {
 
 /**
 * Reflect a change in the host page
+* isModel tells if we should into the model data structures
 */
-function changeProperty (key, path, newValue) {
-  var prop = window._polymerNamespace_.getPropPath(key, path).pop();
+function changeProperty (key, path, newValue, isModel) {
+  var prop = window._polymerNamespace_.getPropPath(key, path, isModel).pop();
   path.pop();
-  var obj = window._polymerNamespace_.resolveObject(key, path);
+  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
   if (obj) {
     obj[prop] = newValue;
   }
@@ -129,20 +134,22 @@ function changeProperty (key, path, newValue) {
 
 /**
 * Get a property somewhere inside an element (repesented by path)
+* isModel tells if we should into the model data structures
 */
-function getProperty (key, path) {
-  var prop = window._polymerNamespace_.getPropPath(key, path).pop();
+function getProperty (key, path, isModel) {
+  var prop = window._polymerNamespace_.getPropPath(key, path, isModel).pop();
   path.pop();
-  var obj = window._polymerNamespace_.resolveObject(key, path);
+  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
   return window._polymerNamespace_.serializer.serializeProperty(prop, obj);
 }
 
 function addToCache (obj, key) {
-  if (obj.tagName === 'template' && obj.model) {
-    window._polymerNamespace_.DOMCache[key] = obj;
-  } else {
-    window._polymerNamespace_.DOMCache[key] = obj;
+  if (obj.tagName === 'TEMPLATE' && obj.model) {
+    window._polymerNamespace_.DOMModelCache[key] = obj.model;
+  } else if (obj.templateInstance) {
+    window._polymerNamespace_.DOMModelCache[key] = obj.templateInstance.model;
   }
+  window._polymerNamespace_.DOMCache[key] = obj;
 }
 
 /**
@@ -162,9 +169,11 @@ function inspectorSelectionChangeListener () {
 
 /**
 * Go as deep as required by `path` into `indexToPropMap`
+* isModel tells if we should into the model data structures
 */
-function getIndexMapObject (key, path) {
-  var start = window._polymerNamespace_.indexToPropMap[key];
+function getIndexMapObject (key, path, isModel) {
+  var start = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
+    window._polymerNamespace_.indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
     start = start[path[i]];
   }
@@ -196,10 +205,11 @@ function removeFromSubIndexMap (indexMap, index) {
 
 /**
 * Add a property to `indexToPropMap`
+* isModel tells if we should into the model data structures
 */
-function addToIndexMap (propName, key, path) {
+function addToIndexMap (propName, key, path, isModel) {
   var lastIndex = path.pop();
-  var start = window._polymerNamespace_.getIndexMapObject(key, path);
+  var start = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
   start[lastIndex] = {
     __name__: propName
   };
@@ -210,13 +220,16 @@ function addToIndexMap (propName, key, path) {
 /**
 * Empty a part of `indexToPropMap`. (Used when the part of the object
 * is no longer in view in the object tree.)
+* isModel tells if we should into the model data structures
 */
-function emptyIndexMap (key, path) {
-  var start = window._polymerNamespace_.indexToPropMap[key];
+function emptyIndexMap (key, path, isModel) {
+  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap :
+    window._polymerNamespace_.indexToPropMap;
+  var start = indexMap[key];
   var lastIndex = path.pop();
   if (!lastIndex) {
-    window._polymerNamespace_.indexToPropMap[key] = {};
-    window._polymerNamespace_.indexToPropMap[key].__lastIndex__ = -1;
+    indexMap[key] = {};
+    indexMap[key].__lastIndex__ = -1;
     return;
   }
   for (var i = 0; i < path.length; i++) {
@@ -428,6 +441,7 @@ function getDOMString (el) {
           // Also make a map to store the actual property names to the indices corresponding to the names
           // before passing it to the caller.
           window._polymerNamespace_.indexToPropMap[key] = {};
+          window._polymerNamespace_.modelIndexToPropMap[key] = {};
           domNode.__keyPolymer__ = key;
           converted.key = key;
 
@@ -459,10 +473,18 @@ function getDOMString (el) {
 
 /**
 * Serialize an object one level deep
+* isModel tells if we should into the model data structures
 */
-function getObjectString (key, path) {
-  var obj = window._polymerNamespace_.resolveObject(key, path);
-  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
+function getObjectString (key, path, isModel) {
+  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  if (!obj) {
+    return {
+      'data': JSON.stringify({
+        value: []
+      })
+    };
+  }
+  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
   var filter = null;
   if (path.length === 0) {
     filter = function (prop) {
@@ -479,13 +501,15 @@ function getObjectString (key, path) {
       serializeObject(obj, function (converted) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
-          if (path.length === 0 && (key in window._polymerNamespace_.breakPointIndices) &&
-            (propList[i].name in window._polymerNamespace_.breakPointIndices[key])) {
-            converted.value[i].setBreakpoint = true;
+          if (!isModel) {
+            if (path.length === 0 && (key in window._polymerNamespace_.breakPointIndices) &&
+              (propList[i].name in window._polymerNamespace_.breakPointIndices[key])) {
+              converted.value[i].setBreakpoint = true;
+            }
           }
           var propName = propList[i].name;
           // Must associate each index to the corresponding property name.
-          window._polymerNamespace_.addToSubIndexMap(indexMap, propName);
+          window._polymerNamespace_.addToSubIndexMap(indexMap, propName, isModel);
         }
       },
       filter)
@@ -494,8 +518,9 @@ function getObjectString (key, path) {
 
 /**
 * Add an object observer that reports changes to it using O.o()
+* isModel tells if we should into the model data structures
 */
-function addObjectObserver (key, path) {
+function addObjectObserver (key, path, isModel) {
   /**
   * Checks if a property is present in the higher prototype objects
   * of an object.
@@ -525,8 +550,13 @@ function addObjectObserver (key, path) {
     return false;
   }
   console.log('adding observer');
-  var obj = window._polymerNamespace_.resolveObject(key, path);
-  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path);
+  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  if (!obj) {
+    // This is because an element may not have a `model` and we just ignore it.
+    // No observer can be added
+    return;
+  }
+  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
 
   /**
   * Returns a change object that looks like this:
@@ -546,6 +576,7 @@ function addObjectObserver (key, path) {
   */
   function processChanges (changes) {
     var processedChangeObject = {
+      isModel: isModel,
       path: path,
       key: key,
       changes: []
@@ -564,6 +595,11 @@ function addObjectObserver (key, path) {
       }
       switch (change.type) {
         case 'update':
+          // We've chosen to ignore certain Polymer properties which may have gotten updated
+          if (window._polymerNamespace_.isPolymerElement(obj) &&
+              !window._polymerNamespace_.filterProperty(change.name)) {
+            continue;
+          }
           // We might be dealing with non-Objects which DOMSerializer can't serialize.
           // So we wrap it and then let the caller unwrap later.
           var wrappedObject = {
@@ -586,7 +622,7 @@ function addObjectObserver (key, path) {
               serializeObject(wrappedObject);
           } else {
             // Update the index-to-propName map to reflect the deletion
-            window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name]);
+            window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name], isModel);
           }
           break;
         case 'add':
@@ -607,7 +643,7 @@ function addObjectObserver (key, path) {
             // only for Polymer elements.
             summary.type = 'update';
           } else {
-            window._polymerNamespace_.addToSubIndexMap(indexMap, change.name);
+            window._polymerNamespace_.addToSubIndexMap(indexMap, change.name, isModel);
           }
           break;
       }
@@ -628,11 +664,13 @@ function addObjectObserver (key, path) {
     Object.observe(proto, observer);
     proto = proto.__proto__;
   }
+  var observerCache = isModel ? window._polymerNamespace_.modelObserverCache :
+    window._polymerNamespace_.observerCache;
   // Store the observer function so that we can unobserve when we need to.
-  if (!window._polymerNamespace_.observerCache[key]) {
-    window._polymerNamespace_.observerCache[key] = {};
+  if (!observerCache[key]) {
+    observerCache[key] = {};
   }
-  var hashLocation = window._polymerNamespace_.observerCache[key];
+  var hashLocation = observerCache[key];
   for (var i = 0; i < path.length; i++) {
     if (!hashLocation[path[i]]) {
       hashLocation[path[i]] = {};
@@ -644,8 +682,9 @@ function addObjectObserver (key, path) {
 
 /**
 * Stop observing an object
+* isModel tells if we should into the model data structures
 */
-function removeObjectObserver (key, path) {
+function removeObjectObserver (key, path, isModel) {
   function recursiveUnobserve (obj, hashLocation, indexMap) {
     if (hashLocation['__objectObserver__']) {
       Object.unobserve(obj, hashLocation['__objectObserver__']);
@@ -666,10 +705,17 @@ function removeObjectObserver (key, path) {
       }
     }
   }
-  var obj = window._polymerNamespace_.resolveObject(key, path);
-  var parent = window._polymerNamespace_.observerCache;
+  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  if (!obj) {
+    // This is because an element may not have a `model` and we just ignore it.
+    // No observer can be added
+    return;
+  }
+  var parent = isModel ? window._polymerNamespace_.modelObserverCache :
+    window._polymerNamespace_.observerCache;
   var hashLocation = parent[key];
-  var indexMap = window._polymerNamespace_.indexToPropMap[key];
+  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
+    window._polymerNamespace_.indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
     parent = hashLocation;
     hashLocation = hashLocation[path[i]];
@@ -681,12 +727,22 @@ function removeObjectObserver (key, path) {
 }
 
 function createCache() {
+  // All DOM elements discovered are hashed by a unique key
   window._polymerNamespace_.DOMCache = {};
+  // A similar map is maintained for the models associated with the DOM objects
+  window._polymerNamespace_.DOMModelCache = {};
+  // O.o() observers are hashed so they can be removed when needed
   window._polymerNamespace_.observerCache = {};
+  window._polymerNamespace_.modelObserverCache = {};
   window._polymerNamespace_.breakPointIndices = {};
+  // indexToPropMap maps indices to property names
+  // The UI maintains properties as an array (to keep them ordered). To keep an
+  // association with real object properties and those, we need a map.
   window._polymerNamespace_.indexToPropMap = {};
+  window._polymerNamespace_.modelIndexToPropMap = {};
   // The key of the last DOM element added
   window._polymerNamespace_.lastDOMKey = 0;
+  // Mutation observers are stored so they can be removed later
   window._polymerNamespace_.mutationObserverCache = {};
   window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
 }
