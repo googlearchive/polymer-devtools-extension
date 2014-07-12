@@ -200,7 +200,7 @@ function DOMSerializer () {
   }
 
   /**
-  * Gets the composed DOM (Shadow DOM + Light DOM) of an element
+  * Gets the children of root in the composed DOM (Shadow DOM + Light DOM)
   */
   function getComposedDOM (root) {
     if (root.shadowRoot) {
@@ -211,7 +211,11 @@ function DOMSerializer () {
       if (root.children[i].tagName === 'CONTENT') {
         children.push.apply(children, root.children[i].getDistributedNodes());
       } else if (root.children[i].tagName === 'SHADOW') {
-        children.push.apply(children, getComposedDOM(root.olderShadowRoot));
+        var shadowRoot = root;
+        while (!shadowRoot.host) {
+          shadowRoot = shadowRoot.parentNode;
+        }
+        children.push.apply(children, getComposedDOM(shadowRoot.olderShadowRoot));
       } else {
         children.push(root.children[i]);
       }

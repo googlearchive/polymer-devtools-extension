@@ -156,14 +156,12 @@ function addToCache (obj, key) {
 * Called when the selection in the inspector changes
 */
 function inspectorSelectionChangeListener () {
-  if (window._polymerNamespace_.isPolymerElement($0)) {
-    if ($0.__keyPolymer__) {
-      window.dispatchEvent(new CustomEvent('inspected-element-changed', {
-        detail : {
-          key: $0.__keyPolymer__
-        }
-      }));
-    }
+  if ($0.__keyPolymer__) {
+    window.dispatchEvent(new CustomEvent('inspected-element-changed', {
+      detail : {
+        key: $0.__keyPolymer__
+      }
+    }));
   }
 }
 
@@ -493,7 +491,7 @@ function getObjectString (key, path, isModel) {
   }
   if (window._polymerNamespace_.isPolymerElement(obj)) {
     filter = function (prop) {
-      return window._polymerNamespace_.filterProperty(prop);
+      return window._polymerNamespace_.filterProperty(prop) && prop !== '__keyPolymer__';
     };
   }
   return {

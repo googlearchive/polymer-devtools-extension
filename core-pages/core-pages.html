@@ -1,0 +1,14 @@
+<!--
+  This was written simply because Polymer's core-pages doesn't work
+  with CSP. It is because it has `noscript` and vulcanize doesn't work
+  with that. When it's fixed, we should use Polymer's core-pages
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name='core-pages' attributes='selected'>
+  <template>
+    <content select='.core-pages-selected'></content>
+  </template>
+  <script src='core-pages.js'></script>
+</polymer-element>

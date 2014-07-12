@@ -6,20 +6,28 @@
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
     <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+    <link rel="import" href="core-pages/core-pages.html">
     <link rel="import" href="split-pane/split-pane.html">
     <link rel="import" href="element-tree/element-tree.html">
     <link rel="import" href="object-tree/object-tree.html">
     <link rel="import" href="method-list/method-list.html">
     <style>
-      .split-pane-right {
+      #pagesContainer {
         margin-left: 10px;
+        margin-top: 10px;
       }
       paper-tabs {
-        background-color: gray;
+        background-color: rgb(178, 224, 178);
         width: 100%;
       }
-      #methodListContainer {
-        margin-top: 20px;
+      paper-tabs {
+        background-color: rgba(239, 245, 255, 0.63);
+        width: 100%;
+        height: 30px;
+        color: rgb(47, 150, 141);
+      }
+      paper-tabs::shadow #selectionBar {
+        background-color: rgba(14, 177, 228, 0.83);
       }
     </style>
   </head>
@@ -29,10 +37,17 @@
         <element-tree></element-tree>
       </div>
       <div class='split-pane-right'>
-        <object-tree id='main-tree'></object-tree>
-        <object-tree id='model-tree'></object-tree>
-        <div id='methodListContainer'>
-          <method-list></method-list>
+        <paper-tabs id='tabs' selected='0' noink>
+          <paper-tab>Properties</paper-tab>
+          <paper-tab>Model</paper-tab>
+          <paper-tab>Breakpoints</paper-tab>
+        </paper-tabs>
+        <div id='pagesContainer'>
+          <core-pages id='pages' selected='0'>
+            <object-tree id='main-tree'></object-tree>
+            <object-tree id='model-tree'></object-tree>
+            <method-list></method-list>
+          </core-pages>
         </div>
       </div>
     </split-pane>

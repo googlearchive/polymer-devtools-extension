@@ -1,14 +1,14 @@
 {
-  "name" : "Test extension",
+  "name" : "Polymer debugging extension",
   "version" : "1.0",
-  "description" : "Test extension.",
+  "description" : "Helps debug Polymer apps.",
   "background" : {
     "scripts": ["background.js"]
   },
   "devtools_page": "devtools.html",
   "content_scripts" : [
     {
-      "matches" : [ 
+      "matches" : [
          "http://*/*",
          "https://*/*"
       ],

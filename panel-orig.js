@@ -16,6 +16,12 @@
     // methodList is the list of methods of the selected element. It is used
     // to add breakpoints
     methodList = document.querySelector('method-list');
+
+    var tabs = document.querySelector('#tabs');
+    var pages = document.querySelector('#pages')
+    tabs.addEventListener('core-select', function (event) {
+      pages.selected = tabs.selected;
+    });
     createEvalHelper(function (helper) {
       EvalHelper = helper;
       // Make all the definitions in the host page
@@ -221,10 +227,6 @@
           // Empty the object/model tree
           if (!isModel) {
             objectTree.tree.length = 0;
-            var parent = methodList.parentNode;
-            parent.removeChild(methodList);
-            methodList = new MethodList();
-            parent.appendChild(methodList);
             unhighlightElement(key, false);
           } else {
             modelTree.tree.length = 0;
@@ -421,7 +423,7 @@
           break;
       }
     });
-    
+
     // Send a message to background page so that the background page can associate panel
     // to the current host page
     backgroundPageConnection.postMessage({
