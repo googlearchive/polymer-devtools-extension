@@ -8,7 +8,8 @@
 
   function init () {
     var DOM;
-    elementTree = document.querySelector('element-tree');
+    elementTree = document.querySelector('element-tree#composedDOMTree');
+    shadowDOMTree = document.querySelector('element-tree#shadowDOMTree');
     // objectTree shows the properties of a selected element in the tree
     objectTree = document.querySelector('object-tree#main-tree');
     // modelTree shows the model behind a seleccted element (if any)
@@ -18,9 +19,14 @@
     methodList = document.querySelector('method-list');
 
     var tabs = document.querySelector('#tabs');
-    var pages = document.querySelector('#pages')
+    var objectTreePages = document.querySelector('#objectTreePages');
     tabs.addEventListener('core-select', function (event) {
-      pages.selected = tabs.selected;
+      objectTreePages.selected = tabs.selected;
+    });
+    var toggleButton = document.querySelector('#toggleButton');
+    var elementTreePages = document.querySelector('#elementTreePages');
+    toggleButton.addEventListener('change', function (event) {
+      elementTreePages.selected = toggleButton.checked ? 1 : 0;
     });
     createEvalHelper(function (helper) {
       EvalHelper = helper;
@@ -144,6 +150,9 @@
               throw error;
             }
             EvalHelper.executeFunction('getDOMString', [], function (result, error) {
+              if (error) {
+                throw error;
+              }
               DOM = JSON.parse(result.data);
               elementTree.initFromDOMTree(DOM);
             });

@@ -6,6 +6,7 @@
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
     <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+    <link rel="import" href="bower_components/paper-toggle-button/paper-toggle-button.html">
     <link rel="import" href="core-pages/core-pages.html">
     <link rel="import" href="split-pane/split-pane.html">
     <link rel="import" href="element-tree/element-tree.html">
@@ -29,11 +30,37 @@
       paper-tabs::shadow #selectionBar {
         background-color: rgba(14, 177, 228, 0.83);
       }
+      #localViewToggle {
+        margin: 10px;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border: 1px solid #C7E4ED;
+        display: inline-block;
+        padding: 3px;
+      }
+      #localViewToggle > span {
+        margin: 5px;
+        color: rgb(57, 139, 19);
+        -webkit-user-select: none;
+      }
+      paper-toggle-button {
+        vertical-align: middle
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink {
+        color: white;
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink[checked] {
+        color: white;
+      }
     </style>
   </head>
   <body unresolved>
     <split-pane>
       <div class='split-pane-left'>
+        <div id='localViewToggle'>
+          <span>Composed DOM</span>
+          <paper-toggle-button></paper-toggle-button>
+          <span>Shadow DOM</span>
+        </div>
         <element-tree></element-tree>
       </div>
       <div class='split-pane-right'>

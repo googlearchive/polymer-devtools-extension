@@ -430,8 +430,13 @@ function processMutations (mutations) {
 function getDOMString (el) {
   return {
     'data': window._polymerNamespace_.serializer.serializeDOMObject(el || document.body,
-      function (domNode, converted) {
+      function (domNode, converted, lightDOM) {
         if (!domNode.__keyPolymer__) {
+          if (lightDOM) {
+            // Something that wasn't found in the composed tree but found in the light DOM
+            // was probably not rendered.
+            converted.unRendered = true;
+          }
           // For every element found during traversal, we store it in a hash-table with a unique key.
           window._polymerNamespace_.lastDOMKey++;
           var key = window._polymerNamespace_.lastDOMKey;
@@ -443,6 +448,9 @@ function getDOMString (el) {
           domNode.__keyPolymer__ = key;
           converted.key = key;
 
+          if (window._polymerNamespace_.isPolymerElement(domNode)) {
+            converted.isPolymer = true;
+          }
           if (key === 1 || domNode.shadowRoot) {
             var observer = new MutationObserver(function (mutations) {
               window.dispatchEvent(new CustomEvent('dom-mutation', {

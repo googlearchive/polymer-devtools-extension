@@ -857,6 +857,129 @@
 ;
 
 
+  Polymer('paper-radio-button', {
+    
+    /**
+     * Fired when the checked state changes.
+     *
+     * @event change
+     */
+    
+    publish: {
+      /**
+       * Gets or sets the state, `true` is checked and `false` is unchecked.
+       *
+       * @attribute checked
+       * @type boolean
+       * @default false
+       */
+      checked: {value: false, reflect: true},
+      
+      /**
+       * The label for the radio button.
+       *
+       * @attribute label
+       * @type string
+       * @default ''
+       */
+      label: '',
+      
+      /**
+       * Normally the user cannot uncheck the radio button by tapping once
+       * checked.  Setting this property to `true` makes the radio button
+       * toggleable from checked to unchecked.
+       *
+       * @attribute toggles
+       * @type boolean
+       * @default false
+       */
+      toggles: false,
+      
+      /**
+       * If true, the user cannot interact with this element.
+       *
+       * @attribute disabled
+       * @type boolean
+       * @default false
+       */
+      disabled: {value: false, reflect: true}
+    },
+    
+    eventDelegates: {
+      tap: 'tap'
+    },
+    
+    tap: function() {
+      this.toggle();
+      this.fire('paper-radio-button-activate');
+    },
+    
+    toggle: function() {
+      this.checked = !this.toggles || !this.checked;
+    },
+    
+    checkedChanged: function() {
+      this.$.onRadio.classList.toggle('fill', this.checked);
+      this.setAttribute('aria-checked', this.checked ? 'true': 'false');
+      this.fire('change');
+    },
+    
+    labelChanged: function() {
+      this.setAttribute('aria-label', this.label);
+    }
+    
+  });
+  
+;
+
+
+  Polymer('paper-toggle-button', {
+    
+    /**
+     * Fired when the checked state changes.
+     *
+     * @event change
+     */
+
+    /**
+     * Gets or sets the state, `true` is checked and `false` is unchecked.
+     *
+     * @attribute checked
+     * @type boolean
+     * @default false
+     */
+    checked: false,
+
+    trackStart: function(e) {
+      this._w = this.$.toggleBar.offsetLeft + this.$.toggleBar.offsetWidth;
+      e.preventTap();
+    },
+
+    track: function(e) {
+      this._x = Math.min(this._w, 
+          Math.max(0, this.checked ? this._w + e.dx : e.dx));
+      this.$.toggleRadio.classList.add('dragging');
+      var s =  this.$.toggleRadio.style;
+      s.webkitTransform = s.transform = 'translate3d(' + this._x + 'px,0,0)';
+    },
+
+    trackEnd: function() {
+      var s =  this.$.toggleRadio.style;
+      s.webkitTransform = s.transform = null;
+      this.$.toggleRadio.classList.remove('dragging');
+      this.checked = Math.abs(this._x) > this._w / 2;
+    },
+
+    checkedChanged: function() {
+      this.setAttribute('aria-pressed', Boolean(this.checked));
+      this.fire('change');
+    }
+
+  });
+
+;
+
+
   Polymer('core-splitter', {
     
     /**

@@ -753,6 +753,316 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </polymer-element>
 </div>
     <div hidden><!--
+Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!--
+`paper-toggle-button` provides a ON/OFF switch that user can toggle the state
+by tapping or by dragging the swtich.
+
+Example:
+
+    <paper-toggle-button></paper-toggle-button>
+
+Styling toggle button:
+
+To change the ink color for checked state:
+
+    paper-toggle-button::shadow paper-radio-button::shadow #ink[checked] {
+      color: #4285f4;
+    }
+    
+To change the radio checked color:
+    
+    paper-toggle-button::shadow paper-radio-button::shadow #onRadio {
+      background-color: #4285f4;
+    }
+    
+To change the bar color for checked state:
+
+    paper-toggle-button::shadow #toggleBar[checked] {
+      background-color: #4285f4;
+    }
+    
+To change the ink color for unchecked state:
+
+    paper-toggle-button::shadow paper-radio-button::shadow #ink {
+      color: #b5b5b5;
+    }
+    
+To change the radio unchecked color:
+    
+    paper-toggle-button::shadow paper-radio-button::shadow #offRadio {
+      border-color: #b5b5b5;
+    }
+
+To change the bar color for unchecked state:
+
+    paper-toggle-button::shadow #toggleBar {
+      background-color: red;
+    }
+
+@group Paper Elements
+@element paper-toggle-button
+@homepage github.io
+-->
+
+<!--
+Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!--
+`paper-radio-button` is a button that can be either checked or unchecked.
+User can tap the radio button to check it.  But it cannot be unchecked by
+tapping once checked.
+
+Use `paper-radio-group` to group a set of radio buttons.  When radio buttons
+are inside a radio group, only one radio button in the group can be checked.
+
+Example:
+
+    <paper-radio-button></paper-radio-button>
+    
+Styling radio button:
+
+To change the ink color for checked state:
+
+    paper-radio-button::shadow #ink[checked] {
+      color: #4285f4;
+    }
+    
+To change the radio checked color:
+    
+    paper-radio-button::shadow #onRadio {
+      background-color: #4285f4;
+    }
+    
+To change the ink color for unchecked state:
+
+    paper-radio-button::shadow #ink {
+      color: #b5b5b5;
+    }
+    
+To change the radio unchecked color:
+    
+    paper-radio-button::shadow #offRadio {
+      border-color: #b5b5b5;
+    }
+
+@group Paper Elements
+@element paper-radio-button
+@homepage github.io
+-->
+
+
+
+<polymer-element name="paper-radio-button" role="radio" tabindex="0" aria-checked="false" assetpath="bower_components/paper-radio-button/">
+<template>
+
+  <style>/*
+Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
+:host {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+:host(:focus) {
+  outline: none;
+}
+
+#radioContainer {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+#radioContainer.labeled {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#ink {
+  position: absolute;
+  top: -17px;
+  left: -17px;
+  width: 50px;
+  height: 50px;
+  color: #5a5a5a;
+}
+
+#ink[checked] {
+  color: #0f9d58;
+}
+
+#offRadio {
+  position: absolute;
+  top: 0px;
+  left: 0px; 
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: solid 2px;
+  border-color: #5a5a5a;
+}
+
+#onRadio {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #0f9d58;
+  -webkit-transform: scale(0);
+  transform: scale(0);
+  transition: -webkit-transform ease 0.28s;
+  transition: transform ease 0.28s;
+}
+
+#onRadio.fill {
+  -webkit-transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+#radioLabel {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  white-space: normal;
+  pointer-events: none;
+}
+
+#radioLabel[hidden] {
+  display: none;
+}
+
+/* disabled state */
+:host([disabled]) {
+  pointer-events: none;
+}
+
+:host([disabled]) #offRadio {
+  border-color: #eaeaea !important;
+}
+
+:host([disabled]) #onRadio {
+  background-color: #eaeaea !important;
+}
+</style>
+  
+  <div id="radioContainer" class="{{ {labeled: label} | tokenList }}">
+  
+    <div id="offRadio"></div>
+    <div id="onRadio"></div>
+    
+    <paper-ripple id="ink" class="circle recenteringTouch" checked?="{{!checked}}"></paper-ripple>
+    
+  </div>
+  
+  <div id="radioLabel" aria-hidden="true" hidden?="{{!label}}">{{label}}<content></content></div>
+  
+</template>
+
+</polymer-element>
+
+
+<polymer-element name="paper-toggle-button" attributes="checked" touch-action="pan-y" role="button" aria-pressed="false" tabindex="0" assetpath="bower_components/paper-toggle-button/">
+<template>
+
+  <style>/*
+Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
+:host {
+  display: inline-block;
+}
+
+:host(:focus) {
+  outline: none;
+}
+
+#toggleContainer {
+  position: relative;
+  width: 64px;
+  height: 16px;
+}
+
+#toggleBar {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  height: 1px;
+  width: 32px;
+  background-color: #5a5a5a;
+  pointer-events: none;
+}
+
+#toggleBar[checked] {
+  background-color: #0f9d58;
+}
+
+#toggleContainer[checked] #checkedBar {
+  width: 100%;
+}
+
+#toggleRadio {
+  position: absolute;
+  left: 0;
+  padding: 8px 48px 8px 0;
+  margin: -8px -48px -8px 0;
+  transition: -webkit-transform linear .08s;
+  transition: transform linear .08s;
+}
+
+#toggleRadio[checked] {
+  -webkit-transform: translate(48px, 0);
+  transform: translate(48px, 0);
+  padding: 8px 0 8px 48px;
+  margin: -8px 0 -8px -48px;
+}
+
+#toggleRadio.dragging {
+  -webkit-transition: none;
+  transition: none;
+}</style>
+
+  <div id="toggleContainer">
+  
+    <div id="toggleBar" checked?="{{checked}}"></div>
+  
+    <paper-radio-button id="toggleRadio" toggles="" checked="{{checked}}" on-trackstart="{{trackStart}}" on-track="{{track}}" on-trackend="{{trackEnd}}"></paper-radio-button>
+    
+  </div>
+
+</template>
+
+</polymer-element>
+</div>
+    <div hidden><!--
   This was written simply because Polymer's core-pages doesn't work
   with CSP. It is because it has `noscript` and vulcanize doesn't work
   with that. When it's fixed, we should use Polymer's core-pages
@@ -1573,11 +1883,37 @@ html /deep/ core-icon[size=""] > svg {
       paper-tabs::shadow #selectionBar {
         background-color: rgba(14, 177, 228, 0.83);
       }
+      #localViewToggle {
+        margin: 10px;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border: 1px solid #C7E4ED;
+        display: inline-block;
+        padding: 3px;
+      }
+      #localViewToggle > span {
+        margin: 5px;
+        color: rgb(57, 139, 19);
+        -webkit-user-select: none;
+      }
+      paper-toggle-button {
+        vertical-align: middle
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink {
+        color: white;
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink[checked] {
+        color: white;
+      }
     </style>
   </head>
   <body unresolved="">
     <split-pane>
       <div class="split-pane-left">
+        <div id="localViewToggle">
+          <span>Composed DOM</span>
+          <paper-toggle-button></paper-toggle-button>
+          <span>Shadow DOM</span>
+        </div>
         <element-tree></element-tree>
       </div>
       <div class="split-pane-right">

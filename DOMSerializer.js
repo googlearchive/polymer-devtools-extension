@@ -6,10 +6,6 @@ function DOMSerializer () {
   function isPolymerElement (element) {
     return element && ('element' in element) && (element.element.localName === 'polymer-element');
   }
-  function isCustomElement (element) {
-    return element.shadowRoot && 
-      element.localName.indexOf('-') !== -1 || element.getAttribute('is');
-  }
 
   // Polymer-specific stuff (to flag them differently)
   var polymerSpecificProps = {
@@ -203,13 +199,21 @@ function DOMSerializer () {
   * Gets the children of root in the composed DOM (Shadow DOM + Light DOM)
   */
   function getComposedDOM (root) {
-    if (root.shadowRoot) {
-      root = root.shadowRoot;
+    var res = {
+      shadowRoots: [],
+      lightDOMChildren: []
+    };
+    for (var i = 0; i < root.children; i++) {
+      res.lightDOMChildren.push(root.children[i]);
     }
-    var children = [];
+    if (!root.shadowRoot) {
+      return res;
+    }
+    root = root.shadowRoot;
+    res.shadowRoots.push([]);
     for (var i = 0; i < root.children.length; i++) {
       if (root.children[i].tagName === 'CONTENT') {
-        children.push.apply(children, root.children[i].getDistributedNodes());
+        res.push.apply(children, root.children[i].getDistributedNodes());
       } else if (root.children[i].tagName === 'SHADOW') {
         var shadowRoot = root;
         while (!shadowRoot.host) {
@@ -217,7 +221,7 @@ function DOMSerializer () {
         }
         children.push.apply(children, getComposedDOM(shadowRoot.olderShadowRoot));
       } else {
-        children.push(root.children[i]);
+        res.normalChildren.push(root.children[i]);
       }
     }
     return children.filter(function (node) {
@@ -250,8 +254,7 @@ function DOMSerializer () {
         return null;
       }
       callback && callback(root, res);
-      if (isPolymerElement(root) ||
-        (root.tagName === 'TEMPLATE' && root.model)) {
+      if (isPolymerElement(root)) {
         res.isPolymer = true;
       }
       var children = getComposedDOM(root);

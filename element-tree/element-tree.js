@@ -18,6 +18,7 @@
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
     },
     addChild: function (element) {
+      element.indent = this.indent + this.baseWidth;
       this.childElements.push(element);
       this.$.childrenContent.appendChild(element);
     },
@@ -59,7 +60,9 @@
       for (var i = 0; i < tree.children.length; i++) {
         // Create a new ElementTree to hold a child
         var child = new ElementTree();
-        child.indent = this.indent + this.baseWidth;
+        if (isShadowDOMTree) {
+          child.initFromDOMTree(tree.children[i])
+        }
         child.initFromDOMTree(tree.children[i], this.root, this.keyMap);
         this.addChild(child);
       }
@@ -120,6 +123,7 @@
     * Tells the extension to highlight the element that was hovered on. 
     */
     mouseOver: function () {
+      // Only if this is not already selected
       if (!this.selected) {
         this.fire('highlight', {
           key: this.key
@@ -127,6 +131,7 @@
       }
     },
     mouseOut: function () {
+      // Only if this is not already selected
       if (!this.selected) {
         this.fire('unhighlight', {
           key: this.key
