@@ -46,18 +46,6 @@ function scrollIntoView (key) {
   }
 }
 
-/*function addElementSelectionCSS (key) {
-  function mouseEnter (event) {
-    event.stopPropagation();
-  }
-  function mouseLeave (event) {
-    event.stopPropagation();
-  }
-  var element = window._polymerNamespace_.DOMCache[key];
-    element.
-}
-*/
-
 /**
 * Set a breakpoint at the beginning of a function
 */
@@ -448,9 +436,7 @@ function getDOMString (el) {
           domNode.__keyPolymer__ = key;
           converted.key = key;
 
-          if (window._polymerNamespace_.isPolymerElement(domNode)) {
-            converted.isPolymer = true;
-          }
+          converted.isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
           if (key === 1 || domNode.shadowRoot) {
             var observer = new MutationObserver(function (mutations) {
               window.dispatchEvent(new CustomEvent('dom-mutation', {
@@ -469,8 +455,10 @@ function getDOMString (el) {
               observer.observe(domNode.shadowRoot, config);
             }
           }
-        } else {
+        }
+        if (!converted.key) {
           converted.key = domNode.__keyPolymer__;
+          converted.isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
         }
       }
     )

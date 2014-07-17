@@ -195,39 +195,86 @@ function DOMSerializer () {
     return res;
   }
 
+  function isScriptOrStyle (el) {
+    return el && (el.tagName === 'SCRIPT' || el.tagName === 'STYLE');
+  }
+  /**
+  * Does a deep light DOM exploration.
+  * Puts child tree under <shadow> and <content> tags if found
+  */
+  function exploreLightDOM (root, callback) {
+    var res = {
+      children: [],
+      tagName: root.tagName.toLowerCase()
+    };
+    // Call the callback with the DOM node, the to-be-converted object
+    // and true to mean that it was found in the light DOM exploration
+    callback && callback(root, res, true);
+    if (root.tagName === 'CONTENT') {
+      // <content> must get replaced by what gets distributed into it
+      var children = root.getDistributedNodes();
+      for (var j = 0; j < children.length; j++) {
+        if ('tagName' in children[j]) {
+          res.children.push(exploreLightDOM(children[j], callback));
+        }
+      }
+    } else if (root === 'SHADOW') {
+      // <shadow> must get replaced by stuff from older shadow root
+      var children = getComposedDOMChildren(root);
+      for (var j = 0; j < children.length; j++) {
+        res.children.push(exploreLightDOM(children[j], callback));
+      }
+    } else {
+      for (var i = 0; i < root.children.length; i++) {
+        if (root.children[i] && 'tagName' in root.children[i]) {
+          if (!isScriptOrStyle(root.children[i])) {
+            res.children.push(exploreLightDOM(root.children[i], callback));
+          }
+        }
+      }
+    }
+    return res;
+  }
   /**
   * Gets the children of root in the composed DOM (Shadow DOM + Light DOM)
   */
-  function getComposedDOM (root) {
-    var res = {
-      shadowRoots: [],
-      lightDOMChildren: []
-    };
-    for (var i = 0; i < root.children; i++) {
-      res.lightDOMChildren.push(root.children[i]);
-    }
-    if (!root.shadowRoot) {
-      return res;
-    }
-    root = root.shadowRoot;
-    res.shadowRoots.push([]);
-    for (var i = 0; i < root.children.length; i++) {
-      if (root.children[i].tagName === 'CONTENT') {
-        res.push.apply(children, root.children[i].getDistributedNodes());
-      } else if (root.children[i].tagName === 'SHADOW') {
-        var shadowRoot = root;
-        while (!shadowRoot.host) {
-          shadowRoot = shadowRoot.parentNode;
+  function getComposedDOMChildren (root) {
+    if (root.tagName === 'CONTENT') {
+      // <content> must get replaced by what gets distributed into it
+      var children = [];
+      var distributedNodes = root.getDistributedNodes();
+      for (var j = 0; j < distributedNodes.length; j++) {
+        if ('tagName' in distributedNodes[j]) {
+          children.push(distributedNodes[j]);
         }
-        children.push.apply(children, getComposedDOM(shadowRoot.olderShadowRoot));
-      } else {
-        res.normalChildren.push(root.children[i]);
+      }
+      return children;
+    }
+    if (root.tagName === 'SHADOW') {
+      // <shadow> must get replaced by stuff from older shadow root
+      var children = [];
+      var shadowRoot = root;
+      while (!shadowRoot.host) {
+        shadowRoot = shadowRoot.parentNode;
+      }
+      if (!shadowRoot.olderShadowRoot) {
+        // This is a mistake in the host page. A <shadow> was used
+        // when there is no olderShadowRoot.
+        // TODOD: We should warn the user somehow.
+        return [];
+      }
+      return getComposedDOMChildren(shadowRoot.olderShadowRoot);
+    }
+    if (root.shadowRoot) {
+      root = root.shadowRoot;
+    }
+    var children = [];
+    for (var i = 0; i < root.children.length; i++) {
+      if ('tagName' in root.children[i]) {
+        children.push(root.children[i]);
       }
     }
-    return children.filter(function (node) {
-      // Filter out non-element nodes
-      return 'tagName' in node;
-    });
+    return children;
   }
 
   /**
@@ -248,28 +295,30 @@ function DOMSerializer () {
       if ('tagName' in root) {
         res.tagName = root.tagName.toLowerCase();
       } else {
+        console.error(root);
         throw 'tagName is a required property';
       }
-      if (root.tagName === 'SCRIPT' || root.tagName === 'STYLE') {
+      if (!root || isScriptOrStyle(root)) {
+        // We don't show script and style tags
         return null;
       }
       callback && callback(root, res);
-      if (isPolymerElement(root)) {
-        res.isPolymer = true;
-      }
-      var children = getComposedDOM(root);
+      var composedDOMChildren = getComposedDOMChildren(root);
       res.children = [];
-      if (!root) {
-        return res;
-      }
-      for (var i = 0; i < children.length; i++) {
-        if (children[i]) {
-          var child = traverse(children[i]);
+
+      // composedDOMChildren is an array of elements found at a level immediately below this
+      // in the composed tree
+      for (var i = 0; i < composedDOMChildren.length; i++) {
+        if (composedDOMChildren[i]) {
+          var child = traverse(composedDOMChildren[i]);
           if (child) {
             res.children.push(child);
           }
         }
       }
+      // With everything that is in the composed DOM tree at root being traversed through
+      // we can be sure `callback` has dealt with all the rendered elements.
+      res.lightDOMTree = exploreLightDOM(root, callback);
       return res;
     }
     return JSON.stringify(traverse(root));

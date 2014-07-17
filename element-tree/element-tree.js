@@ -30,6 +30,7 @@
       if (this.selected) {
         this.root.selectedChild = null;
         this.selected = false;
+        this.$.thisElement.removeAttribute('selected');
       }
       if (this.keyMap && this.keyMap[this.key]) {
         delete this.keyMap[this.key];
@@ -46,13 +47,15 @@
     * @root: not passed in first call, but passed internally to
     * pass around the root of the entire tree.
     */
-    initFromDOMTree: function (tree, root, keyMap) {
+    initFromDOMTree: function (tree, root) {
       this.empty();
       this.text = '<' + tree.tagName + '>';
       this.isPolymer = tree.isPolymer;
+      this.unRendered = tree.unRendered;
       this.key = tree.key;
-      this.keyMap = keyMap || this.keyMap || {};
+      this.keyMap = this.keyMap || (root ? root.keyMap : {});
       this.keyMap[this.key] = this;
+      this.tree = tree;
       if (this.isPolymer) {
         this.$.name.setAttribute('polymer', 'polymer');
       }
@@ -60,10 +63,7 @@
       for (var i = 0; i < tree.children.length; i++) {
         // Create a new ElementTree to hold a child
         var child = new ElementTree();
-        if (isShadowDOMTree) {
-          child.initFromDOMTree(tree.children[i])
-        }
-        child.initFromDOMTree(tree.children[i], this.root, this.keyMap);
+        child.initFromDOMTree(tree.children[i], this.root);
         this.addChild(child);
       }
     },
@@ -137,6 +137,11 @@
           key: this.key
         });
       }
+    },
+    magnify: function () {
+      this.fire('magnify', {
+        key: this.key
+      });
     }
   });
 })();

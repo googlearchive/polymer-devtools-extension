@@ -13,7 +13,7 @@
     <link rel="import" href="object-tree/object-tree.html">
     <link rel="import" href="method-list/method-list.html">
     <style>
-      #pagesContainer {
+      #objectTreePagesContainer {
         margin-left: 10px;
         margin-top: 10px;
       }
@@ -41,6 +41,7 @@
         margin: 5px;
         color: rgb(57, 139, 19);
         -webkit-user-select: none;
+        cursor: default;
       }
       paper-toggle-button {
         vertical-align: middle
@@ -58,10 +59,13 @@
       <div class='split-pane-left'>
         <div id='localViewToggle'>
           <span>Composed DOM</span>
-          <paper-toggle-button></paper-toggle-button>
-          <span>Shadow DOM</span>
+          <paper-toggle-button id='toggleButton'></paper-toggle-button>
+          <span>Local DOM</span>
         </div>
-        <element-tree></element-tree>
+         <core-pages id='elementTreePages' selected='0'>
+            <element-tree id='composedDOMTree'></element-tree>
+            <element-tree id='shadowDOMTree'></element-tree>
+          </core-pages>
       </div>
       <div class='split-pane-right'>
         <paper-tabs id='tabs' selected='0' noink>
@@ -69,8 +73,8 @@
           <paper-tab>Model</paper-tab>
           <paper-tab>Breakpoints</paper-tab>
         </paper-tabs>
-        <div id='pagesContainer'>
-          <core-pages id='pages' selected='0'>
+        <div id='objectTreePagesContainer'>
+          <core-pages id='objectTreePages' selected='0'>
             <object-tree id='main-tree'></object-tree>
             <object-tree id='model-tree'></object-tree>
             <method-list></method-list>

@@ -39,7 +39,7 @@
         font-size: 12px;
         font-family: dejavu sans mono, monospace;
         cursor: default;
-        width: 92%;
+        width: 87%;
         color: #C04747;
         height: 16px;
         display: inline-block;
@@ -57,6 +57,8 @@
     <div id='content'>
       <div id='thisElement' on-mouseover='{{mouseOver}}' on-mouseout='{{mouseOut}}'>
         <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
+        <input hidden?='{{!isPolymer}}' type='button' id='magnify' value='+' on-click='{{magnify}}'></input>
+        <span hidden?='{{!unRendered}}'> ! </span>
         <span on-click='{{toggleSelection}}' id='name'>{{text}}</span>
       </div>
       <div id='childrenContent'></div>

@@ -2,10 +2,13 @@
   // The cache equivalent to the DOM cache maintained in the host page.
   // Used to display object-tree in response to selection in element-tree.
   var elementTree;
+  var shadowDOMTree;
   var objectTree;
   var methodList;
   var EvalHelper;
-
+  var localDOMMode = false;
+  var deepView = false;
+  var DOMCache = {};
   function init () {
     var DOM;
     elementTree = document.querySelector('element-tree#composedDOMTree');
@@ -26,7 +29,9 @@
     var toggleButton = document.querySelector('#toggleButton');
     var elementTreePages = document.querySelector('#elementTreePages');
     toggleButton.addEventListener('change', function (event) {
+      unSelectInTree();
       elementTreePages.selected = toggleButton.checked ? 1 : 0;
+      localDOMMode = toggleButton.checked;
     });
     createEvalHelper(function (helper) {
       EvalHelper = helper;
@@ -135,11 +140,7 @@
         {
           name: 'inspectorSelectionChangeListener',
           string: inspectorSelectionChangeListener.toString()
-        }/*,
-        {
-          name: 'addElementSelectionCSS',
-          string: addElementSelectionCSS.toString()
-        }*/
+        }
       ], function (result, error) {
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
@@ -155,6 +156,7 @@
               }
               DOM = JSON.parse(result.data);
               elementTree.initFromDOMTree(DOM);
+              initShadowDOMTree(shadowDOMTree, DOM);
             });
           });
         });
@@ -162,6 +164,55 @@
     });
   }
 
+  function initShadowDOMTree (tree, DOM) {
+    if (!deepView) {
+      tree.initFromDOMTree(DOM.lightDOMTree);
+      return;
+    }
+    if (tree === shadowDOMTree) {
+      var lightDOMTreeRoot = {
+        tagName: DOM.lightDOMTree.tagName,
+        key: DOM.lightDOMTree.key,
+        children: []
+      };
+      tree.initFromDOMTree(lightDOMTreeRoot);
+      var childTree;
+      for (var i = 0; i < DOM.lightDOMTree.children.length; i++) {
+        childTree = new ElementTree();
+        childTree.initFromDOMTree(DOM.lightDOMTree.children[i], shadowDOMTree);
+        tree.addChild(childTree);
+      }
+    } else {
+      tree.initFromDOMTree(DOM.lightDOMTree);
+    }
+  }
+  function getCurrentElementTreeKey () {
+    if (localDOMMode) {
+      return shadowDOMTree.selectedChild ? shadowDOMTree.selectedChild.key : null;
+    }
+    return elementTree.selectedChild ? elementTree.selectedChild.key : null;
+  }
+  function getCurrentElementTree () {
+    if (localDOMMode) {
+      return shadowDOMTree;
+    }
+    return elementTree;
+  }
+  function getDOMTreeForKey (key) {
+    var childTree = elementTree.getChildTreeForKey(key);
+    if (childTree) {
+      return childTree.tree;
+    }
+    return null;
+  }
+
+  function unSelectInTree () {
+    var selectedKey = getCurrentElementTreeKey();
+    if (selectedKey) {
+      var childTree = getCurrentElementTree().selectedChild;
+      childTree.toggleSelection();
+    }
+  }
   /**
   * Highlight an element in the page
   * isHover: true if element is to be highlighted because it was hovered
@@ -196,8 +247,7 @@
   /**
   * isModel tells if it is model-tree that we are expanding
   */
-  function expandObject (path, isModel) {
-    var key = elementTree.selectedChild.key;
+  function expandObject (key, path, isModel) {
     EvalHelper.executeFunction('getObjectString', [key, path, isModel], function (result, error) {
       var props = JSON.parse(result.data).value;
       var childTree = isModel ? modelTree.tree : objectTree.tree;
@@ -218,8 +268,8 @@
 
   function selectElement (key) {
     // When an element is selected, we try to open both the main and model trees
-    expandObject([], false);
-    expandObject([], true);
+    expandObject(key, [], false);
+    expandObject(key, [], true);
     // Visually highlight the element in the page and scroll it into view
     highlightElement(key);
   }
@@ -284,7 +334,7 @@
     window.addEventListener('property-changed', function (event) {
       var newValue = event.detail.value;
       var path = event.detail.path;
-      var key = elementTree.selectedChild.key;
+      var key = getCurrentElementTreeKey();
       var childTree = event.detail.tree;
       var isModel = (event.target.id === 'model-tree');
       // Reflect a change in property in the host page
@@ -302,7 +352,7 @@
       );
     });
     window.addEventListener('refresh-property', function (event) {
-      var key = elementTree.selectedChild.key;
+      var key = getCurrentElementTreeKey();
       var childTree = event.detail.tree;
       var path = event.detail.path;
       var isModel = (event.target.id === 'model-tree');
@@ -310,12 +360,13 @@
     });
     window.addEventListener('object-expand', function (event) {
       var isModel = (event.target.id === 'model-tree');
-      expandObject(event.detail.path, isModel);
+      var key = getCurrentElementTreeKey();
+      expandObject(key, event.detail.path, isModel);
     });
     // An object has been collapsed. We must remove the object observer
     // and empty the index-propName map in the host page for this object
     window.addEventListener('object-collapse', function (event) {
-      var key = elementTree.selectedChild.key;
+      var key = getCurrentElementTreeKey();
       var path = event.detail.path;
       var isModel = (event.target.id === 'model-tree');
       EvalHelper.executeFunction('removeObjectObserver', [key, path, isModel], function (result, error) {
@@ -330,7 +381,7 @@
       });
     });
     window.addEventListener('breakpoint-toggle', function (event) {
-      var key = elementTree.selectedChild.key;
+      var key = getCurrentElementTreeKey();
       var index = event.detail.index;
       var functionName = event.detail.isSet ? 'setBreakpoint' : 'clearBreakpoint';
       EvalHelper.executeFunction(functionName, [key, [index]], function (result, error) {
@@ -350,6 +401,15 @@
       unhighlightElement(key, true);
     });
 
+    window.addEventListener('magnify', function (event) {
+      var key = event.detail.key;
+      var childTree = getCurrentElementTree().getChildTreeForKey(key);
+      if (!localDOMMode) {
+        var DOMTree = getDOMTreeForKey(key);
+        unSelectInTree();
+        initShadowDOMTree(shadowDOMTree, DOMTree);
+      }
+    });
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
     });
@@ -411,11 +471,16 @@
           for (var i = 0; i < mutations.length; i++) {
             var newElement = JSON.parse(mutations[i].data);
             var key = newElement.key;
-            var childTree = elementTree.getChildTreeForKey(key);
+            var tree = getCurrentElementTree();
+            var childTree = tree.getChildTreeForKey(key);
             if (childTree.selected) {
-              unselectElement(childTree.key, function () {
+              unselectElement(key, function () {
                 childTree.empty();
-                childTree.initFromDOMTree(newElement);
+                if (localDOMMode) {
+                  initShadowDOMTree(childTree, newElement);
+                } else {
+                  childTree.initFromDOMTree(newElement);
+                }
               });
             } else {
               childTree.empty();
@@ -424,9 +489,10 @@
           }
           break;
         case 'inspected-element-changed':
-        // An element got selected in the inspector, must select in element-tree
-          var childTree = elementTree.getChildTreeForKey(message.key);
-          if (!childTree.selected) {
+          // An element got selected in the inspector, must select in element-tree
+          var tree = getCurrentElementTree();
+          var childTree = tree.getChildTreeForKey(message.key);
+          if (childTree && !childTree.selected) {
             childTree.toggleSelection();
           }
           break;

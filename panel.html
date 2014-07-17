@@ -5,7 +5,7 @@
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
-    <div hidden><!--
+    <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -751,8 +751,8 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 </template>
 
 </polymer-element>
-</div>
-    <div hidden><!--
+
+    <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -1061,8 +1061,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </template>
 
 </polymer-element>
-</div>
-    <div hidden><!--
+
+    <!--
   This was written simply because Polymer's core-pages doesn't work
   with CSP. It is because it has `noscript` and vulcanize doesn't work
   with that. When it's fixed, we should use Polymer's core-pages
@@ -1076,8 +1076,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="core-pages/core-pages.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 <!--Creates a double pane with a splitter in between-->
 
 <!--
@@ -1170,7 +1170,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         flex-direction: row;
       }
       #left {
-        width: 60%;
+        width: 70%;
         height: 100%;
         overflow: auto;
       }
@@ -1192,8 +1192,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script src="split-pane/split-pane.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -1694,7 +1694,7 @@ html /deep/ core-icon[size=""] > svg {
         font-size: 12px;
         font-family: dejavu sans mono, monospace;
         cursor: default;
-        width: 92%;
+        width: 87%;
         color: #C04747;
         height: 16px;
         display: inline-block;
@@ -1712,6 +1712,8 @@ html /deep/ core-icon[size=""] > svg {
     <div id="content">
       <div id="thisElement" on-mouseover="{{mouseOver}}" on-mouseout="{{mouseOut}}">
         <core-icon id="expandBtn" on-click="{{toggle}}" icon="{{expandBtnIcon}}" size="15"></core-icon>
+        <input hidden?="{{!isPolymer}}" type="button" id="magnify" value="+" on-click="{{magnify}}">
+        <span hidden?="{{!unRendered}}"> ! </span>
         <span on-click="{{toggleSelection}}" id="name">{{text}}</span>
       </div>
       <div id="childrenContent"></div>
@@ -1719,8 +1721,8 @@ html /deep/ core-icon[size=""] > svg {
   </template>
   <script src="element-tree/element-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 <!--A text label that is editable upon mouse-click-->
 
@@ -1824,8 +1826,8 @@ html /deep/ core-icon[size=""] > svg {
   </template>
   <script src="object-tree/object-tree.js"></script>
 </polymer-element>
-</div>
-    <div hidden>
+
+    
 
 
 <polymer-element name="method-list" constructor="MethodList" assetpath="method-list/">
@@ -1864,9 +1866,9 @@ html /deep/ core-icon[size=""] > svg {
   </template>
   <script src="method-list/method-list.js"></script>
 </polymer-element>
-</div>
+
     <style>
-      #pagesContainer {
+      #objectTreePagesContainer {
         margin-left: 10px;
         margin-top: 10px;
       }
@@ -1894,6 +1896,7 @@ html /deep/ core-icon[size=""] > svg {
         margin: 5px;
         color: rgb(57, 139, 19);
         -webkit-user-select: none;
+        cursor: default;
       }
       paper-toggle-button {
         vertical-align: middle
@@ -1911,10 +1914,13 @@ html /deep/ core-icon[size=""] > svg {
       <div class="split-pane-left">
         <div id="localViewToggle">
           <span>Composed DOM</span>
-          <paper-toggle-button></paper-toggle-button>
-          <span>Shadow DOM</span>
+          <paper-toggle-button id="toggleButton"></paper-toggle-button>
+          <span>Local DOM</span>
         </div>
-        <element-tree></element-tree>
+         <core-pages id="elementTreePages" selected="0">
+            <element-tree id="composedDOMTree"></element-tree>
+            <element-tree id="shadowDOMTree"></element-tree>
+          </core-pages>
       </div>
       <div class="split-pane-right">
         <paper-tabs id="tabs" selected="0" noink="">
@@ -1922,8 +1928,8 @@ html /deep/ core-icon[size=""] > svg {
           <paper-tab>Model</paper-tab>
           <paper-tab>Breakpoints</paper-tab>
         </paper-tabs>
-        <div id="pagesContainer">
-          <core-pages id="pages" selected="0">
+        <div id="objectTreePagesContainer">
+          <core-pages id="objectTreePages" selected="0">
             <object-tree id="main-tree"></object-tree>
             <object-tree id="model-tree"></object-tree>
             <method-list></method-list>
