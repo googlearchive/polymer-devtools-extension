@@ -7,6 +7,8 @@
   var objectTree;
   var methodList;
   var EvalHelper;
+  var splitPane;
+  var elementTreeScrollTop;
   // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
   // deepView is true when the local DOM view is showing the shadow DOM contents,
@@ -24,6 +26,7 @@
     // to add breakpoints
     methodList = document.querySelector('method-list');
 
+    splitPane = document.querySelector('split-pane');
     // tabs is an instance of paper-tabs that is used to change the object-tree
     // shown in view
     var tabs = document.querySelector('#tabs');
@@ -38,6 +41,7 @@
     toggleButton.addEventListener('change', function (event) {
       // Unselect whatever is selected in whichever element-tree
       unSelectInTree();
+      splitPane.leftScrollTop = elementTreeScrollTop;
       elementTreePages.selected = toggleButton.checked ? 1 : 0;
       localDOMMode = toggleButton.checked;
     });
@@ -255,9 +259,11 @@
       return;
     }
     unSelectInTree();
+    elementTreeScrollTop = splitPane.leftScrollTop;
     elementTreePages.selected = 1;
     localDOMMode = true;
     toggleButton.checked = true;
+    splitPane.rightScrollTop = 0;
   }
 
   function getDOMTreeForKey (key) {
@@ -553,7 +559,7 @@
               // an update there
               var childElementTree = elementTree.getChildTreeForKey(key);
               if (childElementTree) {
-                childElementTree.initFromDOMTree(newElement, true);
+                childElementTree.initFromDOMTree(newElement, true, elementTree);
               }
               if (!localDOMMode) {
                 // If we're in the composed DOM view, we are done
@@ -579,6 +585,7 @@
           if (childTree && !childTree.selected) {
             childTree.toggleSelection();
           }
+          childTree.scrollIntoView();
           break;
       }
     });
