@@ -227,7 +227,7 @@ function DOMJSONizer () {
           res.children.push(exploreLightDOM(children[j], callback));
         }
       }
-    } else if (root === 'SHADOW') {
+    } else if (root.tagName === 'SHADOW') {
       // <shadow> must get replaced by stuff from older shadow root
       var children = getComposedDOMChildren(root);
       for (var j = 0; j < children.length; j++) {

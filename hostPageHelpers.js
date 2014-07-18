@@ -462,13 +462,9 @@ function getDOMJSON (el) {
           }
         }
         converted.key = domNode.__keyPolymer__;
-        var isTemplate = ((domNode.tagName === 'TEMPLATE') && ('model' in domNode));
         var isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
-        // optionally set these properties
-        if (isTemplate) {
-          converted.isTemplate = true;
-        }
-        if (isPolymer || isTemplate) {
+        // conditionally set the properties
+        if (isPolymer) {
           converted.isPolymer = true;
         }
       }

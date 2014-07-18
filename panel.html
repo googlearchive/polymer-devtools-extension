@@ -1712,7 +1712,7 @@ html /deep/ core-icon[size=""] > svg {
     <div id="content">
       <div id="thisElement" on-mouseover="{{mouseOver}}" on-mouseout="{{mouseOut}}">
         <core-icon id="expandBtn" on-click="{{toggle}}" icon="{{expandBtnIcon}}" size="15"></core-icon>
-        <input hidden?="{{!isPolymer || isTemplate || unRendered}}" type="button" id="magnify" value="{{isDiggable ? &quot;+&quot; : &quot;-&quot;}}" on-click="{{magnify}}">
+        <input hidden?="{{!isPolymer || unRendered}}" type="button" id="magnify" value="{{isDiggable ? &quot;+&quot; : &quot;-&quot;}}" on-click="{{magnify}}">
         <span hidden?="{{!unRendered}}"> ! </span>
         <span on-click="{{toggleSelection}}" id="name">{{text}}</span>
       </div>
