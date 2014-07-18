@@ -5,9 +5,13 @@
   // shadowDOMTree is the tree used for viewing local DOM contents
   var shadowDOMTree;
   var objectTree;
+  // For breakpoints
   var methodList;
+  // For injecting code into the host page
   var EvalHelper;
   var splitPane;
+  // The bread crumbs that are shown in the local DOM view
+  var breadCrumbs;
   var elementTreeScrollTop;
   // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
@@ -27,6 +31,9 @@
     methodList = document.querySelector('method-list');
 
     splitPane = document.querySelector('split-pane');
+    breadCrumbs = document.querySelector('bread-crumbs');
+    breadCrumbs.list = [];
+
     // tabs is an instance of paper-tabs that is used to change the object-tree
     // shown in view
     var tabs = document.querySelector('#tabs');
@@ -172,6 +179,10 @@
               elementTree.initFromDOMTree(DOM, true);
               console.log('3');
               initLocalDOMTree(shadowDOMTree, DOM);
+              breadCrumbs.list.push({
+                name: DOM.tagName,
+                key: DOM.key
+              });
               console.log('4');
             });
           });
@@ -214,6 +225,7 @@
         childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
         tree.addChild(childTree);
       }
+
     } else {
       // called when DOM mutations happen and we need update just one part of the tree
       tree.initFromDOMTree(DOM.lightDOMTree, true);
@@ -266,6 +278,12 @@
     splitPane.rightScrollTop = 0;
   }
 
+  /**
+  * elementTree has references to all rendered elements. So if someother
+  * part of the code wants a reference to a DOM element we can just get it from
+  * elementTree. It is an alternative to a separate hash table which would have
+  * needed another complete tree traversal.
+  */
   function getDOMTreeForKey (key) {
     var childTree = elementTree.getChildTreeForKey(key);
     return childTree ? childTree.tree : null;
@@ -470,12 +488,24 @@
         unSelectInTree();
         deepView = false;
         initLocalDOMTree(shadowDOMTree, DOMTree);
+        breadCrumbs.list = [{
+          name: DOMTree.tagName,
+          key: DOMTree.key
+        }];
         switchToLocalDOMView();
       } else {
         deepView = true;
         var DOMTree = getDOMTreeForKey(key);
         unSelectInTree();
         initLocalDOMTree(shadowDOMTree, DOMTree);
+        // If the last bread crumb is not the one representing what we want in the
+        // local DOM view (this means it is not just a peek into the shadow DOM from light DOM)
+        if (breadCrumbs.list[breadCrumbs.list.length - 1].key !== DOMTree.key) {
+          breadCrumbs.list.push({
+            name: DOMTree.tagName,
+            key: DOMTree.key
+          });
+        }
       }
     });
 
@@ -488,6 +518,16 @@
       deepView = false;
       var DOMTree = childTree.tree;
       unSelectInTree();
+      initLocalDOMTree(shadowDOMTree, DOMTree);
+    });
+
+    // When a bread crumb click happens we may need to focus something else in
+    // tree
+    window.addEventListener('bread-crumb-click', function (event) {
+      unSelectInTree();
+      var key = event.detail.key;
+      var DOMTree = getDOMTreeForKey(key);
+      deepView = false;
       initLocalDOMTree(shadowDOMTree, DOMTree);
     });
 

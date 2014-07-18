@@ -12,6 +12,7 @@
     <link rel="import" href="element-tree/element-tree.html">
     <link rel="import" href="object-tree/object-tree.html">
     <link rel="import" href="method-list/method-list.html">
+    <link rel="import" href="bread-crumbs/bread-crumbs.html">
     <style>
       #objectTreePagesContainer {
         margin-left: 10px;
@@ -62,10 +63,13 @@
           <paper-toggle-button id='toggleButton'></paper-toggle-button>
           <span>Local DOM</span>
         </div>
-         <core-pages id='elementTreePages' selected='0'>
-            <element-tree id='composedDOMTree'></element-tree>
+        <core-pages id='elementTreePages' selected='0'>
+          <element-tree id='composedDOMTree'></element-tree>
+          <div>
+            <bread-crumbs></bread-crumbs>
             <element-tree id='shadowDOMTree'></element-tree>
-          </core-pages>
+          </div>
+        </core-pages>
       </div>
       <div class='split-pane-right'>
         <paper-tabs id='tabs' selected='0' noink>

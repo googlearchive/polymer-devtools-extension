@@ -1,0 +1,27 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<!--
+  A simple bread-crumbs element.
+  To use:
+  1. <bread-crumbs></bread-crumbs>
+  2. get reference to it and
+  3. breadCrumbs.list = [{name: <label>, key: <key to identify it>}, ...]
+  4. Listen to `bread-crumb-clicked`. It has `key` in `event.detail` to tell which button the
+    click happened on.
+-->
+<polymer-element name='bread-crumbs'>
+  <template>
+    <style>
+      paper-button {
+        background-color: #4285f4;
+        color: white;
+        font-size: 12px;
+      }
+    </style>
+    <template repeat='{{item, index in list}}'>
+      <paper-button id='btn{{index}}' label='{{item.name}}' on-click='{{clicked}}'></paper-button>
+    </template>
+  </template>
+  <script src='bread-crumbs.js'></script>
+</polymer-element>

@@ -1482,3 +1482,393 @@
   });
   
 })();
+;
+
+    Polymer('paper-focusable', {
+
+      publish: {
+
+        /**
+         * If true, the button is currently active either because the
+         * user is holding down the button, or the button is a toggle
+         * and is currently in the active state.
+         *
+         * @attribute active
+         * @type boolean
+         * @default false
+         */
+        active: {value: false, reflect: true},
+
+        /**
+         * If true, the element currently has focus due to keyboard
+         * navigation.
+         *
+         * @attribute focused
+         * @type boolean
+         * @default false
+         */
+        focused: {value: false, reflect: true},
+
+        /**
+         * If true, the user is currently holding down the button.
+         *
+         * @attribute pressed
+         * @type boolean
+         * @default false
+         */
+        pressed: {value: false, reflect: true},
+
+        /**
+         * If true, the user cannot interact with this element.
+         *
+         * @attribute disabled
+         * @type boolean
+         * @default false
+         */
+        disabled: {value: false, reflect: true},
+
+        /**
+         * If true, the button toggles the active state with each tap.
+         * Otherwise, the button becomes active when the user is holding
+         * it down.
+         *
+         * @attribute isToggle
+         * @type boolean
+         * @default false
+         */
+        isToggle: {value: false, reflect: false}
+
+      },
+
+      disabledChanged: function() {
+        if (this.disabled) {
+          this.removeAttribute('tabindex');
+        } else {
+          this.setAttribute('tabindex', 0);
+        }
+      },
+
+      _downAction: function(e) {
+        if (this.disabled) {
+          return;
+        }
+        this.downAction(e);
+      },
+
+      downAction: function() {
+        this.pressed = true;
+        this.focused = false;
+
+        if (this.isToggle) {
+          this.active = !this.active;
+        } else {
+          this.active = true;
+        }
+      },
+
+      _upAction: function(e) {
+        if (this.disabled) {
+          return;
+        }
+        this.upAction(e);
+      },
+
+      upAction: function() {
+        this.pressed = false;
+
+        if (!this.isToggle) {
+          this.active = false;
+        }
+      },
+
+      focusAction: function() {
+        if (!this.pressed) {
+          // Only render the "focused" state if the element gains focus due to
+          // keyboard navigation.
+          this.focused = true;
+        }
+      },
+
+      blurAction: function() {
+        this.focused = false;
+      }
+
+    });
+
+  ;
+
+    Polymer('paper-shadow', {
+
+      publish: {
+        /**
+         * If set, the shadow is applied to this node.
+         *
+         * @attribute target
+         * @type Element
+         * @default null
+         */
+        target: {value: null, reflect: true},
+
+        /**
+         * The z-depth of this shadow, from 0-5.
+         *
+         * @attribute z
+         * @type number
+         * @default 1
+         */
+        z: {value: 1, reflect: true},
+
+        /**
+         * If true, the shadow animates between z-depth changes.
+         *
+         * @attribute animated
+         * @type boolean
+         * @default false
+         */
+        animated: {value: false, reflect: true},
+
+        /**
+         * Workaround: getComputedStyle is wrong sometimes so `paper-shadow`
+         * may overwrite the `position` CSS property. Set this property to
+         * true to prevent this.
+         *
+         * @attribute hasPosition
+         * @type boolean
+         * @default false
+         */
+        hasPosition: {value: false}
+      },
+
+      // NOTE: include template so that styles are loaded, but remove
+      // so that we can decide dynamically what part to include
+      registerCallback: function(polymerElement) {
+        var template = polymerElement.querySelector('template');
+        this._style = template.content.querySelector('style');
+        this._style.removeAttribute('no-shim');
+      },
+
+      fetchTemplate: function() {
+        return null;
+      },
+
+      attached: function() {
+        this.installScopeStyle(this._style);
+
+        // If no target is bound at attach, default the target to the parent
+        // element or shadow host.
+        if (!this.target) {
+          if (!this.parentElement && this.parentNode.host) {
+            this.target = this.parentNode.host;
+          } else if (this.parentElement && (window.ShadowDOMPolyfill ? this.parentElement !== wrap(document.body) : this.parentElement !== document.body)) {
+            this.target = this.parentElement;
+          }
+        }
+      },
+
+      targetChanged: function(old) {
+        if (old) {
+          this.removeShadow(old);
+        }
+        if (this.target) {
+          this.addShadow(this.target);
+        }
+      },
+
+      zChanged: function(old) {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            shadow[s].classList.remove('paper-shadow-' + s + '-z-' + old);
+            shadow[s].classList.add('paper-shadow-' + s + '-z-' + this.z);
+          }.bind(this));
+        }
+      },
+
+      animatedChanged: function() {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            if (this.animated) {
+              shadow[s].classList.add('paper-shadow-animated');
+            } else {
+              shadow[s].classList.remove('paper-shadow-animated');
+            }
+          }.bind(this));
+        }
+      },
+
+      addShadow: function(node) {
+        if (node._paperShadow) {
+          return;
+        }
+
+        var computed = getComputedStyle(node);
+        if (!this.hasPosition && computed.position === 'static') {
+          node.style.position = 'relative';
+        }
+        node.style.overflow = 'visible';
+
+        // Both the top and bottom shadows are children of the target, so
+        // it does not affect the classes and CSS properties of the target.
+        ['top', 'bottom'].forEach(function(s) {
+          var inner = (node._paperShadow && node._paperShadow[s]) || document.createElement('div');
+          inner.classList.add('paper-shadow');
+          inner.classList.add('paper-shadow-' + s + '-z-' + this.z);
+          if (this.animated) {
+            inner.classList.add('paper-shadow-animated');
+          }
+
+          if (node.shadowRoot) {
+            node.shadowRoot.insertBefore(inner, node.shadowRoot.firstChild);
+          } else {
+            node.insertBefore(inner, node.firstChild);
+          }
+
+          node._paperShadow = node._paperShadow || {};
+          node._paperShadow[s] = inner;
+        }.bind(this));
+
+      },
+
+      removeShadow: function(node) {
+        if (!node._paperShadow) {
+          return;
+        }
+
+        ['top', 'bottom'].forEach(function(s) {
+          node._paperShadow[s].remove();
+        });
+        node._paperShadow = null;
+
+        node.style.position = null;
+      }
+
+    });
+  ;
+
+    Polymer('paper-button', {
+
+      publish: {
+
+        /**
+         * The label of the button.
+         *
+         * @attribute label
+         * @type string
+         * @default ''
+         */
+        label: '',
+
+        /**
+         * If true, the button will be styled as a "raised" button.
+         *
+         * @attribute raisedButton
+         * @type boolean
+         * @default false
+         */
+        raisedButton: {value: false, reflect: true},
+
+        /**
+         * (optional) The URL of an image for an icon to use in the button.
+         * Should not use `icon` property if you are using this property.
+         *
+         * @attribute iconSrc
+         * @type string
+         * @default ''
+         */
+         iconSrc: {value: ''},
+
+         /**
+          * (optional) Specifies the icon name or index in the set of icons
+          * available in the icon set. If using this property, load the icon
+          * set separately where the icon is used. Should not use `src`
+          * if you are using this property.
+          *
+          * @attribute icon
+          * @type string
+          * @default ''
+          */
+         icon: {value: ''}
+
+      },
+
+      z: 1,
+
+      attached: function() {
+        if (this.textContent) {
+          console.warn('Using textContent to label the button is deprecated. Use the "label" property instead');
+          this.label = this.textContent;
+        }
+      },
+
+      activeChanged: function() {
+        this.super();
+
+        if (this.active) {
+          // FIXME: remove when paper-ripple can have a default 'down' state.
+          if (!this.lastEvent) {
+            var rect = this.getBoundingClientRect();
+            this.lastEvent = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            }
+          }
+          this.$.ripple.downAction(this.lastEvent);
+        } else {
+          this.$.ripple.upAction();
+        }
+        this.adjustZ();
+      },
+
+      focusedChanged: function() {
+        this.super();
+        this.adjustZ();
+      },
+
+      disabledChanged: function() {
+        this.super();
+        this.adjustZ();
+      },
+
+      // waitForSpillCompleted: function(callback) {
+      //   this.async(callback, null, (this.$.ink.spillCompleted ? 0 : this.duration));
+      // },
+
+      // resetInk: function() {
+      //   this.active = false;
+      //   this.$.ink.reset();
+      // },
+
+      insideButton: function(x, y) {
+        var rect = this.getBoundingClientRect();
+        return (rect.left <= x) && (x <= rect.right) && (rect.top <= y) && (y <= rect.bottom);
+      },
+
+      adjustZ: function() {
+        if (this.focused) {
+          this.classList.add('paper-shadow-animate-z-1-z-2');
+        } else {
+          this.classList.remove('paper-shadow-animate-z-1-z-2');
+
+          if (this.active) {
+            this.z = 2;
+          } else if (this.disabled) {
+            this.z = 0;
+          } else {
+            this.z = 1;
+          }
+
+        }
+      },
+
+      downAction: function(e) {
+        this.super(e);
+        this.lastEvent = e;
+      },
+
+      labelChanged: function() {
+        this.setAttribute('aria-label', this.label);
+      }
+
+    });
+  
