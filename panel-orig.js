@@ -1,14 +1,17 @@
 (function () {
-  // The cache equivalent to the DOM cache maintained in the host page.
-  // Used to display object-tree in response to selection in element-tree.
+  // elementTree is the tree used for viewing composed DOM.
+  // It is initialized once and its branches are kept up-to-date as necessary.
   var elementTree;
+  // shadowDOMTree is the tree used for viewing local DOM contents
   var shadowDOMTree;
   var objectTree;
   var methodList;
   var EvalHelper;
+  // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
+  // deepView is true when the local DOM view is showing the shadow DOM contents,
+  // false when showing the light DOM contents
   var deepView = false;
-  var DOMCache = {};
   function init () {
     var DOM;
     elementTree = document.querySelector('element-tree#composedDOMTree');
@@ -21,14 +24,19 @@
     // to add breakpoints
     methodList = document.querySelector('method-list');
 
+    // tabs is an instance of paper-tabs that is used to change the object-tree
+    // shown in view
     var tabs = document.querySelector('#tabs');
     var objectTreePages = document.querySelector('#objectTreePages');
     tabs.addEventListener('core-select', function (event) {
       objectTreePages.selected = tabs.selected;
     });
+    // toggleButton is an instance of paper-toggle-button used to switch between
+    // composed DOM and local DOM views
     var toggleButton = document.querySelector('#toggleButton');
     var elementTreePages = document.querySelector('#elementTreePages');
     toggleButton.addEventListener('change', function (event) {
+      // Unselect whatever is selected in whichever element-tree
       unSelectInTree();
       elementTreePages.selected = toggleButton.checked ? 1 : 0;
       localDOMMode = toggleButton.checked;
@@ -102,16 +110,16 @@
           string: removeFromSubIndexMap.toString()
         },
         {
-          name: 'DOMSerializer',
-          string: DOMSerializer.toString()
+          name: 'DOMJSONizer',
+          string: DOMJSONizer.toString()
         },
         {
-          name: 'getObjectString',
-          string: getObjectString.toString()
+          name: 'getObjectJSON',
+          string: getObjectJSON.toString()
         },
         {
-          name: 'getDOMString',
-          string: getDOMString.toString()
+          name: 'getDOMJSON',
+          string: getDOMJSON.toString()
         },
         {
           name: 'setBreakpoint',
@@ -150,13 +158,17 @@
             if (error) {
               throw error;
             }
-            EvalHelper.executeFunction('getDOMString', [], function (result, error) {
+            EvalHelper.executeFunction('getDOMJSON', [], function (result, error) {
               if (error) {
                 throw error;
               }
-              DOM = JSON.parse(result.data);
-              elementTree.initFromDOMTree(DOM);
-              initShadowDOMTree(shadowDOMTree, DOM);
+              console.log('1');
+              DOM = result.data;
+              console.log('2');
+              elementTree.initFromDOMTree(DOM, true);
+              console.log('3');
+              initLocalDOMTree(shadowDOMTree, DOM);
+              console.log('4');
             });
           });
         });
@@ -164,54 +176,93 @@
     });
   }
 
-  function initShadowDOMTree (tree, DOM) {
+  /**
+  * Initializes the element tree in the local DOM view with the DOM tree supplied.
+  * It checks `deepView` and decides how to display the DOM tree (i.e., light DOM or shadow DOM).
+  */
+  function initLocalDOMTree (tree, DOM) {
     if (!deepView) {
-      tree.initFromDOMTree(DOM.lightDOMTree);
+      // DOM tree is to be shown as light DOM tree
+      tree.initFromDOMTree(DOM.lightDOMTree, true);
       return;
     }
     if (tree === shadowDOMTree) {
-      var lightDOMTreeRoot = {
-        tagName: DOM.lightDOMTree.tagName,
-        key: DOM.lightDOMTree.key,
-        children: []
+      // We are trying to set the entire tree here.
+      // It is done this way:
+      // 1. First level of children are from the composed DOM
+      // 2. After that all children of first level children are from light DOM
+      var treeRoot = {
+        tagName: DOM.tagName,
+        key: DOM.key,
+        children: [],
+        isPolymer: DOM.isPolymer
       };
-      tree.initFromDOMTree(lightDOMTreeRoot);
+      tree.initFromDOMTree(treeRoot, false);
+      tree.tree = DOM;
+      if (DOM.noShadowRoot) {
+        // the tree object contains this flag that means that this element
+        // doesn't have a shadow root and shouldn't have a shadow DOM view
+        return;
+      }
       var childTree;
-      for (var i = 0; i < DOM.lightDOMTree.children.length; i++) {
+      for (var i = 0; i < DOM.children.length; i++) {
         childTree = new ElementTree();
-        childTree.initFromDOMTree(DOM.lightDOMTree.children[i], shadowDOMTree);
+        childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
         tree.addChild(childTree);
       }
     } else {
-      tree.initFromDOMTree(DOM.lightDOMTree);
+      // called when DOM mutations happen and we need update just one part of the tree
+      tree.initFromDOMTree(DOM.lightDOMTree, true);
     }
   }
+
+  /**
+  * Gets the currently selected element's key in whichever view
+  */
   function getCurrentElementTreeKey () {
     if (localDOMMode) {
       return shadowDOMTree.selectedChild ? shadowDOMTree.selectedChild.key : null;
     }
     return elementTree.selectedChild ? elementTree.selectedChild.key : null;
   }
+
+  /**
+  * Gets the currently focused element tree
+  */
   function getCurrentElementTree () {
     if (localDOMMode) {
       return shadowDOMTree;
     }
     return elementTree;
   }
-  function getDOMTreeForKey (key) {
-    var childTree = elementTree.getChildTreeForKey(key);
-    if (childTree) {
-      return childTree.tree;
-    }
-    return null;
-  }
 
+  /**
+  * Unselect the selected element in whichever tree
+  */
   function unSelectInTree () {
     var selectedKey = getCurrentElementTreeKey();
     if (selectedKey) {
       var childTree = getCurrentElementTree().selectedChild;
       childTree.toggleSelection();
     }
+  }
+
+  /**
+  * Switch to local DOM view if we're not in it
+  */
+  function switchToLocalDOMView () {
+    if (localDOMMode) {
+      return;
+    }
+    unSelectInTree();
+    elementTreePages.selected = 1;
+    localDOMMode = true;
+    toggleButton.checked = true;
+  }
+
+  function getDOMTreeForKey (key) {
+    var childTree = elementTree.getChildTreeForKey(key);
+    return childTree ? childTree.tree : null;
   }
   /**
   * Highlight an element in the page
@@ -248,8 +299,8 @@
   * isModel tells if it is model-tree that we are expanding
   */
   function expandObject (key, path, isModel) {
-    EvalHelper.executeFunction('getObjectString', [key, path, isModel], function (result, error) {
-      var props = JSON.parse(result.data).value;
+    EvalHelper.executeFunction('getObjectJSON', [key, path, isModel], function (result, error) {
+      var props = result.data.value;
       var childTree = isModel ? modelTree.tree : objectTree.tree;
       for (var i = 0; i < path.length; i++) {
         childTree = childTree[path[i]].value;
@@ -273,6 +324,7 @@
     // Visually highlight the element in the page and scroll it into view
     highlightElement(key);
   }
+
   function unselectElement (key, callback) {
     function removeObject (isModel, callback) {
       EvalHelper.executeFunction('removeObjectObserver', [key, [], isModel], function (result, error) {
@@ -308,7 +360,7 @@
   function refreshProperty (key, childTree, path, isModel) {
     var index = path[path.length - 1];
     EvalHelper.executeFunction('getProperty', [key, path, isModel], function (result, error) {
-      var newObj = JSON.parse(result).value[0];
+      var newObj = result.value[0];
       childTree[index] = newObj;
     });
   }
@@ -401,15 +453,38 @@
       unhighlightElement(key, true);
     });
 
+    // Happens when an element is to be magnified,
+    // i.e., either seen in the local DOM view or if already in the 
+    // local DOM view, to see the shadow content of it.
     window.addEventListener('magnify', function (event) {
       var key = event.detail.key;
       var childTree = getCurrentElementTree().getChildTreeForKey(key);
       if (!localDOMMode) {
         var DOMTree = getDOMTreeForKey(key);
         unSelectInTree();
-        initShadowDOMTree(shadowDOMTree, DOMTree);
+        deepView = false;
+        initLocalDOMTree(shadowDOMTree, DOMTree);
+        switchToLocalDOMView();
+      } else {
+        deepView = true;
+        var DOMTree = getDOMTreeForKey(key);
+        unSelectInTree();
+        initLocalDOMTree(shadowDOMTree, DOMTree);
       }
     });
+
+    // When an element in the local DOM view is to be 'unmagnified',
+    // i.e., it's light DOM is to be seen.
+    window.addEventListener('unmagnify', function (event) {
+      // Only possible inside local DOM view and when in deepView
+      var key = event.detail.key;
+      var childTree = getCurrentElementTree().getChildTreeForKey(key);
+      deepView = false;
+      var DOMTree = childTree.tree;
+      unSelectInTree();
+      initLocalDOMTree(shadowDOMTree, DOMTree);
+    });
+
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
     });
@@ -423,7 +498,7 @@
           // An object has changed. Must update object-tree
 
           // The list of changes
-          var changeObj = JSON.parse(message.changeList);
+          var changeObj = message.changeList;
           // The path where the change happened
           var path = changeObj.path;
           var changes = changeObj.changes;
@@ -448,7 +523,7 @@
               // TODO: is it okay to do this busy looping until child-tree is ready?
             }
             if (type !== 'delete') {
-              newObj = JSON.parse(change.object).value[0];
+              newObj = change.object.value[0];
               newObj.name = name;
             } else {
               childTree.splice(index, 1);
@@ -467,24 +542,33 @@
         case 'dom-mutation':
           // A DOM element has changed. Must re-render it in the element tree.
           
-          var mutations = JSON.parse(message.changeList);
+          var mutations = message.changeList;
           for (var i = 0; i < mutations.length; i++) {
-            var newElement = JSON.parse(mutations[i].data);
+            var newElement = mutations[i].data;
             var key = newElement.key;
             var tree = getCurrentElementTree();
             var childTree = tree.getChildTreeForKey(key);
-            if (childTree.selected) {
-              unselectElement(key, function () {
-                childTree.empty();
-                if (localDOMMode) {
-                  initShadowDOMTree(childTree, newElement);
-                } else {
-                  childTree.initFromDOMTree(newElement);
-                }
-              });
+            function resetTree () {
+              // elementTree has all composed DOM elements. A DOM mutation will might need
+              // an update there
+              var childElementTree = elementTree.getChildTreeForKey(key);
+              if (childElementTree) {
+                childElementTree.initFromDOMTree(newElement, true);
+              }
+              if (!localDOMMode) {
+                // If we're in the composed DOM view, we are done
+                return;
+              }
+              if (childTree) {
+                // The element to be refreshed is there in the local DOM tree as well.
+                initLocalDOMTree(childTree, newElement);
+              }
+            }
+            if (childTree && childTree.selected) {
+              // The selected element and the one to be refreshed are the same.
+              unselectElement(key, resetTree);
             } else {
-              childTree.empty();
-              childTree.initFromDOMTree(newElement);
+              resetTree();
             }
           }
           break;

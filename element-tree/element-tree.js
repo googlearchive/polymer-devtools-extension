@@ -47,15 +47,25 @@
     * @root: not passed in first call, but passed internally to
     * pass around the root of the entire tree.
     */
-    initFromDOMTree: function (tree, root) {
+    initFromDOMTree: function (tree, isDiggable, root) {
       this.empty();
       this.text = '<' + tree.tagName + '>';
-      this.isPolymer = tree.isPolymer;
-      this.unRendered = tree.unRendered;
+      // conditionally set these to save memory (there can be a huge page with very few
+      // Polymer elements)
+      if (tree.isPolymer) {
+        this.isPolymer = true;
+      }
+      if (tree.unRendered) {
+        this.unRendered = true;
+      }
+      if (tree.isTemplate) {
+        this.isTemplate = true;
+      }
       this.key = tree.key;
       this.keyMap = this.keyMap || (root ? root.keyMap : {});
       this.keyMap[this.key] = this;
       this.tree = tree;
+      this.isDiggable = isDiggable;
       if (this.isPolymer) {
         this.$.name.setAttribute('polymer', 'polymer');
       }
@@ -63,7 +73,7 @@
       for (var i = 0; i < tree.children.length; i++) {
         // Create a new ElementTree to hold a child
         var child = new ElementTree();
-        child.initFromDOMTree(tree.children[i], this.root);
+        child.initFromDOMTree(tree.children[i], isDiggable, this.root);
         this.addChild(child);
       }
     },
@@ -88,6 +98,10 @@
     * Element selection/unselection
     */
     toggleSelection: function () {
+      if (!this.tree.isPolymer) {
+        // No selection of non-Polymer elements
+        return;
+      }
       if (this.selected) {
         // selectedChild holds the element in the tree that is currently selected
         this.root.selectedChild = null;
@@ -139,7 +153,8 @@
       }
     },
     magnify: function () {
-      this.fire('magnify', {
+      var eventName = this.isDiggable ? 'magnify' : 'unmagnify';
+      this.fire(eventName, {
         key: this.key
       });
     }

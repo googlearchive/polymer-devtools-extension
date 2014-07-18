@@ -57,7 +57,7 @@
     <div id='content'>
       <div id='thisElement' on-mouseover='{{mouseOver}}' on-mouseout='{{mouseOut}}'>
         <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
-        <input hidden?='{{!isPolymer}}' type='button' id='magnify' value='+' on-click='{{magnify}}'></input>
+        <input hidden?='{{!isPolymer || isTemplate || unRendered}}' type='button' id='magnify' value='{{isDiggable ? "+" : "-"}}' on-click='{{magnify}}'></input>
         <span hidden?='{{!unRendered}}'> ! </span>
         <span on-click='{{toggleSelection}}' id='name'>{{text}}</span>
       </div>

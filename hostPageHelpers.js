@@ -128,7 +128,7 @@ function getProperty (key, path, isModel) {
   var prop = window._polymerNamespace_.getPropPath(key, path, isModel).pop();
   path.pop();
   var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
-  return window._polymerNamespace_.serializer.serializeProperty(prop, obj);
+  return window._polymerNamespace_.JSONizer.JSONizeProperty(prop, obj);
 }
 
 function addToCache (obj, key) {
@@ -406,24 +406,28 @@ function processMutations (mutations) {
     // We should ideally remove all the removed nodes from `DOMCache` but it
     // would involve finding all children of a removed node (recursively through the 
     // composed DOM). So we let them be.
-    changedElements.push(window._polymerNamespace_.getDOMString(changedElement));
+    changedElements.push(window._polymerNamespace_.getDOMJSON(changedElement));
     changedElementKeys[changedElements.__keyPolymer__] = true;
   }
-  return JSON.stringify(changedElements);
+  return changedElements;
 }
 
 /**
-* Serialize el or document.body (if `el` isn't passed)
+* JSONize `el` or document.body (if `el` isn't passed)
 */
-function getDOMString (el) {
+function getDOMJSON (el) {
   return {
-    'data': window._polymerNamespace_.serializer.serializeDOMObject(el || document.body,
+    'data': window._polymerNamespace_.JSONizer.JSONizeDOMObject(el || document.body,
       function (domNode, converted, lightDOM) {
         if (!domNode.__keyPolymer__) {
           if (lightDOM) {
             // Something that wasn't found in the composed tree but found in the light DOM
             // was probably not rendered.
             converted.unRendered = true;
+          } else if ((window._polymerNamespace_.isPolymerElement(domNode) && !domNode.shadowRoot)) {
+            // Polymer elements may not have shadow roots. So, the composed DOM tree is the light DOM tree
+            // and has nothing do with the shadow DOM.
+            converted.noShadowRoot = true;
           }
           // For every element found during traversal, we store it in a hash-table with a unique key.
           window._polymerNamespace_.lastDOMKey++;
@@ -434,10 +438,11 @@ function getDOMString (el) {
           window._polymerNamespace_.indexToPropMap[key] = {};
           window._polymerNamespace_.modelIndexToPropMap[key] = {};
           domNode.__keyPolymer__ = key;
-          converted.key = key;
 
-          converted.isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
-          if (key === 1 || domNode.shadowRoot) {
+          // DOM mutation listeners are added to the very first element (the parent) of all elements
+          // so that it will report all light DOM changes and to *all* shadow roots so they will
+          // report all shadow DOM changes.
+          if (key === window._polymerNamespace_.firstDOMKey || domNode.shadowRoot) {
             var observer = new MutationObserver(function (mutations) {
               window.dispatchEvent(new CustomEvent('dom-mutation', {
                 detail: window._polymerNamespace_.processMutations(mutations)
@@ -448,7 +453,7 @@ function getDOMString (el) {
               childList: true,
               subtree: true
             };
-            if (key === 1) {
+            if (key === window._polymerNamespace_.firstDOMKey) {
               observer.observe(domNode, config);
             }
             if (domNode.shadowRoot) {
@@ -456,9 +461,15 @@ function getDOMString (el) {
             }
           }
         }
-        if (!converted.key) {
-          converted.key = domNode.__keyPolymer__;
-          converted.isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
+        converted.key = domNode.__keyPolymer__;
+        var isTemplate = ((domNode.tagName === 'TEMPLATE') && ('model' in domNode));
+        var isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
+        // optionally set these properties
+        if (isTemplate) {
+          converted.isTemplate = true;
+        }
+        if (isPolymer || isTemplate) {
+          converted.isPolymer = true;
         }
       }
     )
@@ -466,10 +477,10 @@ function getDOMString (el) {
 }
 
 /**
-* Serialize an object one level deep
+* JSONize an object one level deep
 * isModel tells if we should into the model data structures
 */
-function getObjectString (key, path, isModel) {
+function getObjectJSON (key, path, isModel) {
   var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
   if (!obj) {
     return {
@@ -491,8 +502,8 @@ function getObjectString (key, path, isModel) {
     };
   }
   return {
-    'data': window._polymerNamespace_.serializer.
-      serializeObject(obj, function (converted) {
+    'data': window._polymerNamespace_.JSONizer.
+      JSONizeObject(obj, function (converted) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
           if (!isModel) {
@@ -594,13 +605,13 @@ function addObjectObserver (key, path, isModel) {
               !window._polymerNamespace_.filterProperty(change.name)) {
             continue;
           }
-          // We might be dealing with non-Objects which DOMSerializer can't serialize.
+          // We might be dealing with non-Objects which DOMJSONizer can't JSONize.
           // So we wrap it and then let the caller unwrap later.
           var wrappedObject = {
             value: change.object[change.name]
           };
-          summary.object = window._polymerNamespace_.serializer.
-            serializeObject(wrappedObject);
+          summary.object = window._polymerNamespace_.JSONizer.
+            JSONizeObject(wrappedObject);
           break;
         case 'delete':
           if (checkChainUpForProp(change.name, obj)) {
@@ -612,8 +623,8 @@ function addObjectObserver (key, path, isModel) {
             var wrappedObject = {
               value: change.object[change.name]
             };
-            summary.object = window._polymerNamespace_.serializer.
-              serializeObject(wrappedObject);
+            summary.object = window._polymerNamespace_.JSONizer.
+              JSONizeObject(wrappedObject);
           } else {
             // Update the index-to-propName map to reflect the deletion
             window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name], isModel);
@@ -627,8 +638,8 @@ function addObjectObserver (key, path, isModel) {
           var wrappedObject = {
             value: change.object[change.name]
           };
-          summary.object = window._polymerNamespace_.serializer.
-            serializeObject(wrappedObject);
+          summary.object = window._polymerNamespace_.JSONizer.
+            JSONizeObject(wrappedObject);
           if (window._polymerNamespace_.isPolymerElement(obj) &&
             checkChainUpForProp(change.name, obj)) {
             // Even though this is an addition at one level, this is an update in the view of the UI
@@ -643,8 +654,9 @@ function addObjectObserver (key, path, isModel) {
       }
       processedChangeObject.changes.push(summary);
     }
-    return JSON.stringify(processedChangeObject);
+    return processedChangeObject;
   }
+
   function observer (changes) {
     console.log('observing');
     window.dispatchEvent(new CustomEvent('object-changed', {
@@ -734,9 +746,10 @@ function createCache() {
   // association with real object properties and those, we need a map.
   window._polymerNamespace_.indexToPropMap = {};
   window._polymerNamespace_.modelIndexToPropMap = {};
+  window._polymerNamespace_.firstDOMKey = 1;
   // The key of the last DOM element added
-  window._polymerNamespace_.lastDOMKey = 0;
+  window._polymerNamespace_.lastDOMKey = window._polymerNamespace_.firstDOMKey - 1;
   // Mutation observers are stored so they can be removed later
   window._polymerNamespace_.mutationObserverCache = {};
-  window._polymerNamespace_.serializer = new window._polymerNamespace_.DOMSerializer();
+  window._polymerNamespace_.JSONizer = new window._polymerNamespace_.DOMJSONizer();
 }

@@ -54,8 +54,8 @@
         margin-left: 4px;
       }
     </style>
-    <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
     <div id='content' hidden?='{{hidden}}'>
+      <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
       <template repeat='{{prop, index in tree}}'>
         <div class='property'>
           <span hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' class='btn'>

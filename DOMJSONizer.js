@@ -1,8 +1,8 @@
-// Contains a class DOMSerializer used to serialize DOM tree, objects, properties
+// Contains a class DOMJSONizer used to JSONize DOM tree, objects, properties
 
 // TODO: Remove all logic that pertains to Polymer elements from here and pass them as callbacks
 
-function DOMSerializer () {
+function DOMJSONizer () {
   function isPolymerElement (element) {
     return element && ('element' in element) && (element.element.localName === 'polymer-element');
   }
@@ -45,7 +45,7 @@ function DOMSerializer () {
         type: 'error',
         hasAccessor: true,
         error: true,
-        value: error.message,
+        value: e.message,
         name: prop
       });
       return;
@@ -159,6 +159,7 @@ function DOMSerializer () {
           }
         }
       }
+      // TODO: `__proto__` ?
       // copyProperty(Object.prototype, obj, destObj, '__proto__');
     }
 
@@ -201,11 +202,19 @@ function DOMSerializer () {
   /**
   * Does a deep light DOM exploration.
   * Puts child tree under <shadow> and <content> tags if found
+  * Returned object looks like:
+  * {
+  *   tagName: <tagName>,
+  *   children: <list of other such objects>,
+  *   isLightDOMTree: true
+  * }
+  * unless callback does something else to it
   */
   function exploreLightDOM (root, callback) {
     var res = {
       children: [],
-      tagName: root.tagName.toLowerCase()
+      tagName: root.tagName.toLowerCase(),
+      isLightDOMTree: true
     };
     // Call the callback with the DOM node, the to-be-converted object
     // and true to mean that it was found in the light DOM exploration
@@ -278,18 +287,18 @@ function DOMSerializer () {
   }
 
   /**
-  * Serializes a DOM element
+  * JSONizes a DOM element
   * Return object looks like this:
   * {
   *   tagName: <tag-name>,
   *   key: <unique-key>,
-  *   isPolymer: <true|false>,
+  *   lightDOMTree: <what exploreLightDOM returns>
   *   children: [<more such objects>]
   * }
-  * @callback: is execuated on every DOM element found
-  * @isPolymer is supposed to tell if an element is a Polymer element
+  * unless callback does anything else to it.
+  * @callback: is executed on every DOM element found
   */
-  this.serializeDOMObject = function (root, callback) {
+  this.JSONizeDOMObject = function (root, callback) {
     function traverse (root) {
       var res = {};
       if ('tagName' in root) {
@@ -303,11 +312,10 @@ function DOMSerializer () {
         return null;
       }
       callback && callback(root, res);
-      var composedDOMChildren = getComposedDOMChildren(root);
       res.children = [];
-
+      var composedDOMChildren = getComposedDOMChildren(root);
       // composedDOMChildren is an array of elements found at a level immediately below this
-      // in the composed tree
+      // in the composed tree (which we are sure, came from the shadow DOM and not light DOM)
       for (var i = 0; i < composedDOMChildren.length; i++) {
         if (composedDOMChildren[i]) {
           var child = traverse(composedDOMChildren[i]);
@@ -321,14 +329,14 @@ function DOMSerializer () {
       res.lightDOMTree = exploreLightDOM(root, callback);
       return res;
     }
-    return JSON.stringify(traverse(root));
+    return traverse(root);
   };
 
   /**
-  * Serializes any object (or function) one level deep.
+  * JSONize any object (or function) one level deep.
   * It checks for only own properties.
   * Pass in a wrapped object and unwrap later if passing a non-object.
-  * @callback: this is called once just before serializing the newly created one-level
+  * @callback: this is called once just before JSONizing the newly created one-level
   *   deep object mirror
   * Return object looks like this:
   * {
@@ -346,14 +354,14 @@ function DOMSerializer () {
   *   ]
   * }
   */
-  this.serializeObject = function (obj, callback, filter) {
+  this.JSONizeObject = function (obj, callback, filter) {
     var res = JSONize(obj, filter);
     callback && callback(res);
-    return JSON.stringify(res);
+    return res;
   };
 
   /**
-  * Takes an object and a property name and serializes just that property's value.
+  * Takes an object and a property name and JSONizes just that property's value.
   * It returns a wrapped object with the same property containing the required property.
   * Returns an object that looks like this:
   * {
@@ -368,7 +376,7 @@ function DOMSerializer () {
   *   ]
   * }
   */
-  this.serializeProperty = function (prop, obj) {
+  this.JSONizeProperty = function (prop, obj) {
     // Get to the object in the prototype chain that actually contains the property
     var actualObject = obj;
     while (actualObject) {
@@ -393,6 +401,6 @@ function DOMSerializer () {
         res.value[0].published = true;
       }
     }
-    return JSON.stringify(res);
+    return res;
   };
 }

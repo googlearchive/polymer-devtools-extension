@@ -1,7 +1,7 @@
 <html>
   <head>
     <script src="bower_components/platform/platform.js"></script>
-    <script src="DOMSerializer.js"></script>
+    <script src="DOMJSONizer.js"></script>
     <script src="hostPageHelpers.js"></script>
     <script src="evalHelper.js"></script>
     <script src="panel-orig.js"></script>
@@ -1712,7 +1712,7 @@ html /deep/ core-icon[size=""] > svg {
     <div id="content">
       <div id="thisElement" on-mouseover="{{mouseOver}}" on-mouseout="{{mouseOut}}">
         <core-icon id="expandBtn" on-click="{{toggle}}" icon="{{expandBtnIcon}}" size="15"></core-icon>
-        <input hidden?="{{!isPolymer}}" type="button" id="magnify" value="+" on-click="{{magnify}}">
+        <input hidden?="{{!isPolymer || isTemplate || unRendered}}" type="button" id="magnify" value="{{isDiggable ? &quot;+&quot; : &quot;-&quot;}}" on-click="{{magnify}}">
         <span hidden?="{{!unRendered}}"> ! </span>
         <span on-click="{{toggleSelection}}" id="name">{{text}}</span>
       </div>
@@ -1799,8 +1799,8 @@ html /deep/ core-icon[size=""] > svg {
         margin-left: 4px;
       }
     </style>
-    <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
     <div id="content" hidden?="{{hidden}}">
+      <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
       <template repeat="{{prop, index in tree}}">
         <div class="property">
           <span hidden?="{{prop.type != &quot;object&quot; &amp;&amp; prop.type != &quot;array&quot; &amp;&amp; prop.type != &quot;function&quot;}}" class="btn">
