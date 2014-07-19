@@ -7,35 +7,7 @@ function createEvalHelper (callback) {
   * Convert any object to a string
   */
   function serialize (object) {
-    function serializeArray (arr) {
-      var path = '[';
-      var lastIndex = arr.length - 1;
-      for (var i = 0; i <= lastIndex; i++) {
-        path += ('"' + arr[i] + '"');
-        if (i !== lastIndex) {
-          path += ', ';
-        }
-      }
-      path += ']';
-      return path;
-    }
-    if (object === null) {
-      return 'null';
-    }
-    switch (typeof object) {
-      case 'number':
-        return object;
-      case 'string':
-        return '"' + object + '"';
-      case 'object':
-        return JSON.stringify(object);
-      case 'array':
-        return serializeArray(object);
-      case 'undefined':
-        return 'undefined';
-      default:
-        return object.toString();
-    }
+    return JSON.stringify(object);
   }
   var srcURLID = 0;
   function getSrcURL (string) {
