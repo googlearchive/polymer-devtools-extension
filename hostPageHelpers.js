@@ -237,6 +237,10 @@ function filterProperty (n) {
 }
 
 // IMPORTANT: First set filterProperty and then call setBlacklist.
+// See :
+// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement
+// and
+// https://developer.mozilla.org/en-US/docs/Web/API/Element
 // TODO: Improve blacklist
 function setBlacklist () {
   window._polymerNamespace_.filterProperty.blacklist = {

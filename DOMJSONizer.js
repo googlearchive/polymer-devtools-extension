@@ -8,6 +8,7 @@ function DOMJSONizer () {
   }
 
   // Polymer-specific stuff (to flag them differently)
+  // Mostly taken from: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
   var polymerSpecificProps = {
     observe: true,
     publish: true,
