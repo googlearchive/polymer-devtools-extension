@@ -166,7 +166,7 @@ function DOMJSONizer () {
     }
 
     /**
-    * Explores an array for proerties
+    * Explores an array for properties
     */
     function exploreArray (arr, destObj) {
       for (var i = 0; i < arr.length; i++) {
