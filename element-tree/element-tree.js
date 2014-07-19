@@ -32,6 +32,12 @@
         this.selected = false;
         this.$.thisElement.removeAttribute('selected');
       }
+      if (this.isPolymer) {
+        delete this.isPolymer;
+      }
+      if (this.unRendered) {
+        delete this.unRendered;
+      }
       if (this.keyMap && this.keyMap[this.key]) {
         delete this.keyMap[this.key];
       }
@@ -57,9 +63,6 @@
       }
       if (tree.unRendered) {
         this.unRendered = true;
-      }
-      if (tree.isTemplate) {
-        this.isTemplate = true;
       }
       this.key = tree.key;
       this.keyMap = this.keyMap || (root ? root.keyMap : {});

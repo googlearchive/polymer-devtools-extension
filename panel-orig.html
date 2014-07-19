@@ -53,6 +53,11 @@
       paper-toggle-button::shadow paper-radio-button::shadow #ink[checked] {
         color: white;
       }
+      .breadCrumbsContainer {
+        margin-left: 10px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
     </style>
   </head>
   <body unresolved>
@@ -66,7 +71,9 @@
         <core-pages id='elementTreePages' selected='0'>
           <element-tree id='composedDOMTree'></element-tree>
           <div>
-            <bread-crumbs></bread-crumbs>
+            <div class='breadCrumbsContainer'>
+              <bread-crumbs></bread-crumbs>
+            </div>
             <element-tree id='shadowDOMTree'></element-tree>
           </div>
         </core-pages>
