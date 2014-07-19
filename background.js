@@ -18,6 +18,10 @@
         portIdToTabIdMap[portId] = message.tabId;
         portIdToPortMap[portId] = port;
         port.onMessage.removeListener(onMessage);
+
+        chrome.tabs.executeScript(message.tabId, {
+          file: 'contentScript.js'
+        });
       }
     }
     // We expect a `panel-init` message from it soon after the connection.
