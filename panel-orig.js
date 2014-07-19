@@ -324,6 +324,9 @@
   */
   function expandObject (key, path, isModel) {
     EvalHelper.executeFunction('getObjectJSON', [key, path, isModel], function (result, error) {
+      if (error) {
+        throw error;
+      }
       var props = result.data.value;
       var childTree = isModel ? modelTree.tree : objectTree.tree;
       for (var i = 0; i < path.length; i++) {
@@ -560,8 +563,8 @@
             var newObj;
             var childTree = isModel ? modelTree.tree : objectTree.tree;
             try {
-              // If the observer reports changes before child-tree is ready, we must
-              // only
+              // If the observer reports changes before child-tree is ready, we can
+              // only wait and ignore it
               for (var j = 0; j < path.length; j++) {
                 childTree = childTree[path[j]].value;
               }
