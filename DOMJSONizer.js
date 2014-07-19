@@ -24,25 +24,25 @@ function DOMJSONizer () {
   * Checks if a property is an acessor. obj.hasOwnProperty(prop) has to be true.
   */
   function propHasAccessor (obj, prop) {
-     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
-     if (!descriptor) {
-      console.error(prop);
-     }
-     return !!descriptor.set || !!descriptor.get;
+    var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+    if (!descriptor) {
+    console.error(prop);
+    }
+    return Boolean(descriptor.set) || Boolean(descriptor.get);
   }
 
   /**
-  * Copies a property from oldObj to newObj and adds some metadata.
+  * Copies a property from oldObj to newObjArray and adds some metadata.
   * protoObject is the exact object in the chain where the prop is present.
   * It is necessary to determine if the prop is an accessor or not.
   */
-  function copyProperty (protoObject, oldObj, newObj, prop) {
+  function copyProperty (protoObject, oldObj, newObjArray, prop) {
     try {
       oldObj[prop];
     } catch (e) {
       // We encountered an error trying to read the property.
       // It must be a getter that is failing.
-      newObj.push({
+      newObjArray.push({
         type: 'error',
         hasAccessor: true,
         error: true,
@@ -52,7 +52,7 @@ function DOMJSONizer () {
       return;
     }
     if (oldObj[prop] === null) {
-      newObj.push({
+      newObjArray.push({
         type: 'null',
         hasAccessor: false,
         value: 'null',
@@ -61,7 +61,7 @@ function DOMJSONizer () {
     } else if (typeof oldObj[prop] === 'string' ||
         typeof oldObj[prop] === 'number' ||
         typeof oldObj[prop] === 'boolean') {
-      newObj.push({
+      newObjArray.push({
         type: typeof oldObj[prop],
         hasAccessor: propHasAccessor(protoObject, prop),
         value: oldObj[prop].toString(),
@@ -70,14 +70,14 @@ function DOMJSONizer () {
     } else if (((typeof oldObj[prop] === 'object' &&
         !(oldObj[prop] instanceof Array)) ||
         typeof oldObj[prop] === 'function')) {
-      newObj.push({
+      newObjArray.push({
         type: typeof oldObj[prop],
         hasAccessor: propHasAccessor(protoObject, prop),
         value: [],
         name: prop
       });
     } else if (typeof oldObj[prop] === 'object') {
-      newObj.push({
+      newObjArray.push({
         type: 'array',
         hasAccessor: propHasAccessor(protoObject, prop),
         length: oldObj[prop].length,
@@ -85,7 +85,7 @@ function DOMJSONizer () {
         name: prop
       });
     } else {
-      newObj.push({
+      newObjArray.push({
         type: 'undefined',
         hasAccessor: false,
         value: 'undefined',
@@ -115,8 +115,8 @@ function DOMJSONizer () {
     */
     function explorePolymerObject (element, destObj) {
       var addedProps = {};
-      function checkAdded (el) {
-        return !(el in addedProps);
+      function isAdded (el) {
+        return (el in addedProps);
       }
       function addToAddedProps (el) {
         addedProps[el] = true;
@@ -125,9 +125,11 @@ function DOMJSONizer () {
         var proto = element;
         while (proto && !Polymer.isBase(proto)) {
           var props = getPolymerProps(proto);
-          props = props.filter(checkAdded);
-          props.forEach(addToAddedProps);
           for (var i = 0; i < props.length; i++) {
+            if (isAdded(props[i])) {
+              continue;
+            }
+            addToAddedProps(props[i]);
             copyProperty(proto, element, destObj, props[i]);
             // Add a flag to show Polymer implementation properties separately
             if (props[i] in polymerSpecificProps) {
@@ -161,7 +163,6 @@ function DOMJSONizer () {
         }
       }
       // TODO: `__proto__` ?
-      // copyProperty(Object.prototype, obj, destObj, '__proto__');
     }
 
     /**
