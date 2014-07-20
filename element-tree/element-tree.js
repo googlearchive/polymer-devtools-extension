@@ -88,7 +88,7 @@
         return;
       }
       this.collapsed = !(this.collapsed);
-      this.expandBtnImg = newExpandBtnIcon(this.collapsed);
+      this.expandBtnIcon = newExpandBtnIcon(this.collapsed);
       for (var i = 0; i < this.childElements.length; i++) {
         if (this.collapsed) {
           this.childElements[i].$.content.style.display = 'none';
