@@ -5,6 +5,15 @@
 // in its body is self-executed in the context of the host page.
 
 /**
+ * adds the extension ID to the event name so it's unique.
+ * @param  {string} name event name
+ * @return {string}      new event name
+ */
+function getNamespacedEventName (name) {
+  return NAMESPACE + '-' + name;
+}
+
+/**
 * Highlight an element in the page
 * isHover: true if element is to be highlighted because it was hovered
 * over in the element-tree.
@@ -148,7 +157,7 @@ function addToCache (obj, key) {
 */
 function inspectorSelectionChangeListener () {
   if ($0.__keyPolymer__) {
-    window.dispatchEvent(new CustomEvent('inspected-element-changed', {
+    window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('inspected-element-changed'), {
       detail : {
         key: $0.__keyPolymer__
       }
@@ -451,7 +460,7 @@ function getDOMJSON (el) {
           // report all shadow DOM changes.
           if (key === window[NAMESPACE].firstDOMKey || domNode.shadowRoot) {
             var observer = new MutationObserver(function (mutations) {
-              window.dispatchEvent(new CustomEvent('dom-mutation', {
+              window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('dom-mutation'), {
                 detail: window[NAMESPACE].processMutations(mutations)
               }));
             });
@@ -662,7 +671,7 @@ function addObjectObserver (key, path, isModel) {
 
   function observer (changes) {
     console.log('observing');
-    window.dispatchEvent(new CustomEvent('object-changed', {
+    window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
     }));
   }

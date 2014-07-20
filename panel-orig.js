@@ -159,6 +159,10 @@
         {
           name: 'inspectorSelectionChangeListener',
           string: inspectorSelectionChangeListener.toString()
+        },
+        {
+          name: 'getNamespacedEventName',
+          string: getNamespacedEventName.toString()
         }
       ], function (result, error) {
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {

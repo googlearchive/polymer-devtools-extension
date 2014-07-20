@@ -15,6 +15,14 @@ function createEvalHelper (callback) {
     srcURLID++;
     return '\n//@ sourceURL=src' + srcURLID + '.js';
   }
+  /**
+   * Wraps a function into a self executing function that gets called with the
+   * unique namespace (extension ID) so that the function to be defined in the
+   * host page gets to know of the namespace.
+   * @param  {string} fnName   name of the function
+   * @param  {string} fnString body of the function
+   * @return {string}          the wrapped function string
+   */
   function wrapFunction (fnName, fnString) {
     return '(function (NAMESPACE) {' +
       'window["' + NAMESPACE + '"].' + fnName + ' = ' +
