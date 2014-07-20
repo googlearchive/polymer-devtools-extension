@@ -1,5 +1,8 @@
 // All these helpers are meant to be injected into the host page as strings
-// after .toString()
+// after .toString().
+// E.g, to define `highlight` a function which takes `NAMESPACE`
+// as an argument and has a `window[<namspace>] = <highlight-function-string>;`
+// in its body is self-executed in the context of the host page.
 
 /**
 * Highlight an element in the page
@@ -7,18 +10,18 @@
 * over in the element-tree.
 */
 function highlight (key, isHover) {
-  var element = window._polymerNamespace_.DOMCache[key];
+  var element = window[NAMESPACE].DOMCache[key];
   if (isHover) {
-    window._polymerNamespace_.prevHoveredOutline = element.style.outline;
-    window._polymerNamespace_.prevHoveredBackgroundColor = element.style.backgroundColor;
+    window[NAMESPACE].prevHoveredOutline = element.style.outline;
+    window[NAMESPACE].prevHoveredBackgroundColor = element.style.backgroundColor;
   } else {
-    window._polymerNamespace_.unhighlight(key, true);
-    if (window._polymerNamespace_.lastSelectedKey) {
-      window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    window[NAMESPACE].unhighlight(key, true);
+    if (window[NAMESPACE].lastSelectedKey) {
+      window[NAMESPACE].unhighlight(window[NAMESPACE].lastSelectedKey, false);
     }
-    window._polymerNamespace_.lastSelectedKey = key;
-    window._polymerNamespace_.prevSelectedOutline = element.style.outline;
-    window._polymerNamespace_.prevSelectedBackgroundColor = element.style.backgroundColor;
+    window[NAMESPACE].lastSelectedKey = key;
+    window[NAMESPACE].prevSelectedOutline = element.style.outline;
+    window[NAMESPACE].prevSelectedBackgroundColor = element.style.backgroundColor;
   }
   element.style.outline = '1px dashed red';
   element.style.backgroundColor = 'rgba(255,0,0,0.1)';
@@ -30,19 +33,19 @@ function highlight (key, isHover) {
 * out in the element-tree.
 */
 function unhighlight (key, isHover) {
-  var element = window._polymerNamespace_.DOMCache[key];
-  element.style.outline = isHover ? window._polymerNamespace_.prevHoveredOutline :
-    window._polymerNamespace_.prevSelectedOutline;
-  element.style.backgroundColor = isHover ? window._polymerNamespace_.prevHoveredBackgroundColor :
-    window._polymerNamespace_.prevSelectedBackgroundColor;
+  var element = window[NAMESPACE].DOMCache[key];
+  element.style.outline = isHover ? window[NAMESPACE].prevHoveredOutline :
+    window[NAMESPACE].prevSelectedOutline;
+  element.style.backgroundColor = isHover ? window[NAMESPACE].prevHoveredBackgroundColor :
+    window[NAMESPACE].prevSelectedBackgroundColor;
 }
 
 /**
 * Scroll an element into view
 */
 function scrollIntoView (key) {
-  if (key in window._polymerNamespace_.DOMCache) {
-    window._polymerNamespace_.DOMCache[key].scrollIntoView();
+  if (key in window[NAMESPACE].DOMCache) {
+    window[NAMESPACE].DOMCache[key].scrollIntoView();
   }
 }
 
@@ -50,15 +53,15 @@ function scrollIntoView (key) {
 * Set a breakpoint at the beginning of a function
 */
 function setBreakpoint (key, path) {
-  var method = window._polymerNamespace_.resolveObject(key, path);
-  var methodName = window._polymerNamespace_.getPropPath(key, path).pop();
+  var method = window[NAMESPACE].resolveObject(key, path);
+  var methodName = window[NAMESPACE].getPropPath(key, path).pop();
   if (typeof method !== 'function') {
     return;
   }
-  if (!(key in window._polymerNamespace_.breakPointIndices)) {
-    window._polymerNamespace_.breakPointIndices[key] = {};
+  if (!(key in window[NAMESPACE].breakPointIndices)) {
+    window[NAMESPACE].breakPointIndices[key] = {};
   }
-  window._polymerNamespace_.breakPointIndices[key][methodName] = true;
+  window[NAMESPACE].breakPointIndices[key][methodName] = true;
   debug(method);
 }
 
@@ -66,14 +69,14 @@ function setBreakpoint (key, path) {
 * Clear the breakpoint at the beginning of a function
 */
 function clearBreakpoint (key, path) {
-  var method = window._polymerNamespace_.resolveObject(key, path);
-  var methodName = window._polymerNamespace_.getPropPath(key, path).pop();
+  var method = window[NAMESPACE].resolveObject(key, path);
+  var methodName = window[NAMESPACE].getPropPath(key, path).pop();
   if (typeof method !== 'function') {
     return;
   }
-  if ((key in window._polymerNamespace_.breakPointIndices) &&
-    (methodName in window._polymerNamespace_.breakPointIndices[key])) {
-    delete window._polymerNamespace_.breakPointIndices[key][methodName];
+  if ((key in window[NAMESPACE].breakPointIndices) &&
+    (methodName in window[NAMESPACE].breakPointIndices[key])) {
+    delete window[NAMESPACE].breakPointIndices[key][methodName];
   }
   undebug(method);
 }
@@ -84,8 +87,8 @@ function clearBreakpoint (key, path) {
 */
 function getPropPath (key, path, isModel) {
   var propPath = [];
-  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
-    window._polymerNamespace_.indexToPropMap[key];
+  var indexMap = isModel ? window[NAMESPACE].modelIndexToPropMap[key] :
+    window[NAMESPACE].indexToPropMap[key];
   path.forEach(function (el) {
     indexMap = indexMap[el];
     propPath.push(indexMap.__name__);
@@ -98,9 +101,9 @@ function getPropPath (key, path, isModel) {
 * isModel tells if we should into the model data structures
 */
 function resolveObject (key, path, isModel) {
-  var obj = isModel ? window._polymerNamespace_.DOMModelCache[key] :
-    window._polymerNamespace_.DOMCache[key];
-  var propPath = window._polymerNamespace_.getPropPath(key, path, isModel);
+  var obj = isModel ? window[NAMESPACE].DOMModelCache[key] :
+    window[NAMESPACE].DOMCache[key];
+  var propPath = window[NAMESPACE].getPropPath(key, path, isModel);
   propPath.forEach(function (el) {
     obj = obj[el];
   });
@@ -112,9 +115,9 @@ function resolveObject (key, path, isModel) {
 * isModel tells if we should into the model data structures
 */
 function changeProperty (key, path, newValue, isModel) {
-  var prop = window._polymerNamespace_.getPropPath(key, path, isModel).pop();
+  var prop = window[NAMESPACE].getPropPath(key, path, isModel).pop();
   path.pop();
-  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (obj) {
     obj[prop] = newValue;
   }
@@ -125,19 +128,19 @@ function changeProperty (key, path, newValue, isModel) {
 * isModel tells if we should into the model data structures
 */
 function getProperty (key, path, isModel) {
-  var prop = window._polymerNamespace_.getPropPath(key, path, isModel).pop();
+  var prop = window[NAMESPACE].getPropPath(key, path, isModel).pop();
   path.pop();
-  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
-  return window._polymerNamespace_.JSONizer.JSONizeProperty(prop, obj);
+  var obj = window[NAMESPACE].resolveObject(key, path, isModel);
+  return window[NAMESPACE].JSONizer.JSONizeProperty(prop, obj);
 }
 
 function addToCache (obj, key) {
   if (obj.tagName === 'TEMPLATE' && obj.model) {
-    window._polymerNamespace_.DOMModelCache[key] = obj.model;
+    window[NAMESPACE].DOMModelCache[key] = obj.model;
   } else if (obj.templateInstance) {
-    window._polymerNamespace_.DOMModelCache[key] = obj.templateInstance.model;
+    window[NAMESPACE].DOMModelCache[key] = obj.templateInstance.model;
   }
-  window._polymerNamespace_.DOMCache[key] = obj;
+  window[NAMESPACE].DOMCache[key] = obj;
 }
 
 /**
@@ -158,8 +161,8 @@ function inspectorSelectionChangeListener () {
 * isModel tells if we should into the model data structures
 */
 function getIndexMapObject (key, path, isModel) {
-  var start = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
-    window._polymerNamespace_.indexToPropMap[key];
+  var start = isModel ? window[NAMESPACE].modelIndexToPropMap[key] :
+    window[NAMESPACE].indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
     start = start[path[i]];
   }
@@ -195,7 +198,7 @@ function removeFromSubIndexMap (indexMap, index) {
 */
 function addToIndexMap (propName, key, path, isModel) {
   var lastIndex = path.pop();
-  var start = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
+  var start = window[NAMESPACE].getIndexMapObject(key, path, isModel);
   start[lastIndex] = {
     __name__: propName
   };
@@ -209,8 +212,8 @@ function addToIndexMap (propName, key, path, isModel) {
 * isModel tells if we should into the model data structures
 */
 function emptyIndexMap (key, path, isModel) {
-  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap :
-    window._polymerNamespace_.indexToPropMap;
+  var indexMap = isModel ? window[NAMESPACE].modelIndexToPropMap :
+    window[NAMESPACE].indexToPropMap;
   var start = indexMap[key];
   var lastIndex = path.pop();
   if (!lastIndex) {
@@ -243,7 +246,7 @@ function filterProperty (n) {
 // https://developer.mozilla.org/en-US/docs/Web/API/Element
 // TODO: Improve blacklist
 function setBlacklist () {
-  window._polymerNamespace_.filterProperty.blacklist = {
+  window[NAMESPACE].filterProperty.blacklist = {
   accessKey: true,
   align: true,
   attributes: true,
@@ -410,7 +413,7 @@ function processMutations (mutations) {
     // We should ideally remove all the removed nodes from `DOMCache` but it
     // would involve finding all children of a removed node (recursively through the 
     // composed DOM). So we let them be.
-    changedElements.push(window._polymerNamespace_.getDOMJSON(changedElement));
+    changedElements.push(window[NAMESPACE].getDOMJSON(changedElement));
     changedElementKeys[changedElements.__keyPolymer__] = true;
   }
   return changedElements;
@@ -421,43 +424,43 @@ function processMutations (mutations) {
 */
 function getDOMJSON (el) {
   return {
-    'data': window._polymerNamespace_.JSONizer.JSONizeDOMObject(el || document.body,
+    'data': window[NAMESPACE].JSONizer.JSONizeDOMObject(el || document.body,
       function (domNode, converted, lightDOM) {
         if (!domNode.__keyPolymer__) {
           if (lightDOM) {
             // Something that wasn't found in the composed tree but found in the light DOM
             // was probably not rendered.
             converted.unRendered = true;
-          } else if ((window._polymerNamespace_.isPolymerElement(domNode) && !domNode.shadowRoot)) {
+          } else if ((window[NAMESPACE].isPolymerElement(domNode) && !domNode.shadowRoot)) {
             // Polymer elements may not have shadow roots. So, the composed DOM tree is the light DOM tree
             // and has nothing do with the shadow DOM.
             converted.noShadowRoot = true;
           }
           // For every element found during traversal, we store it in a hash-table with a unique key.
-          window._polymerNamespace_.lastDOMKey++;
-          var key = window._polymerNamespace_.lastDOMKey;
-          window._polymerNamespace_.addToCache(domNode, key);
+          window[NAMESPACE].lastDOMKey++;
+          var key = window[NAMESPACE].lastDOMKey;
+          window[NAMESPACE].addToCache(domNode, key);
           // Also make a map to store the actual property names to the indices corresponding to the names
           // before passing it to the caller.
-          window._polymerNamespace_.indexToPropMap[key] = {};
-          window._polymerNamespace_.modelIndexToPropMap[key] = {};
+          window[NAMESPACE].indexToPropMap[key] = {};
+          window[NAMESPACE].modelIndexToPropMap[key] = {};
           domNode.__keyPolymer__ = key;
 
           // DOM mutation listeners are added to the very first element (the parent) of all elements
           // so that it will report all light DOM changes and to *all* shadow roots so they will
           // report all shadow DOM changes.
-          if (key === window._polymerNamespace_.firstDOMKey || domNode.shadowRoot) {
+          if (key === window[NAMESPACE].firstDOMKey || domNode.shadowRoot) {
             var observer = new MutationObserver(function (mutations) {
               window.dispatchEvent(new CustomEvent('dom-mutation', {
-                detail: window._polymerNamespace_.processMutations(mutations)
+                detail: window[NAMESPACE].processMutations(mutations)
               }));
             });
-            window._polymerNamespace_.mutationObserverCache[key] = observer;
+            window[NAMESPACE].mutationObserverCache[key] = observer;
             var config = {
               childList: true,
               subtree: true
             };
-            if (key === window._polymerNamespace_.firstDOMKey) {
+            if (key === window[NAMESPACE].firstDOMKey) {
               observer.observe(domNode, config);
             }
             if (domNode.shadowRoot) {
@@ -466,7 +469,7 @@ function getDOMJSON (el) {
           }
         }
         converted.key = domNode.__keyPolymer__;
-        var isPolymer = window._polymerNamespace_.isPolymerElement(domNode);
+        var isPolymer = window[NAMESPACE].isPolymerElement(domNode);
         // conditionally set the properties
         if (isPolymer) {
           converted.isPolymer = true;
@@ -481,7 +484,7 @@ function getDOMJSON (el) {
 * isModel tells if we should into the model data structures
 */
 function getObjectJSON (key, path, isModel) {
-  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (!obj) {
     return {
       'data': JSON.stringify({
@@ -489,32 +492,32 @@ function getObjectJSON (key, path, isModel) {
       })
     };
   }
-  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
+  var indexMap = window[NAMESPACE].getIndexMapObject(key, path, isModel);
   var filter = null;
   if (path.length === 0) {
     filter = function (prop) {
       return prop !== '__keyPolymer__';
     };
   }
-  if (window._polymerNamespace_.isPolymerElement(obj)) {
+  if (window[NAMESPACE].isPolymerElement(obj)) {
     filter = function (prop) {
-      return window._polymerNamespace_.filterProperty(prop) && prop !== '__keyPolymer__';
+      return window[NAMESPACE].filterProperty(prop) && prop !== '__keyPolymer__';
     };
   }
   return {
-    'data': window._polymerNamespace_.JSONizer.
+    'data': window[NAMESPACE].JSONizer.
       JSONizeObject(obj, function (converted) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
           if (!isModel) {
-            if (path.length === 0 && (key in window._polymerNamespace_.breakPointIndices) &&
-              (propList[i].name in window._polymerNamespace_.breakPointIndices[key])) {
+            if (path.length === 0 && (key in window[NAMESPACE].breakPointIndices) &&
+              (propList[i].name in window[NAMESPACE].breakPointIndices[key])) {
               converted.value[i].setBreakpoint = true;
             }
           }
           var propName = propList[i].name;
           // Must associate each index to the corresponding property name.
-          window._polymerNamespace_.addToSubIndexMap(indexMap, propName, isModel);
+          window[NAMESPACE].addToSubIndexMap(indexMap, propName, isModel);
         }
       },
       filter)
@@ -555,13 +558,13 @@ function addObjectObserver (key, path, isModel) {
     return false;
   }
   console.log('adding observer');
-  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (!obj) {
     // This is because an element may not have a `model` and we just ignore it.
     // No observer can be added
     return;
   }
-  var indexMap = window._polymerNamespace_.getIndexMapObject(key, path, isModel);
+  var indexMap = window[NAMESPACE].getIndexMapObject(key, path, isModel);
 
   /**
   * Returns a change object that looks like this:
@@ -601,8 +604,8 @@ function addObjectObserver (key, path, isModel) {
       switch (change.type) {
         case 'update':
           // We've chosen to ignore certain Polymer properties which may have gotten updated
-          if (window._polymerNamespace_.isPolymerElement(obj) &&
-              !window._polymerNamespace_.filterProperty(change.name)) {
+          if (window[NAMESPACE].isPolymerElement(obj) &&
+              !window[NAMESPACE].filterProperty(change.name)) {
             continue;
           }
           // We might be dealing with non-Objects which DOMJSONizer can't JSONize.
@@ -610,7 +613,7 @@ function addObjectObserver (key, path, isModel) {
           var wrappedObject = {
             value: change.object[change.name]
           };
-          summary.object = window._polymerNamespace_.JSONizer.
+          summary.object = window[NAMESPACE].JSONizer.
             JSONizeObject(wrappedObject);
           break;
         case 'delete':
@@ -623,24 +626,24 @@ function addObjectObserver (key, path, isModel) {
             var wrappedObject = {
               value: change.object[change.name]
             };
-            summary.object = window._polymerNamespace_.JSONizer.
+            summary.object = window[NAMESPACE].JSONizer.
               JSONizeObject(wrappedObject);
           } else {
             // Update the index-to-propName map to reflect the deletion
-            window._polymerNamespace_.removeFromSubIndexMap(indexMap, indexMap['name-' + change.name], isModel);
+            window[NAMESPACE].removeFromSubIndexMap(indexMap, indexMap['name-' + change.name], isModel);
           }
           break;
         case 'add':
-          if (window._polymerNamespace_.isPolymerElement(obj) &&
-            !window._polymerNamespace_.filterProperty(change.name)) {
+          if (window[NAMESPACE].isPolymerElement(obj) &&
+            !window[NAMESPACE].filterProperty(change.name)) {
             continue;
           }
           var wrappedObject = {
             value: change.object[change.name]
           };
-          summary.object = window._polymerNamespace_.JSONizer.
+          summary.object = window[NAMESPACE].JSONizer.
             JSONizeObject(wrappedObject);
-          if (window._polymerNamespace_.isPolymerElement(obj) &&
+          if (window[NAMESPACE].isPolymerElement(obj) &&
             checkChainUpForProp(change.name, obj)) {
             // Even though this is an addition at one level, this is an update in the view of the UI
             // because another property of the same name is already shown.
@@ -648,7 +651,7 @@ function addObjectObserver (key, path, isModel) {
             // only for Polymer elements.
             summary.type = 'update';
           } else {
-            window._polymerNamespace_.addToSubIndexMap(indexMap, change.name, isModel);
+            window[NAMESPACE].addToSubIndexMap(indexMap, change.name, isModel);
           }
           break;
       }
@@ -670,8 +673,8 @@ function addObjectObserver (key, path, isModel) {
     Object.observe(proto, observer);
     proto = proto.__proto__;
   }
-  var observerCache = isModel ? window._polymerNamespace_.modelObserverCache :
-    window._polymerNamespace_.observerCache;
+  var observerCache = isModel ? window[NAMESPACE].modelObserverCache :
+    window[NAMESPACE].observerCache;
   // Store the observer function so that we can unobserve when we need to.
   if (!observerCache[key]) {
     observerCache[key] = {};
@@ -694,7 +697,7 @@ function removeObjectObserver (key, path, isModel) {
   function recursiveUnobserve (obj, hashLocation, indexMap) {
     if (hashLocation['__objectObserver__']) {
       Object.unobserve(obj, hashLocation['__objectObserver__']);
-      if (window._polymerNamespace_.isPolymerElement(obj)) {
+      if (window[NAMESPACE].isPolymerElement(obj)) {
         // Polymer objects have listeners on multiple proto levels
         var proto = obj.__proto__;
         while (proto && !Polymer.isBase(proto)) {
@@ -711,17 +714,17 @@ function removeObjectObserver (key, path, isModel) {
       }
     }
   }
-  var obj = window._polymerNamespace_.resolveObject(key, path, isModel);
+  var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (!obj) {
     // This is because an element may not have a `model` and we just ignore it.
     // No observer can be added
     return;
   }
-  var parent = isModel ? window._polymerNamespace_.modelObserverCache :
-    window._polymerNamespace_.observerCache;
+  var parent = isModel ? window[NAMESPACE].modelObserverCache :
+    window[NAMESPACE].observerCache;
   var hashLocation = parent[key];
-  var indexMap = isModel ? window._polymerNamespace_.modelIndexToPropMap[key] :
-    window._polymerNamespace_.indexToPropMap[key];
+  var indexMap = isModel ? window[NAMESPACE].modelIndexToPropMap[key] :
+    window[NAMESPACE].indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
     parent = hashLocation;
     hashLocation = hashLocation[path[i]];
@@ -734,22 +737,22 @@ function removeObjectObserver (key, path, isModel) {
 
 function createCache() {
   // All DOM elements discovered are hashed by a unique key
-  window._polymerNamespace_.DOMCache = {};
+  window[NAMESPACE].DOMCache = {};
   // A similar map is maintained for the models associated with the DOM objects
-  window._polymerNamespace_.DOMModelCache = {};
+  window[NAMESPACE].DOMModelCache = {};
   // O.o() observers are hashed so they can be removed when needed
-  window._polymerNamespace_.observerCache = {};
-  window._polymerNamespace_.modelObserverCache = {};
-  window._polymerNamespace_.breakPointIndices = {};
+  window[NAMESPACE].observerCache = {};
+  window[NAMESPACE].modelObserverCache = {};
+  window[NAMESPACE].breakPointIndices = {};
   // indexToPropMap maps indices to property names
   // The UI maintains properties as an array (to keep them ordered). To keep an
   // association with real object properties and those, we need a map.
-  window._polymerNamespace_.indexToPropMap = {};
-  window._polymerNamespace_.modelIndexToPropMap = {};
-  window._polymerNamespace_.firstDOMKey = 1;
+  window[NAMESPACE].indexToPropMap = {};
+  window[NAMESPACE].modelIndexToPropMap = {};
+  window[NAMESPACE].firstDOMKey = 1;
   // The key of the last DOM element added
-  window._polymerNamespace_.lastDOMKey = window._polymerNamespace_.firstDOMKey - 1;
+  window[NAMESPACE].lastDOMKey = window[NAMESPACE].firstDOMKey - 1;
   // Mutation observers are stored so they can be removed later
-  window._polymerNamespace_.mutationObserverCache = {};
-  window._polymerNamespace_.JSONizer = new window._polymerNamespace_.DOMJSONizer();
+  window[NAMESPACE].mutationObserverCache = {};
+  window[NAMESPACE].JSONizer = new window[NAMESPACE].DOMJSONizer();
 }

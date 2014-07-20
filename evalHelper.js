@@ -2,7 +2,8 @@
 * A helper object to help `eval` code in host page
 */
 function createEvalHelper (callback) {
-  var NAMESPACE = 'window._polymerNamespace_.';
+  // The extension's ID serves as the namespace.
+  var NAMESPACE = chrome.runtime.id;
   /**
   * Convert any object to a string
   */
@@ -14,14 +15,21 @@ function createEvalHelper (callback) {
     srcURLID++;
     return '\n//@ sourceURL=src' + srcURLID + '.js';
   }
+  function wrapFunction (fnName, fnString) {
+    return '(function (NAMESPACE) {' +
+      'window["' + NAMESPACE + '"].' + fnName + ' = ' +
+        fnString + ';' +
+    '})("' + NAMESPACE + '");';
+  }
   var helper = {
     /**
     * Define a function
     */
     defineFunction: function (name, string, callback) {
-      chrome.devtools.inspectedWindow.eval(NAMESPACE + name + ' = ' + string + getSrcURL(), function (result, error) {
-        callback && callback(result, error);
-      });
+      chrome.devtools.inspectedWindow.eval(wrapFunction(name, string) + getSrcURL(),
+        function (result, error) {
+          callback && callback(result, error);
+        });
     },
     /**
     * Define functions in a batch
@@ -29,7 +37,7 @@ function createEvalHelper (callback) {
     defineFunctions: function (functionObjects, callback) {
       var toEval = '';
       for (var i = 0; i < functionObjects.length; i++) {
-        toEval += NAMESPACE + functionObjects[i].name + ' = ' + functionObjects[i].string + ';\n\n';
+        toEval += wrapFunction(functionObjects[i].name, functionObjects[i].string) + ';\n\n';
       }
       toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
@@ -48,7 +56,8 @@ function createEvalHelper (callback) {
         params += serialize(args[i]);
       }
       params += ')';
-      var toEval = (lhs ? (NAMESPACE + lhs  + ' = ') : '') + NAMESPACE + name + params + ';'
+      var toEval = (lhs ? ('window["' + NAMESPACE + '"].' + lhs  + ' = ') : '') +
+        'window["' + NAMESPACE + '"].' + name + params + ';';
       toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         callback && callback(result, error);
@@ -57,26 +66,27 @@ function createEvalHelper (callback) {
   };
 
   function cleanUp () {
-    window.removeEventListener('clean-up', window._polymerNamespace_.cleanUp);
-    var keys = Object.keys(window._polymerNamespace_.DOMCache);
+    window.removeEventListener('clean-up', window[NAMESPACE].cleanUp);
+    var keys = Object.keys(window[NAMESPACE].DOMCache);
     for (var i = 0; i < keys.length; i++) {
       // Remove the key property that we had added to all DOM objects
-      delete window._polymerNamespace_.DOMCache[keys[i]].__keyPolymer__;
+      delete window[NAMESPACE].DOMCache[keys[i]].__keyPolymer__;
     }
     // Unhighlight any selected element
-    if (window._polymerNamespace_.lastSelectedKey) {
-      window._polymerNamespace_.unhighlight(window._polymerNamespace_.lastSelectedKey, false);
+    if (window[NAMESPACE].lastSelectedKey) {
+      window[NAMESPACE].unhighlight(window[NAMESPACE].lastSelectedKey, false);
     }
     // TODO: Unhighlight hovered elements too
-    delete window._polymerNamespace_;
+    delete window[NAMESPACE];
   }
   // Wait till the namespace is created and clean-up handler is created.
-  chrome.devtools.inspectedWindow.eval('window._polymerNamespace_ = {};',
+  chrome.devtools.inspectedWindow.eval('window["' + NAMESPACE + '"] = {};',
     function (result, error) {
       // Define cleanUp
       helper.defineFunction('cleanUp', cleanUp.toString(), function (result, error) {
         // Add an event listener that removes itself
-        chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", window._polymerNamespace_.cleanUp);',
+        chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", ' +
+          'window["' + NAMESPACE + '"].cleanUp);',
           function (result, error) {
             // We are ready to let helper be used
             callback(helper);
