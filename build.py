@@ -79,6 +79,13 @@ print 'Project cleaned.\n'
 if mode == 'clean':
   sys.exit('Run `python build.py` to build again.')
 
+# TODO: Executing `bower` gives us:
+# 'warning: possible EventEmitter memory leak detected. 11 listeners added.'
+# So right now, we ask the user to do it manually. Must fix this.
+'''print 'Getting dependencies with `bower`...'
+
+execCmd('bower install', silentFail=False)'''
+
 print 'Building project...\n'
 
 createDirectoryStructure()
