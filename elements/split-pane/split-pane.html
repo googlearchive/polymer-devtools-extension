@@ -9,6 +9,7 @@
       #content {
         display: flex;
         flex-direction: row;
+        overflow: auto;
       }
       #left {
         width: 70%;
@@ -25,7 +26,7 @@
       <div id='left'>
         <content select='.split-pane-left'></content>
       </div>
-      <core-splitter></core-splitter>
+      <core-splitter allowOverflow='true'></core-splitter>
       <div id='right'>
         <content select='.split-pane-right'></content>
       </div>
