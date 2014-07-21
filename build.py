@@ -70,6 +70,10 @@ def createDirectoryStructure ():
   execCmd('mkdir build/bower_components/platform', silentFail=False)
   execCmd('mkdir build/bower_components/polymer', silentFail=False)
 
+  # core-splitter needs an svg resource. vulcanize doesn't put resources in concatenated
+  # file. So we must manually copy that build/ .
+  execCmd('mkdir build/bower_components/core-splitter', silentFail=False)
+
 
 print 'Cleaning project...\n'
 removeFiles(['panel.js', 'panel.html'], silentFail=True)
@@ -132,6 +136,9 @@ copyFilesToBuild(['devtools.html', 'manifest.json'], silentFail=False)
 execCmd('cp bower_components/platform/platform.js build/bower_components/platform/platform.js',
   silentFail=False)
 execCmd('cp bower_components/polymer/polymer.js build/bower_components/polymer/polymer.js',
+  silentFail=False)
+# core-splitter needs an svg resource.
+execCmd('cp bower_components/core-splitter/handle.svg build/bower_components/core-splitter/handle.svg',
   silentFail=False)
 
 print 'All done! The extension was built in `build`.\n'
