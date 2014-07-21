@@ -3,7 +3,7 @@
 */
 function createEvalHelper (callback) {
   // The extension's ID serves as the namespace.
-  var NAMESPACE = chrome.runtime.id;
+  var extensionNamespace = chrome.runtime.id;
   /**
   * Convert any object to a string
   */
@@ -25,9 +25,9 @@ function createEvalHelper (callback) {
    */
   function wrapFunction (fnName, fnString) {
     return '(function (NAMESPACE) {' +
-      'window["' + NAMESPACE + '"].' + fnName + ' = ' +
+      'window["' + extensionNamespace + '"].' + fnName + ' = ' +
         fnString + ';' +
-    '})("' + NAMESPACE + '");';
+    '})("' + extensionNamespace + '");';
   }
   var helper = {
     /**
@@ -64,8 +64,8 @@ function createEvalHelper (callback) {
         params += serialize(args[i]);
       }
       params += ')';
-      var toEval = (lhs ? ('window["' + NAMESPACE + '"].' + lhs  + ' = ') : '') +
-        'window["' + NAMESPACE + '"].' + name + params + ';';
+      var toEval = (lhs ? ('window["' + extensionNamespace + '"].' + lhs  + ' = ') : '') +
+        'window["' + extensionNamespace + '"].' + name + params + ';';
       toEval += getSrcURL();
       chrome.devtools.inspectedWindow.eval(toEval, function (result, error) {
         callback && callback(result, error);
@@ -88,13 +88,13 @@ function createEvalHelper (callback) {
     delete window[NAMESPACE];
   }
   // Wait till the namespace is created and clean-up handler is created.
-  chrome.devtools.inspectedWindow.eval('window["' + NAMESPACE + '"] = {};',
+  chrome.devtools.inspectedWindow.eval('window["' + extensionNamespace + '"] = {};',
     function (result, error) {
       // Define cleanUp
       helper.defineFunction('cleanUp', cleanUp.toString(), function (result, error) {
         // Add an event listener that removes itself
         chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", ' +
-          'window["' + NAMESPACE + '"].cleanUp);',
+          'window["' + extensionNamespace + '"].cleanUp);',
           function (result, error) {
             // We are ready to let helper be used
             callback(helper);

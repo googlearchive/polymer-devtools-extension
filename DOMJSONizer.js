@@ -38,7 +38,7 @@ function DOMJSONizer () {
   */
   function copyProperty (protoObject, oldObj, newObjArray, prop) {
     try {
-      oldObj[prop];
+      var tmp = oldObj[prop];
     } catch (e) {
       // We encountered an error trying to read the property.
       // It must be a getter that is failing.
