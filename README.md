@@ -4,7 +4,7 @@ Polymer debugging extension
 <b>How to run:</b>
 
 - Clone the repository.
-> git clone https://github.com/sachinhosmani/sample-chrome-extension.git
+> git clone https://github.com/sachinhosmani/polymer-devtools-extension.git
 
 - Navigate to cloned directory.
 - Get dependencies with `bower` (Make sure `bower` is installed before this).
