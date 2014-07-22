@@ -566,7 +566,6 @@ function addObjectObserver (key, path, isModel) {
     }
     return false;
   }
-  console.log('adding observer');
   var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (!obj) {
     // This is because an element may not have a `model` and we just ignore it.
