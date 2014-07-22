@@ -5,6 +5,17 @@
 // in its body is self-executed in the context of the host page.
 
 /**
+ * Used to check if the page is fresh (untouched by the extension).
+ * If it is defined in the page, then it won't raise an error. The page is considered unfresh.
+ * If it goes through the page is fresh.
+ * (This is dummy function.)
+ * @return {Boolean}
+ */
+function isPageFresh () {
+  return 'immaterial string';
+}
+
+/**
  * adds the extension ID to the event name so it's unique.
  * @param  {string} name event name
  * @return {string}      new event name
@@ -423,7 +434,7 @@ function processMutations (mutations) {
     // would involve finding all children of a removed node (recursively through the 
     // composed DOM). So we let them be.
     changedElements.push(window[NAMESPACE].getDOMJSON(changedElement));
-    changedElementKeys[changedElements.__keyPolymer__] = true;
+    changedElementKeys[changedElement.__keyPolymer__] = true;
   }
   return changedElements;
 }
@@ -671,6 +682,7 @@ function addObjectObserver (key, path, isModel) {
 
   function observer (changes) {
     console.log('observing');
+    console.log(changes);
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
     }));

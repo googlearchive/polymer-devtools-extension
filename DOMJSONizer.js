@@ -20,8 +20,12 @@ function DOMJSONizer () {
     attributeChanged: true
   };
 
-  /**
-  * Checks if a property is an acessor. obj.hasOwnProperty(prop) has to be true.
+ /**
+  * Checks if a property is an acessor.
+  * Note: obj.hasOwnProperty(prop) has to be true.
+  * @param  {Object} obj
+  * @param  {string} prop
+  * @return {Boolean}
   */
   function propHasAccessor (obj, prop) {
     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);

@@ -8,11 +8,10 @@ function getNamespacedEventName (name) {
   return chrome.runtime.id + '-' + name;
 }
 
-// 'polymer-ready' event means that the host page runs a Polymer app and it was loaded.
-// We need to refresh our panel.
+// 'polymer-ready' event means that the host page runs a Polymer app and it was upgraded by Polymer.
 window.addEventListener('polymer-ready', function () {
   chrome.runtime.sendMessage({
-    name: 'refresh'
+    name: 'polymer-ready'
   });
 });
 

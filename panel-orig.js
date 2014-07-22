@@ -163,6 +163,10 @@
         {
           name: 'getNamespacedEventName',
           string: getNamespacedEventName.toString()
+        },
+        {
+          name: 'isPageFresh',
+          string: isPageFresh.toString()
         }
       ], function (result, error) {
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
@@ -202,7 +206,11 @@
   function initLocalDOMTree (tree, DOM) {
     if (!deepView) {
       // DOM tree is to be shown as light DOM tree
-      tree.initFromDOMTree(DOM.lightDOMTree, true);
+      if (tree === shadowDOMTree) {
+        tree.initFromDOMTree(DOM.lightDOMTree, true);
+      } else {
+        tree.initFromDOMTree(DOM.lightDOMTree, true, shadowDOMTree);
+      }
       return;
     }
     if (tree === shadowDOMTree) {
@@ -543,9 +551,30 @@
     });
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
       switch (message.name) {
+        case 'check-page-fresh':
+          // The page's location has changed. This doesn't necessarily mean that
+          // the page itself got reloaded. So we try to execute a function which is supposed
+          // to be defined if the page is not fresh. If it fails, then the page is fresh.
+          EvalHelper.executeFunction('isPageFresh', [], function (result, error) {
+            if (error) {
+              // Let the background page know so it can spawn the content script.
+              // Expect a 'refresh' message after that.
+              backgroundPageConnection.postMessage({
+                name: 'fresh-page',
+                tabId: chrome.devtools.inspectedWindow.tabId
+              });
+            }
+          });
+          break;
         case 'refresh':
-          // A page refresh has happened
-          init();
+          // This happens when either:
+          // 1. The page got upgraded by Polymer ('polymer-ready')
+          // 2. The page got actually refreshed.
+          EvalHelper.executeFunction('cleanUp', [], function (result, error) {
+            // Ignore error. If this 'refresh' was due to a 'polymer-ready' event, cleanUp will
+            // do its job. Otherwise it must be a fresh page, so there is no clean up needed.
+            init();
+          });
           break;
         case 'object-changed':
           // An object has changed. Must update object-tree
@@ -599,25 +628,21 @@
           for (var i = 0; i < mutations.length; i++) {
             var newElement = mutations[i].data;
             var key = newElement.key;
-            var tree = getCurrentElementTree();
-            var childTree = tree.getChildTreeForKey(key);
+            var childElementTree = elementTree.getChildTreeForKey(key);
+            var childLocalDOMTree = shadowDOMTree.getChildTreeForKey(key);
             function resetTree () {
               // elementTree has all composed DOM elements. A DOM mutation will might need
               // an update there
-              var childElementTree = elementTree.getChildTreeForKey(key);
               if (childElementTree) {
                 childElementTree.initFromDOMTree(newElement, true, elementTree);
               }
-              if (!localDOMMode) {
-                // If we're in the composed DOM view, we are done
-                return;
-              }
-              if (childTree) {
+              if (childLocalDOMTree) {
                 // The element to be refreshed is there in the local DOM tree as well.
-                initLocalDOMTree(childTree, newElement);
+                initLocalDOMTree(childLocalDOMTree, newElement);
               }
             }
-            if (childTree && childTree.selected) {
+            if ((childElementTree && childElementTree.selected) ||
+              (childLocalDOMTree && childLocalDOMTree.selected)) {
               // The selected element and the one to be refreshed are the same.
               unselectElement(key, resetTree);
             } else {

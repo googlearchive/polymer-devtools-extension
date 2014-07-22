@@ -12,16 +12,27 @@
   chrome.runtime.onConnect.addListener(function (port) {
     var portId;
     function onMessage (message, sender, sendResponse) {
-      if (message.name === 'panel-init') {
-        portId = ++lastPortId;
-        tabIdToPortMap[message.tabId] = port;
-        portIdToTabIdMap[portId] = message.tabId;
-        portIdToPortMap[portId] = port;
-        port.onMessage.removeListener(onMessage);
+      switch (message.name) {
+        case 'panel-init':
+          portId = ++lastPortId;
+          tabIdToPortMap[message.tabId] = port;
+          portIdToTabIdMap[portId] = message.tabId;
+          portIdToPortMap[portId] = port;
 
-        chrome.tabs.executeScript(message.tabId, {
-          file: 'contentScript.js'
-        });
+          chrome.tabs.executeScript(message.tabId, {
+            file: 'contentScript.js'
+          });
+          break;
+        case 'fresh-page':
+          // Tab's location had changed and the page confirmed that it was a refresh.
+          // Start the content script.
+          chrome.tabs.executeScript(message.tabId, {
+            file: 'contentScript.js'
+          });
+          port.postMessage({
+            name: 'refresh'
+          });
+          break;
       }
     }
     // We expect a `panel-init` message from it soon after the connection.
@@ -49,11 +60,6 @@
       return;
     }
     switch (message.name) {
-      case 'refresh':
-        port.postMessage({
-          name: 'refresh',
-        });
-        break;
       case 'object-changed':
         port.postMessage({
           name: 'object-changed',
@@ -71,6 +77,36 @@
           name: 'inspected-element-changed',
           key: message.key
         });
+        break;
+      case 'polymer-ready':
+        // If `polymer-ready` happens after chrome.tabs detects page reload.
+        port.postMessage({
+          name: 'refresh'
+        });
+        break;
     }
 	});
+
+  // When a tab gets updated
+  // Sequence of events:
+  // 1. Background-page to panel => 'check-page-refresh'
+  // Possibly:
+  // 2. panel to Background-page => 'fresh-page'
+  // 3. Background-page to panel => 'refresh'
+  // Possibly:
+  // 4. content-script to background-page => 'polymer-ready'
+  // 5. background-page to panel => 'refresh'
+  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    if (changeInfo.status === 'complete') {
+      // Only if it has finished loading
+      if (tabId in tabIdToPortMap) {
+        // If extension was open in this tab, send a message to check if this was
+        // an actual page reload. Further action is based on the response to this.
+        var port = tabIdToPortMap[tabId];
+        port.postMessage({
+          name: 'check-page-fresh'
+        });
+      }
+    }
+  });
 })();

@@ -75,8 +75,34 @@ function createEvalHelper (callback) {
 
   function cleanUp () {
     window.removeEventListener('clean-up', window[NAMESPACE].cleanUp);
-    var keys = Object.keys(window[NAMESPACE].DOMCache);
-    for (var i = 0; i < keys.length; i++) {
+    var keys;
+    var i, j, methodNames;
+    // Remove all object observers that were registered
+    keys = Object.keys(window[NAMESPACE].observerCache);
+    for (i = 0; i < keys.length; i++) {
+      window[NAMESPACE].removeObjectObserver(keys[i], [], false);
+    }
+    // Remove all model object observers that were registered
+    keys = Object.keys(window[NAMESPACE].modelObserverCache);
+    for (i = 0; i < keys.length; i++) {
+      window[NAMESPACE].removeObjectObserver(keys[i], [], true);
+    }
+    // Remove any breakpoints that were set
+    keys = Object.keys(window[NAMESPACE].breakPointIndices);
+    for (i = 0; i < keys.length; i++) {
+      methodNames = Object.keys(window[NAMESPACE].breakPointIndices[keys[i]]);
+      for (j = 0; j < methodNames.length; j++) {
+        if (methodNames[i] in window[NAMESPACE].DOMCache[keys[i]]) {
+          undebug(window[NAMESPACE].DOMCache[keys[i]][methodNames[i]]);
+        }
+      }
+    }
+    keys = Object.keys(window[NAMESPACE].DOMCache);
+    for (i = 0; i < keys.length; i++) {
+      // Remove DOM mutation observers
+      if (keys[i] in window[NAMESPACE].mutationObserverCache) {
+        window[NAMESPACE].mutationObserverCache[keys[i]].disconnect();
+      }
       // Remove the key property that we had added to all DOM objects
       delete window[NAMESPACE].DOMCache[keys[i]].__keyPolymer__;
     }
@@ -92,10 +118,16 @@ function createEvalHelper (callback) {
     function (result, error) {
       // Define cleanUp
       helper.defineFunction('cleanUp', cleanUp.toString(), function (result, error) {
+        if (error) {
+          throw error;
+        }
         // Add an event listener that removes itself
         chrome.devtools.inspectedWindow.eval('window.addEventListener("clean-up", ' +
           'window["' + extensionNamespace + '"].cleanUp);',
           function (result, error) {
+            if (error) {
+              throw error;
+            }
             // We are ready to let helper be used
             callback(helper);
           }
