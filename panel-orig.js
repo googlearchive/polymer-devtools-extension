@@ -502,17 +502,16 @@
         var DOMTree = getDOMTreeForKey(key);
         unSelectInTree();
         deepView = false;
-        initLocalDOMTree(shadowDOMTree, DOMTree);
         breadCrumbs.list = [{
           name: DOMTree.tagName,
           key: DOMTree.key
         }];
+        initLocalDOMTree(shadowDOMTree, DOMTree);
         switchToLocalDOMView();
       } else {
         deepView = true;
         var DOMTree = getDOMTreeForKey(key);
         unSelectInTree();
-        initLocalDOMTree(shadowDOMTree, DOMTree);
         // If the last bread crumb is not the one representing what we want in the
         // local DOM view (this means it is not just a peek into the shadow DOM from light DOM)
         if (breadCrumbs.list[breadCrumbs.list.length - 1].key !== DOMTree.key) {
@@ -521,6 +520,7 @@
             key: DOMTree.key
           });
         }
+        initLocalDOMTree(shadowDOMTree, DOMTree);
       }
     });
 
