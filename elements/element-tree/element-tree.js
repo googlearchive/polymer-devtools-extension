@@ -156,6 +156,16 @@
       this.fire(eventName, {
         key: this.key
       });
+    },
+    /**
+     * View the definition file of the Polymer element.
+     * @param  {Event} e
+     */
+    viewSource: function (e) {
+      e.stopPropagation();
+      this.fire('view-source', {
+        key: this.key
+      });
     }
   });
 })();

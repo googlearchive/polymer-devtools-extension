@@ -493,6 +493,7 @@ function getDOMJSON (el) {
         // conditionally set the properties
         if (isPolymer) {
           converted.isPolymer = true;
+          converted.sourceURL = domNode.element.ownerDocument.URL;
         }
       }
     )

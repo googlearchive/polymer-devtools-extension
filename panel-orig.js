@@ -546,6 +546,13 @@
       initLocalDOMTree(shadowDOMTree, DOMTree);
     });
 
+    window.addEventListener('view-source', function (event) {
+      var key = event.detail.key;
+      var DOMTree = getDOMTreeForKey(key);
+      var sourceURL = DOMTree.sourceURL;
+      chrome.devtools.panels.openResource(sourceURL, 1, 1);
+    });
+
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
     });

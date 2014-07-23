@@ -44,6 +44,12 @@
         height: 16px;
         display: inline-block;
       }
+      #srcBtn {
+        text-decoration: underline;
+        font-size: 8px;
+        color: blue;
+        cursor: pointer;
+      }
       #name[polymer] {
         color: rgb(19, 106, 185);
       }
@@ -59,7 +65,12 @@
         <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
         <input hidden?='{{!isPolymer || unRendered}}' type='button' id='magnify' value='{{isDiggable ? "+" : "-"}}' on-click='{{magnify}}'></input>
         <span hidden?='{{!unRendered}}'> ! </span>
-        <span on-click='{{toggleSelection}}' id='name'>{{text}}</span>
+        <span on-click='{{toggleSelection}}' id='name'>
+          {{text}}
+          <span id='srcBtn' hidden?='{{!isPolymer}}' on-click='{{viewSource}}'>
+            source file
+          </span>
+        </span>
       </div>
       <div id='childrenContent'></div>
     </div>
