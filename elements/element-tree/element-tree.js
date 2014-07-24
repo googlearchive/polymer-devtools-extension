@@ -1,4 +1,4 @@
-(function () {
+(function() {
 
   function newExpandBtnIcon(collapsed) {
     return collapsed ? 'chevron-right' : 'expand-more';
@@ -13,19 +13,19 @@
     expandBtnIcon: newExpandBtnIcon(false),
     // Polymer elements are shown differently and can be selected
     isPolymer: false,
-    ready: function () {
+    ready: function() {
       this.childElements = [];
       this.$.childrenContent.style.marginLeft = this.indent + this.baseWidth + 'px';
     },
-    addChild: function (element) {
+    addChild: function(element) {
       element.indent = this.indent + this.baseWidth;
       this.childElements.push(element);
       this.$.childrenContent.appendChild(element);
     },
     /**
-    * Empties the element-tree
-    */
-    empty: function () {
+     * Empties the element-tree
+     */
+    empty: function() {
       this.text = '';
       if (this.selected) {
         this.root.selectedChild = null;
@@ -49,11 +49,12 @@
       this.childElements = [];
     },
     /**
-    * Pre-populates the element-tree with a given tree
-    * @root: not passed in first call, but passed internally to
-    * pass around the root of the entire tree.
-    */
-    initFromDOMTree: function (tree, isDiggable, root) {
+     * Populates the tree with a tree object.
+     * @param  {Object}       tree       An object with a tagName and children trees
+     * @param  {Boolean}      isDiggable If it is possible to hit the `+` button to see inner stuff
+     * @param  {ElementTree}  root       Root of this tree (top-most parent)
+     */
+    initFromDOMTree: function(tree, isDiggable, root) {
       this.empty();
       this.text = '<' + tree.tagName + '>';
       // conditionally set these to save memory (there can be a huge page with very few
@@ -81,9 +82,9 @@
       }
     },
     /**
-    * Collapse/Uncollapse
-    */
-    toggle: function () {
+     * When the tree is expanded or minimized.
+     */
+    toggle: function() {
       if (this.childElements.length === 0) {
         return;
       }
@@ -98,9 +99,9 @@
       }
     },
     /**
-    * Element selection/unselection
-    */
-    toggleSelection: function () {
+     * When an element is selected or unselected in the tree.
+     */
+    toggleSelection: function() {
       if (this.selected) {
         // selectedChild holds the element in the tree that is currently selected
         this.root.selectedChild = null;
@@ -126,16 +127,18 @@
         });
       }
     },
-    /*
-    * Gets the child tree for an element's key
-    **/
-    getChildTreeForKey: function (key) {
+    /**
+     * Gets the child tree for a given key
+     * @param  {Number}          key         Key to find the ElementTree of
+     * @return {ElementTree}     ElementTree that holds the subtree of the element
+     */
+    getChildTreeForKey: function(key) {
       return this.keyMap ? this.keyMap[key] : null;
     },
     /** 
-    * Tells the extension to highlight the element that was hovered on. 
-    */
-    mouseOver: function () {
+     * Tells the extension to highlight the element that was hovered on.
+     */
+    mouseOver: function() {
       // Only if this is not already selected
       if (!this.selected) {
         this.fire('highlight', {
@@ -143,7 +146,10 @@
         });
       }
     },
-    mouseOut: function () {
+    /**
+     * Tells the extension to unhighlight the highlight that was hovered out of.
+     */
+    mouseOut: function() {
       // Only if this is not already selected
       if (!this.selected) {
         this.fire('unhighlight', {
@@ -151,17 +157,20 @@
         });
       }
     },
-    magnify: function () {
+    /**
+     * When the `+` is clicked on an element to dig into
+     */
+    magnify: function() {
       var eventName = this.isDiggable ? 'magnify' : 'unmagnify';
       this.fire(eventName, {
         key: this.key
       });
     },
     /**
-     * View the definition file of the Polymer element.
-     * @param  {Event} e
+     * When the `view source` button is clicked
+     * @param  {Event} e JS Event object
      */
-    viewSource: function (e) {
+    viewSource: function(e) {
       e.stopPropagation();
       this.fire('view-source', {
         key: this.key

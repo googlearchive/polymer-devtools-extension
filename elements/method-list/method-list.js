@@ -1,6 +1,6 @@
-(function () {
+(function() {
   Polymer('method-list', {
-    filterSelected: function (items) {
+    filterSelected: function(items) {
       var selected = [];
       for (var i = 0; i < items.length; i++) {
         if (items[i].setBreakpoint) {
@@ -9,9 +9,9 @@
       }
       return selected;
     },
-    ready: function () {
+    ready: function() {
       this.list = [];
-      this.addEventListener('core-select', function (event) {
+      this.addEventListener('core-select', function(event) {
         event.stopPropagation();
         this.fire('breakpoint-toggle', {
           isSet: event.detail.isSelected,

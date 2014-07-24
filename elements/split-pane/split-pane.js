@@ -1,20 +1,21 @@
-(function () {
+(function() {
   Polymer('split-pane', {
-    resizePanels: function (event) {
+    // TODO: Remove this unless it is decided to re-write core-splitter.
+    /*resizePanels: function (event) {
       var newX = event.offsetX + this.$.left.offsetWidth;
       var totalWidth = this.$.content.offsetWidth;
       this.$.left.style.width = (newX / totalWidth * 100) + '%';
-    },
-    get leftScrollTop () {
+    },*/
+    get leftScrollTop() {
       return this.$.left.scrollTop;
     },
-    set leftScrollTop (pixels) {
+    set leftScrollTop(pixels) {
       this.$.left.scrollTop = pixels;
     },
-    get rightScrollTop () {
+    get rightScrollTop() {
       return this.$.right.scrollTop;
     },
-    set rightScrollTop (pixels) {
+    set rightScrollTop(pixels) {
       this.$.right.scrollTop = pixels;
     }
   });

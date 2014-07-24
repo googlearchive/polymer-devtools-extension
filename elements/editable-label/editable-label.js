@@ -1,4 +1,4 @@
-(function () {
+(function() {
   Polymer('editable-label', {
     text: '',
     // Present state: editing or not
@@ -6,7 +6,11 @@
     width: 5,
     lastText: null,
     hidden: false,
-    toggleEditing: function () {
+    /**
+     * Called when editing begins or ends. Shows and hides the input field and
+     * span accordingly
+     */
+    toggleEditing: function() {
       if (this.editing) {
         this.$.dynamic.style.display = 'none';
         this.$.static.style.display = 'block';
@@ -16,17 +20,23 @@
       }
       this.editing = !this.editing;
     },
-    ready: function () {
+    ready: function() {
       this.$.dynamic.style.display = 'none';
     },
-    startEditing: function () {
+    /**
+     * When we start editing a field
+     */
+    startEditing: function() {
       if (!this.editing) {
         this.toggleEditing();
         // Select all text in the dynamic field
         this.$.dynamic.select();
       }
     },
-    stopEditing: function () {
+    /**
+     * When we are done editing a field
+     */
+    stopEditing: function() {
       if (this.editing) {
         this.toggleEditing();
         if (this.lastText === this.text) {
@@ -43,15 +53,20 @@
       }
     },
     /**
-    * Handle `enter` key
-    */
-    handleKeyPress: function (event) {
+     * Handle `enter` key
+     */
+    handleKeyPress: function(event) {
       if (event.keyCode === 13) {
         // Enter was pressed. It marks the end of editing.
         this.stopEditing();
       }
     },
-    textChanged: function (oldVal, newVal) {
+    /**
+     * When text changes.
+     * @param  {String} oldVal Old value of the field
+     * @param  {String} newVal New value of the field
+     */
+    textChanged: function(oldVal, newVal) {
       if (this.lastText === null) {
         this.lastText = newVal;
       }

@@ -1,11 +1,9 @@
-(function () {
-  /**
-  * Tells if the new value of the field is valid or not
-  */
+(function() {
   var EXPAND_BTN_IMAGE = '../res/expand.png';
   var COLLAPSE_BTN_IMAGE = '../res/collapse.png';
   var BLANK_IMAGE = '../res/blank.png';
-  function copyArray (arr) {
+
+  function copyArray(arr) {
     var newArr = [];
     for (var i = 0; i < arr.length; i++) {
       newArr.push(arr[i]);
@@ -13,10 +11,10 @@
     return newArr;
   }
   /**
-  * Converts a value represented as a string to an actual JS object.
-  * E.g. : "true" -> true and "5" -> 5
-  */
-  function smartCast (val) {
+   * Converts a value represented as a string to an actual JS object.
+   * E.g. : "true" -> true and "5" -> 5
+   */
+  function smartCast(val) {
     if ((val.length >= 2 &&
       (val[0] === '"' && val[val.length - 1] === '"') ||
       (val[0] === '\'' && val[val.length - 1] === '\''))) {
@@ -38,9 +36,9 @@
     throw 'Bad value';
   }
   /**
-  * Check if a value is valid
-  */
-  function isFieldValueValid (val) {
+   * Check if a value is valid
+   */
+  function isFieldValueValid(val) {
     try {
       smartCast(val);
     } catch (e) {
@@ -50,14 +48,12 @@
   }
   Polymer('object-tree', {
     baseWidth: 14,
-    ready: function () {
+    ready: function() {
       this.tree = [];
       this.path = [];
-      /**
-      * When one of the fields change, it will let the object-tree know
-      * with this event
-      */
-      this.addEventListener('field-changed', function (event) {
+      // When one of the fields change, it will let the object-tree know
+      // with this event
+      this.addEventListener('field-changed', function(event) {
         var newValue = event.detail.newValue;
         var oldValue = event.detail.oldValue;
         var index = event.detail.field.id.substring(5);
@@ -81,11 +77,9 @@
           name: event.detail.name
         });
       });
-      /**
-      * When the `tree` property is updated, Polymer might add
-      * some object-trees under this. Those child trees need to be initialized.
-      */
-      this.addEventListener('child-added', function (event) {
+      // When the `tree` property is updated, Polymer might add
+      // some object-trees under this. Those child trees need to be initialized.
+      this.addEventListener('child-added', function(event) {
         var child = event.detail.child;
         if (child === this) {
           return;
@@ -99,7 +93,8 @@
         }
         event.stopPropagation();
       });
-      this.addEventListener('child-collapsed', function (event) {
+      // When this message is heard, it destroys a child of itself.
+      this.addEventListener('child-collapsed', function(event) {
         var index = event.detail.index;
         // Empty the child tree.
         this.tree[index].value.length = 0;
@@ -107,10 +102,10 @@
       });
     },
     /**
-    * Called when Polymer instantiates this object tree because of
-    * data-binding (with template)
-    */
-    domReady: function () {
+     * Called when Polymer instantiates this object tree because of
+     * data-binding (with template repeat)
+     */
+    domReady: function() {
       var that = this;
       this.fire('child-added', {
         child: that,
@@ -118,9 +113,9 @@
       });
     },
     /**
-    * Collapse/Uncollapse
-    */
-    toggle: function (event) {
+     * Collapse/Uncollapse
+     */
+    toggle: function(event) {
       var targetId = event.target.id;
       var state = event.target.getAttribute('state');
       if (state === 'expanded') {
@@ -136,9 +131,9 @@
       });
     },
     /**
-    * Called when the refresh button is clicked on an accessor
-    */
-    refreshField: function (event) {
+     * Called when the refresh button is clicked on an accessor
+     */
+    refreshField: function(event) {
       var targetIndex = event.target.id.substring(7);
       var path = copyArray(this.path);
       path.push(targetIndex);

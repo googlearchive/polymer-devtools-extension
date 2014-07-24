@@ -1,7 +1,7 @@
 // Responsible for channeling messages from devtools pane and content scripts
 // Here is where the associations between them are made across tabs.
 
-(function () {
+(function() {
   var tabIdToPortMap = {};
   var portIdToTabIdMap = {};
   var portIdToPortMap = {};
@@ -9,9 +9,10 @@
   var lastPortId = 0;
 
   // A panel just tried to connect to the extension background
-  chrome.runtime.onConnect.addListener(function (port) {
+  chrome.runtime.onConnect.addListener(function(port) {
     var portId;
-    function onMessage (message, sender, sendResponse) {
+
+    function onMessage(message, sender, sendResponse) {
       switch (message.name) {
         case 'panel-init':
           portId = ++lastPortId;
@@ -39,7 +40,7 @@
     // We expect a `panel-init` message from it soon after the connection.
     port.onMessage.addListener(onMessage);
     // When a panel closes
-    port.onDisconnect.addListener(function () {
+    port.onDisconnect.addListener(function() {
       // Find the tab
       tabId = portIdToTabIdMap[portId];
       // Delete all associations
@@ -55,7 +56,7 @@
   });
 
   // All the communcation
-  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     var port = tabIdToPortMap[sender.tab.id];
     if (!port) {
       return;
@@ -89,7 +90,7 @@
         });
         break;
     }
-	});
+  });
 
   // When a tab gets updated
   // Sequence of events:
@@ -100,7 +101,7 @@
   // Possibly (if `polymer-ready` happened after content script was loaded):
   // 4. content-script to background-page => 'polymer-ready'
   // 5. background-page to panel => 'refresh'
-  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === 'complete') {
       // Only if it has finished loading
       if (tabId in tabIdToPortMap) {
