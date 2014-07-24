@@ -58,6 +58,10 @@
         margin-top: 4px;
         margin-bottom: 4px;
       }
+      .loading {
+        font-size: 12px;
+        color: rgb(39, 112, 39);
+      }
     </style>
   </head>
   <body unresolved>
@@ -69,8 +73,16 @@
           <span>Local DOM</span>
         </div>
         <core-pages id='elementTreePages' selected='0'>
-          <element-tree id='composedDOMTree'></element-tree>
           <div>
+            <div id='composedTreeLoadingBar' class='loading' hidden>
+              Loading...
+            </div>
+            <element-tree id='composedDOMTree'></element-tree>
+          </div>
+          <div>
+            <div id='localDOMTreeLoadingBar' class='loading' hidden>
+              Loading...
+            </div>
             <div class='breadCrumbsContainer'>
               <bread-crumbs></bread-crumbs>
             </div>

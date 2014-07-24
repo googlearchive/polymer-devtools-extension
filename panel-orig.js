@@ -12,6 +12,9 @@
   var splitPane;
   // The bread crumbs that are shown in the local DOM view
   var breadCrumbs;
+  // Loading bars
+  var composedTreeLoadingBar;
+  var localDOMTreeLoadingBar;
   var elementTreeScrollTop;
   // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
@@ -34,6 +37,8 @@
     breadCrumbs = document.querySelector('bread-crumbs');
     breadCrumbs.list = [];
 
+    composedTreeLoadingBar = document.querySelector('#composedTreeLoadingBar');
+    localDOMTreeLoadingBar = document.querySelector('#localDOMTreeLoadingBar');
     // tabs is an instance of paper-tabs that is used to change the object-tree
     // shown in view
     var tabs = document.querySelector('#tabs');
@@ -169,6 +174,9 @@
           string: isPageFresh.toString()
         }
       ], function (result, error) {
+        [composedTreeLoadingBar, localDOMTreeLoadingBar].forEach(function (bar) {
+          bar.removeAttribute('hidden');
+        });
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
             throw error;
@@ -185,6 +193,7 @@
               DOM = result.data;
               console.log('2');
               elementTree.initFromDOMTree(DOM, true);
+              composedTreeLoadingBar.setAttribute('hidden', 'hidden');
               console.log('3');
               initLocalDOMTree(shadowDOMTree, DOM);
               breadCrumbs.list.push({
@@ -204,6 +213,7 @@
   * It checks `deepView` and decides how to display the DOM tree (i.e., light DOM or shadow DOM).
   */
   function initLocalDOMTree (tree, DOM) {
+    localDOMTreeLoadingBar.removeAttribute('hidden');
     if (!deepView) {
       // DOM tree is to be shown as light DOM tree
       if (tree === shadowDOMTree) {
@@ -211,9 +221,7 @@
       } else {
         tree.initFromDOMTree(DOM.lightDOMTree, true, shadowDOMTree);
       }
-      return;
-    }
-    if (tree === shadowDOMTree) {
+    } else if (tree === shadowDOMTree) {
       // We are trying to set the entire tree here.
       // It is done this way:
       // 1. First level of children are from the composed DOM
@@ -226,22 +234,21 @@
       };
       tree.initFromDOMTree(treeRoot, false);
       tree.tree = DOM;
-      if (DOM.noShadowRoot) {
-        // the tree object contains this flag that means that this element
+      if (!DOM.noShadowRoot) {
+        // if the tree object didn't contain this flag it would have meant that this element
         // doesn't have a shadow root and shouldn't have a shadow DOM view
-        return;
+        var childTree;
+        for (var i = 0; i < DOM.children.length; i++) {
+          childTree = new ElementTree();
+          childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
+          tree.addChild(childTree);
+        }
       }
-      var childTree;
-      for (var i = 0; i < DOM.children.length; i++) {
-        childTree = new ElementTree();
-        childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
-        tree.addChild(childTree);
-      }
-
     } else {
       // called when DOM mutations happen and we need update just one part of the tree
       tree.initFromDOMTree(DOM.lightDOMTree, true);
     }
+    localDOMTreeLoadingBar.setAttribute('hidden', 'hidden');
   }
 
   /**
@@ -641,7 +648,9 @@
               // elementTree has all composed DOM elements. A DOM mutation will might need
               // an update there
               if (childElementTree) {
+                composedTreeLoadingBar.removeAttribute('hidden');
                 childElementTree.initFromDOMTree(newElement, true, elementTree);
+                composedTreeLoadingBar.setAttribute('hidden', 'hidden');
               }
               if (childLocalDOMTree) {
                 // The element to be refreshed is there in the local DOM tree as well.
