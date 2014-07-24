@@ -24,7 +24,7 @@ function DOMJSONizer () {
    * Checks if a property is an accessor property.
    * @param  {Object} obj  The exact object on which the property is present.
    * @param  {String} prop Name of the property
-   * @return {Boolean}      Whether the property is an accessor (get/set) or not.
+   * @return {Boolean}     Whether the property is an accessor (get/set) or not.
    */
   function propHasAccessor (obj, prop) {
     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
@@ -36,10 +36,10 @@ function DOMJSONizer () {
 
   /**
    * Copies a property from oldObj to newObjArray and adds some metadata.
-   * @param  {Object} protoObject The exact object in chain where the property exists.
-   * @param  {Object} oldObj The source object
+   * @param  {Object} protoObject  The exact object in chain where the property exists.
+   * @param  {Object} oldObj       The source object
    * @param  {Array}  newObjArray  The destination object (which is maintained as an Array).
-   * @param  {String} prop        Name of the property
+   * @param  {String} prop         Name of the property
    */
   function copyProperty (protoObject, oldObj, newObjArray, prop) {
     try {
@@ -109,7 +109,7 @@ function DOMJSONizer () {
     /**
      * Gets the own properties of an object.
      * @param  {Object} obj The object whose properties we want.
-     * @return {Array}         An array of properties.
+     * @return {Array}      An array of properties.
      */
     function getOwnFilteredProps (obj) {
       var props = Object.getOwnPropertyNames(obj);
@@ -220,7 +220,7 @@ function DOMJSONizer () {
   /**
    * Tells if an element is a script or style element.
    * @param  {HTMLElement}  el The element we're checkin
-   * @return {Boolean}    whether it is a <script> or <style>
+   * @return {Boolean}         whether it is a <script> or <style>
    */
   function isScriptOrStyle (el) {
     return el && (el.tagName === 'SCRIPT' || el.tagName === 'STYLE');
@@ -231,7 +231,7 @@ function DOMJSONizer () {
    * Puts the child tree under <shadow> and <content> tags if found
    * @param  {HTMLElement}   root     The root element to traverse from.
    * @param  {Function}      callback function to be called for every element found.
-   * @return {Object}            Looks like this:
+   * @return {Object}                 Looks like this:
    * {
    *   tagName: <tagName>,
    *   children: <list of other such objects>,
@@ -277,7 +277,7 @@ function DOMJSONizer () {
   /**
    * Gets the immediate children of root in the composed DOM tree.
    * @param  {HTMLElement} root The element to look under.
-   * @return {Array}      A list of children in composed DOM tree.
+   * @return {Array}            A list of children in composed DOM tree.
    */
   function getComposedDOMChildren (root) {
     if (root.tagName === 'CONTENT') {
@@ -323,7 +323,7 @@ function DOMJSONizer () {
    * composed DOM.
    * @param {HTMLElement}   root     The root of the DOM tree.
    * @param {Function}      callback function to be called for every element discovered.
-   * @return {Object}         Looks like this:
+   * @return {Object}                Looks like this:
    * {
    *   tagName: <tag-name>,
    *   key: <unique-key>,
@@ -371,7 +371,7 @@ function DOMJSONizer () {
    * @param {Object}   obj      The object to JSONize.
    * @param {Function} callback Function called with the result.
    * @param {Function} filter   function that is to filter out properties.
-   * @return {Object}     Looks like:
+   * @return {Object}           Looks like:
    * {
    *   type: 'object',
    *   name: 'Root',
@@ -399,7 +399,7 @@ function DOMJSONizer () {
    * contain meta-data.
    * @param {String} prop The name of the property.
    * @param {Object} obj  The object which contains the property.
-   * @return {Object} Looks like this:
+   * @return {Object}     Looks like this:
    * {
    *   type: 'object',
    *   name: 'Root',

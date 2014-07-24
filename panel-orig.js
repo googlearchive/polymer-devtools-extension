@@ -323,7 +323,7 @@
    * part of the code wants a reference to a DOM element we can just get it from
    * elementTree. It is an alternative to a separate hash table which would have
    * needed another complete tree traversal.
-   * @param  {Number} key The key of the DOM element
+   * @param  {Number}      key The key of the DOM element
    * @return {HTMLElement}     The element corresponding to key.
    */
   function getDOMTreeForKey(key) {
@@ -437,15 +437,11 @@
   }
 
   /**
-   * Refresh a property (*an accessor only*)
-   * isModel tells if this is with regard to the model tree
-   */
-  /**
    * Refresh an accessor property.
-   * @param  {Number}  key       Key of the element concerned.
+   * @param  {Number}      key       Key of the element concerned.
    * @param  {ObjectTree}  childTree The sub-object-tree where this property is rendered.
-   * @param  {Array}   path      Path to find the property.
-   * @param  {Boolean} isModel   If the property belongs to the model-tree.
+   * @param  {Array}       path      Path to find the property.
+   * @param  {Boolean}     isModel   If the property belongs to the model-tree.
    */
   function refreshProperty(key, childTree, path, isModel) {
     var index = path[path.length - 1];
