@@ -5,22 +5,28 @@
   // shadowDOMTree is the tree used for viewing local DOM contents
   var shadowDOMTree;
   var objectTree;
+  // The bread crumbs that are shown in the local DOM view
+  var breadCrumbs;
   // For breakpoints
   var methodList;
   // For injecting code into the host page
-  var EvalHelper;
-  var splitPane;
-  // The bread crumbs that are shown in the local DOM view
-  var breadCrumbs;
   // Loading bars
+  var splitPane;
   var composedTreeLoadingBar;
   var localDOMTreeLoadingBar;
+
+  var EvalHelper;
   var elementTreeScrollTop;
   // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
   // deepView is true when the local DOM view is showing the shadow DOM contents,
   // false when showing the light DOM contents
   var deepView = false;
+
+  // If the page had DOM mutations while the tree was rendered, we need to account
+  // for those later.
+  var pendingDOMMutations = [];
+  var isTreeLoading = false;
   function init () {
     var DOM;
     elementTree = document.querySelector('element-tree#composedDOMTree');
@@ -174,9 +180,6 @@
           string: isPageFresh.toString()
         }
       ], function (result, error) {
-        [composedTreeLoadingBar, localDOMTreeLoadingBar].forEach(function (bar) {
-          bar.removeAttribute('hidden');
-        });
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
             throw error;
@@ -189,18 +192,19 @@
               if (error) {
                 throw error;
               }
-              console.log('1');
               DOM = result.data;
-              console.log('2');
-              elementTree.initFromDOMTree(DOM, true);
-              composedTreeLoadingBar.setAttribute('hidden', 'hidden');
-              console.log('3');
+              console.log('loading composed DOM tree');
+              doTreeLoad(function () {
+                elementTree.initFromDOMTree(DOM, true);
+                addMutations(pendingDOMMutations);
+              });
+              console.log('loading local DOM tree');
               initLocalDOMTree(shadowDOMTree, DOM);
               breadCrumbs.list.push({
                 name: DOM.tagName,
                 key: DOM.key
               });
-              console.log('4');
+              console.log('loaded trees');
             });
           });
         });
@@ -208,47 +212,57 @@
     });
   }
 
+  function doTreeLoad (callback, isLocalDOMTree) {
+    isTreeLoading = true;
+    var loadingBar = isLocalDOMTree ? localDOMTreeLoadingBar : composedTreeLoadingBar;
+    loadingBar.style.display = 'block';
+    callback();
+    loadingBar.style.display = 'none';
+    isTreeLoading = false;
+  }
+
   /**
   * Initializes the element tree in the local DOM view with the DOM tree supplied.
   * It checks `deepView` and decides how to display the DOM tree (i.e., light DOM or shadow DOM).
   */
   function initLocalDOMTree (tree, DOM) {
-    localDOMTreeLoadingBar.removeAttribute('hidden');
-    if (!deepView) {
-      // DOM tree is to be shown as light DOM tree
-      if (tree === shadowDOMTree) {
-        tree.initFromDOMTree(DOM.lightDOMTree, true);
-      } else {
-        tree.initFromDOMTree(DOM.lightDOMTree, true, shadowDOMTree);
-      }
-    } else if (tree === shadowDOMTree) {
-      // We are trying to set the entire tree here.
-      // It is done this way:
-      // 1. First level of children are from the composed DOM
-      // 2. After that all children of first level children are from light DOM
-      var treeRoot = {
-        tagName: DOM.tagName,
-        key: DOM.key,
-        children: [],
-        isPolymer: DOM.isPolymer
-      };
-      tree.initFromDOMTree(treeRoot, false);
-      tree.tree = DOM;
-      if (!DOM.noShadowRoot) {
-        // if the tree object didn't contain this flag it would have meant that this element
-        // doesn't have a shadow root and shouldn't have a shadow DOM view
-        var childTree;
-        for (var i = 0; i < DOM.children.length; i++) {
-          childTree = new ElementTree();
-          childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
-          tree.addChild(childTree);
+    doTreeLoad(function () {
+      if (!deepView) {
+        // DOM tree is to be shown as light DOM tree
+        if (tree === shadowDOMTree) {
+          tree.initFromDOMTree(DOM.lightDOMTree, true);
+        } else {
+          tree.initFromDOMTree(DOM.lightDOMTree, true, shadowDOMTree);
         }
+      } else if (tree === shadowDOMTree) {
+        // We are trying to set the entire tree here.
+        // It is done this way:
+        // 1. First level of children are from the composed DOM
+        // 2. After that all children of first level children are from light DOM
+        var treeRoot = {
+          tagName: DOM.tagName,
+          key: DOM.key,
+          children: [],
+          isPolymer: DOM.isPolymer
+        };
+        tree.initFromDOMTree(treeRoot, false);
+        tree.tree = DOM;
+        if (!DOM.noShadowRoot) {
+          // if the tree object didn't contain this flag it would have meant that this element
+          // doesn't have a shadow root and shouldn't have a shadow DOM view
+          var childTree;
+          for (var i = 0; i < DOM.children.length; i++) {
+            childTree = new ElementTree();
+            childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
+            tree.addChild(childTree);
+          }
+        }
+      } else {
+        // called when DOM mutations happen and we need update just one part of the tree
+        tree.initFromDOMTree(DOM.lightDOMTree, true);
       }
-    } else {
-      // called when DOM mutations happen and we need update just one part of the tree
-      tree.initFromDOMTree(DOM.lightDOMTree, true);
-    }
-    localDOMTreeLoadingBar.setAttribute('hidden', 'hidden');
+      addMutations(pendingDOMMutations);
+    }, true);
   }
 
   /**
@@ -409,6 +423,37 @@
       var newObj = result.value[0];
       childTree[index] = newObj;
     });
+  }
+
+  function addMutations (mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var newElement = mutations[i].data;
+      var key = newElement.key;
+      var childElementTree = elementTree.getChildTreeForKey(key);
+      var childLocalDOMTree = shadowDOMTree.getChildTreeForKey(key);
+      function resetTree () {
+        // elementTree has all composed DOM elements. A DOM mutation will might need
+        // an update there
+        if (childElementTree) {
+          doTreeLoad(function () {
+            childElementTree.initFromDOMTree(newElement, true, elementTree);
+          });
+        }
+        if (childLocalDOMTree) {
+          // The element to be refreshed is there in the local DOM tree as well.
+          initLocalDOMTree(childLocalDOMTree, newElement);
+        }
+      }
+      if ((childElementTree && childElementTree.selected) ||
+        (childLocalDOMTree && childLocalDOMTree.selected)) {
+        // The selected element and the one to be refreshed are the same.
+        unselectElement(key, resetTree);
+      } else {
+        resetTree();
+      }
+    }
+    // Empty the array when done.
+    mutations.length = 0;
   }
   window.addEventListener('polymer-ready', function () {
     init();
@@ -637,33 +682,11 @@
           break;
         case 'dom-mutation':
           // A DOM element has changed. Must re-render it in the element tree.
-          
           var mutations = message.changeList;
-          for (var i = 0; i < mutations.length; i++) {
-            var newElement = mutations[i].data;
-            var key = newElement.key;
-            var childElementTree = elementTree.getChildTreeForKey(key);
-            var childLocalDOMTree = shadowDOMTree.getChildTreeForKey(key);
-            function resetTree () {
-              // elementTree has all composed DOM elements. A DOM mutation will might need
-              // an update there
-              if (childElementTree) {
-                composedTreeLoadingBar.removeAttribute('hidden');
-                childElementTree.initFromDOMTree(newElement, true, elementTree);
-                composedTreeLoadingBar.setAttribute('hidden', 'hidden');
-              }
-              if (childLocalDOMTree) {
-                // The element to be refreshed is there in the local DOM tree as well.
-                initLocalDOMTree(childLocalDOMTree, newElement);
-              }
-            }
-            if ((childElementTree && childElementTree.selected) ||
-              (childLocalDOMTree && childLocalDOMTree.selected)) {
-              // The selected element and the one to be refreshed are the same.
-              unselectElement(key, resetTree);
-            } else {
-              resetTree();
-            }
+          if (isTreeLoading) {
+            pendingDOMMutations.push.apply(pendingDOMMutations, mutations);
+          } else {
+            addMutations(mutations);
           }
           break;
         case 'inspected-element-changed':
