@@ -31,6 +31,7 @@ Polymer debugging extension
 - The left side has two views of the DOM tree you can switch between.
 - One is the `Composed DOM view` and the other is the `Local DOM view`.
 - An element is either `blue` or `brown`. Blue ones are Polymer elements while the rest are not.
+- Polymer elements when hovered on, show a `View Source` button, which if you click will take you to the definition file of the Polymer element.
 - Hovering over an element highlights it in the page.
 - The DOM trees respond to DOM mutations and are hence up-to-date.
 - `Composed DOM view` gives you the entire composed DOM tree.
