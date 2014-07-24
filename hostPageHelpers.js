@@ -7,29 +7,29 @@
 /**
  * Used to check if the page is fresh (untouched by the extension).
  * If it is defined in the page, then it won't raise an error. The page is considered unfresh.
- * If it goes through the page is fresh.
+ * If it goes through, the page is fresh.
  * (This is dummy function.)
- * @return {Boolean}
+ * @return {String}
  */
-function isPageFresh () {
-  return 'immaterial string';
+function isPageFresh() {
+  return true;
 }
 
 /**
- * adds the extension ID to the event name so it's unique.
- * @param  {string} name event name
- * @return {string}      new event name
+ * Adds the extension ID to the event name so its unique.
+ * @param  {String} name name of event
+ * @return {String}      new event name
  */
-function getNamespacedEventName (name) {
+function getNamespacedEventName(name) {
   return NAMESPACE + '-' + name;
 }
 
 /**
-* Highlight an element in the page
-* isHover: true if element is to be highlighted because it was hovered
-* over in the element-tree.
-*/
-function highlight (key, isHover) {
+ * Highlights an element in the page.
+ * @param  {Number}  key     Key of the element to highlight
+ * @param  {Boolean} isHover if the element was hovered upon in the extension
+ */
+function highlight(key, isHover) {
   var element = window[NAMESPACE].DOMCache[key];
   if (isHover) {
     window[NAMESPACE].prevHoveredOutline = element.style.outline;
@@ -48,11 +48,11 @@ function highlight (key, isHover) {
 }
 
 /**
-* Unhighlight the highlighted element in the page
-* isHover: true if element is to be unhighlighted because it was hovered
-* out in the element-tree.
-*/
-function unhighlight (key, isHover) {
+ * Unhighlights an element in the page.
+ * @param  {Number}  key     Key of the element in the page
+ * @param  {Boolean} isHover if the element was hovered-out of
+ */
+function unhighlight(key, isHover) {
   var element = window[NAMESPACE].DOMCache[key];
   element.style.outline = isHover ? window[NAMESPACE].prevHoveredOutline :
     window[NAMESPACE].prevSelectedOutline;
@@ -61,18 +61,21 @@ function unhighlight (key, isHover) {
 }
 
 /**
-* Scroll an element into view
-*/
-function scrollIntoView (key) {
+ * Scrolls an element into view.
+ * @param  {Number} key key of the element in the page
+ */
+function scrollIntoView(key) {
   if (key in window[NAMESPACE].DOMCache) {
     window[NAMESPACE].DOMCache[key].scrollIntoView();
   }
 }
 
 /**
-* Set a breakpoint at the beginning of a function
-*/
-function setBreakpoint (key, path) {
+ * Sets a breakpoint on a method of an element.
+ * @param {Number} key  Key of the element
+ * @param {Array}  path path to find the method in the element
+ */
+function setBreakpoint(key, path) {
   var method = window[NAMESPACE].resolveObject(key, path);
   var methodName = window[NAMESPACE].getPropPath(key, path).pop();
   if (typeof method !== 'function') {
@@ -86,9 +89,11 @@ function setBreakpoint (key, path) {
 }
 
 /**
-* Clear the breakpoint at the beginning of a function
-*/
-function clearBreakpoint (key, path) {
+ * Clears a breakpoint on a method of an element.
+ * @param  {Number} key  Key of the element
+ * @param  {Array}  path path to find the method in the element
+ */
+function clearBreakpoint(key, path) {
   var method = window[NAMESPACE].resolveObject(key, path);
   var methodName = window[NAMESPACE].getPropPath(key, path).pop();
   if (typeof method !== 'function') {
@@ -102,14 +107,17 @@ function clearBreakpoint (key, path) {
 }
 
 /**
-* Get the property (property names) path from the index path (as it is stored in the UI)
-* isModel tells if we should into the model data structures
-*/
-function getPropPath (key, path, isModel) {
+ * Returns a string property path from an index property path (which is used by the UI).
+ * @param  {Number}  key     Key of the element
+ * @param  {Array}   path    index property path
+ * @param  {Boolean} isModel if the object is from the model-tree
+ * @return {Array}           The string property path (array of property names)
+ */
+function getPropPath(key, path, isModel) {
   var propPath = [];
   var indexMap = isModel ? window[NAMESPACE].modelIndexToPropMap[key] :
     window[NAMESPACE].indexToPropMap[key];
-  path.forEach(function (el) {
+  path.forEach(function(el) {
     indexMap = indexMap[el];
     propPath.push(indexMap.__name__);
   });
@@ -117,24 +125,32 @@ function getPropPath (key, path, isModel) {
 }
 
 /**
-* Find the object given a DOM element key and the index path
-* isModel tells if we should into the model data structures
-*/
-function resolveObject (key, path, isModel) {
+ * Finds an object given an element's key and a path to reach the object.
+ * @param  {Number}  key     Key of the element.
+ * @param  {Array}   path    The index path to find the object.
+ * @param  {Boolean} isModel If the object is to be looked under the model of the element.
+ * @return {<T>}             The object that was found.
+ * @template T
+ */
+function resolveObject(key, path, isModel) {
   var obj = isModel ? window[NAMESPACE].DOMModelCache[key] :
     window[NAMESPACE].DOMCache[key];
   var propPath = window[NAMESPACE].getPropPath(key, path, isModel);
-  propPath.forEach(function (el) {
+  propPath.forEach(function(el) {
     obj = obj[el];
   });
   return obj;
 }
 
 /**
-* Reflect a change in the host page
-* isModel tells if we should into the model data structures
-*/
-function changeProperty (key, path, newValue, isModel) {
+ * Changes a property of an element in the page.
+ * @param  {Number}  key      Key of the element
+ * @param  {Array}   path     index path to find the element
+ * @param  {<T>}     newValue the new value to put
+ * @param  {Boolean} isModel  if it is a model object
+ * @template T
+ */
+function changeProperty(key, path, newValue, isModel) {
   var prop = window[NAMESPACE].getPropPath(key, path, isModel).pop();
   path.pop();
   var obj = window[NAMESPACE].resolveObject(key, path, isModel);
@@ -144,17 +160,25 @@ function changeProperty (key, path, newValue, isModel) {
 }
 
 /**
-* Get a property somewhere inside an element (repesented by path)
-* isModel tells if we should into the model data structures
-*/
-function getProperty (key, path, isModel) {
+ * Gets a property of an element.
+ * @param  {Number}  key     Key of the element
+ * @param  {Array}   path    Index path to find the property
+ * @param  {Boolean} isModel if it is a model object
+ * @return {Object}          A wrapped JSON object containing the latest value
+ */
+function getProperty(key, path, isModel) {
   var prop = window[NAMESPACE].getPropPath(key, path, isModel).pop();
   path.pop();
   var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   return window[NAMESPACE].JSONizer.JSONizeProperty(prop, obj);
 }
 
-function addToCache (obj, key) {
+/**
+ * Adds an element to DOMCache and DOMModelCache.
+ * @param {HTMLElement} obj the element to cache
+ * @param {Number}      key The key to identify it with
+ */
+function addToCache(obj, key) {
   if (obj.tagName === 'TEMPLATE' && obj.model) {
     window[NAMESPACE].DOMModelCache[key] = obj.model;
   } else if (obj.templateInstance) {
@@ -164,12 +188,12 @@ function addToCache (obj, key) {
 }
 
 /**
-* Called when the selection in the inspector changes
-*/
-function inspectorSelectionChangeListener () {
+ * Used as a listener to inspector selection changes.
+ */
+function inspectorSelectionChangeListener() {
   if ($0.__keyPolymer__) {
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('inspected-element-changed'), {
-      detail : {
+      detail: {
         key: $0.__keyPolymer__
       }
     }));
@@ -177,10 +201,14 @@ function inspectorSelectionChangeListener () {
 }
 
 /**
-* Go as deep as required by `path` into `indexToPropMap`
-* isModel tells if we should into the model data structures
-*/
-function getIndexMapObject (key, path, isModel) {
+ * Goes deep into indexMap to find the subIndexMap that stores information about
+ * the object found by traversing through `path`.
+ * @param  {Number}  key     Key of the element
+ * @param  {Array}   path    The index path to traverse with
+ * @param  {Boolean} isModel if it is a model object
+ * @return {Object}          Sub index-map
+ */
+function getIndexMapObject(key, path, isModel) {
   var start = isModel ? window[NAMESPACE].modelIndexToPropMap[key] :
     window[NAMESPACE].indexToPropMap[key];
   for (var i = 0; i < path.length; i++) {
@@ -190,9 +218,13 @@ function getIndexMapObject (key, path, isModel) {
 }
 
 /**
-* Given the index map (at any depth), add a property name
-*/
-function addToSubIndexMap (indexMap, propName) {
+ * Adds a new property to a sub-index map. It creates a mapping between a property
+ * name and its associated index (as managed by the extension UI) and also a reverse
+ * mapping. Note: 'name-' is prepended to the property name key.
+ * @param {Object} indexMap sub-Index map
+ * @param {String} propName Property name
+ */
+function addToSubIndexMap(indexMap, propName) {
   indexMap.__lastIndex__ = '__lastIndex__' in indexMap ? (indexMap.__lastIndex__ + 1) : 0;
   indexMap[indexMap.__lastIndex__] = {
     __name__: propName
@@ -201,9 +233,11 @@ function addToSubIndexMap (indexMap, propName) {
 }
 
 /**
-* Given the index map (at any depth), remove everything associated with an index
-*/
-function removeFromSubIndexMap (indexMap, index) {
+ * Removes a property from a sub index map.
+ * @param  {Object} indexMap The sub-index map
+ * @param  {Number} index    The index to remove the property of
+ */
+function removeFromSubIndexMap(indexMap, index) {
   var propName = indexMap[index].__name__;
   for (var i = index + 1; i <= indexMap.__lastIndex__; i++) {
     indexMap[i - 1] = indexMap[i];
@@ -213,25 +247,13 @@ function removeFromSubIndexMap (indexMap, index) {
 }
 
 /**
-* Add a property to `indexToPropMap`
-* isModel tells if we should into the model data structures
-*/
-function addToIndexMap (propName, key, path, isModel) {
-  var lastIndex = path.pop();
-  var start = window[NAMESPACE].getIndexMapObject(key, path, isModel);
-  start[lastIndex] = {
-    __name__: propName
-  };
-  start['name-' + propName] = propName;
-  start.__lastIndex__ = start.__lastIndex__ ? (start.__lastIndex__ + 1) : 0;
-}
-
-/**
-* Empty a part of `indexToPropMap`. (Used when the part of the object
-* is no longer in view in the object tree.)
-* isModel tells if we should into the model data structures
-*/
-function emptyIndexMap (key, path, isModel) {
+ * Empties a sub-index map.
+ * @param  {Number}  key     Key of the element
+ * @param  {Array}   path    index array to find the sub-index map
+ * @param  {Boolean} isModel if we have to look in the model index map
+ */
+function emptySubIndexMap(key, path, isModel) {
+  // Find the sub-index map
   var indexMap = isModel ? window[NAMESPACE].modelIndexToPropMap :
     window[NAMESPACE].indexToPropMap;
   var start = indexMap[key];
@@ -251,12 +273,22 @@ function emptyIndexMap (key, path, isModel) {
   start[lastIndex].__lastIndex__ = -1;
 }
 
-function isPolymerElement (element) {
+/**
+ * Tells if an element is a Polymer element
+ * @param  {HTMLElement}     element the element we want to check
+ * @return {Boolean}                  whether it is a Polymer element
+ */
+function isPolymerElement(element) {
   return element && ('element' in element) && (element.element.localName === 'polymer-element');
 }
 
-function filterProperty (n) {
-  return n[0] !== '_' && n.slice(-1) !== '_' && !filterProperty.blacklist[n];
+/**
+ * A property filter
+ * @param  {String} prop A property name
+ * @return {Boolean}     Whether it is to be kept or not.
+ */
+function filterProperty(prop) {
+  return prop[0] !== '_' && prop.slice(-1) !== '_' && !filterProperty.blacklist[prop];
 }
 
 // IMPORTANT: First set filterProperty and then call setBlacklist.
@@ -265,156 +297,165 @@ function filterProperty (n) {
 // and
 // https://developer.mozilla.org/en-US/docs/Web/API/Element
 // TODO: Improve blacklist
-function setBlacklist () {
+/**
+ * Sets the static blacklist property on `filterProperty`
+ */
+function setBlacklist() {
   window[NAMESPACE].filterProperty.blacklist = {
-  accessKey: true,
-  align: true,
-  attributes: true,
-  baseURI: true,
-  childElementCount: true,
-  childNodes: true,
-  children: true,
-  classList: true,
-  className: true,
-  clientHeight: true,
-  clientLeft: true,
-  clientTop: true,
-  clientWidth: true,
-  contentEditable: true,
-  dataset: true,
-  dir: true,
-  draggable: true,
-  firstChild: true,
-  firstElementChild: true,
-  hidden: true,
-  id: true,
-  innerHTML: true,
-  innerText: true,
-  inputMethodContext: true,
-  isContentEditable: true,
-  lang: true,
-  lastChild: true,
-  lastElementChild: true,
-  localName: true,
-  namespaceURI: true,
-  nextElementSibling: true,
-  nextSibling: true,
-  nodeName: true,
-  nodeType: true,
-  nodeValue: true,
-  offsetHeight: true,
-  offsetLeft: true,
-  offsetParent: true,
-  offsetTop: true,
-  offsetWidth: true,
-  onabort: true,
-  onbeforecopy: true,
-  onbeforecut: true,
-  onbeforepaste: true,
-  onblur: true,
-  oncancel: true,
-  oncanplay: true,
-  oncanplaythrough: true,
-  onchange: true,
-  onclick: true,
-  onclose: true,
-  oncontextmenu: true,
-  oncopy: true,
-  oncuechange: true,
-  oncut: true,
-  ondblclick: true,
-  ondrag: true,
-  ondragend: true,
-  ondragenter: true,
-  ondragleave: true,
-  ondragover: true,
-  ondragstart: true,
-  ondrop: true,
-  ondurationchange: true,
-  onemptied: true,
-  onended: true,
-  onerror: true,
-  onfocus: true,
-  oninput: true,
-  oninvalid: true,
-  onkeydown: true,
-  onkeypress: true,
-  onkeyup: true,
-  onload: true,
-  onloadeddata: true,
-  onloadedmetadata: true,
-  onloadstart: true,
-  onmousedown: true,
-  onmouseenter: true,
-  onmouseleave: true,
-  onmousemove: true,
-  onmouseout: true,
-  onmouseover: true,
-  onmouseup: true,
-  onmousewheel: true,
-  onpaste: true,
-  onpause: true,
-  onplay: true,
-  onplaying: true,
-  onprogress: true,
-  onratechange: true,
-  onreset: true,
-  onresize: true,
-  onscroll: true,
-  onsearch: true,
-  onseeked: true,
-  onseeking: true,
-  onselect: true,
-  onselectstart: true,
-  onshow: true,
-  onstalled: true,
-  onsubmit: true,
-  onsuspend: true,
-  ontimeupdate: true,
-  onvolumechange: true,
-  onwaiting: true,
-  onwebkitfullscreenchange: true,
-  onwebkitfullscreenerror: true,
-  onwheel: true,
-  outerHTML: true,
-  outerText: true,
-  ownerDocument: true,
-  parentElement: true,
-  parentNode: true,
-  prefix: true,
-  previousElementSibling: true,
-  previousSibling: true,
-  scrollHeight: true,
-  scrollLeft: true,
-  scrollTop: true,
-  scrollWidth: true,
-  shadowRoot: true,
-  spellcheck: true,
-  style: true,
-  tabIndex: true,
-  tagName: true,
-  textContent: true,
-  title: true,
-  translate: true,
-  webkitShadowRoot: true,
-  webkitdropzone: true,
-  resolvePath: true,
+    accessKey: true,
+    align: true,
+    attributes: true,
+    baseURI: true,
+    childElementCount: true,
+    childNodes: true,
+    children: true,
+    classList: true,
+    className: true,
+    clientHeight: true,
+    clientLeft: true,
+    clientTop: true,
+    clientWidth: true,
+    contentEditable: true,
+    dataset: true,
+    dir: true,
+    draggable: true,
+    firstChild: true,
+    firstElementChild: true,
+    hidden: true,
+    id: true,
+    innerHTML: true,
+    innerText: true,
+    inputMethodContext: true,
+    isContentEditable: true,
+    lang: true,
+    lastChild: true,
+    lastElementChild: true,
+    localName: true,
+    namespaceURI: true,
+    nextElementSibling: true,
+    nextSibling: true,
+    nodeName: true,
+    nodeType: true,
+    nodeValue: true,
+    offsetHeight: true,
+    offsetLeft: true,
+    offsetParent: true,
+    offsetTop: true,
+    offsetWidth: true,
+    onabort: true,
+    onbeforecopy: true,
+    onbeforecut: true,
+    onbeforepaste: true,
+    onblur: true,
+    oncancel: true,
+    oncanplay: true,
+    oncanplaythrough: true,
+    onchange: true,
+    onclick: true,
+    onclose: true,
+    oncontextmenu: true,
+    oncopy: true,
+    oncuechange: true,
+    oncut: true,
+    ondblclick: true,
+    ondrag: true,
+    ondragend: true,
+    ondragenter: true,
+    ondragleave: true,
+    ondragover: true,
+    ondragstart: true,
+    ondrop: true,
+    ondurationchange: true,
+    onemptied: true,
+    onended: true,
+    onerror: true,
+    onfocus: true,
+    oninput: true,
+    oninvalid: true,
+    onkeydown: true,
+    onkeypress: true,
+    onkeyup: true,
+    onload: true,
+    onloadeddata: true,
+    onloadedmetadata: true,
+    onloadstart: true,
+    onmousedown: true,
+    onmouseenter: true,
+    onmouseleave: true,
+    onmousemove: true,
+    onmouseout: true,
+    onmouseover: true,
+    onmouseup: true,
+    onmousewheel: true,
+    onpaste: true,
+    onpause: true,
+    onplay: true,
+    onplaying: true,
+    onprogress: true,
+    onratechange: true,
+    onreset: true,
+    onresize: true,
+    onscroll: true,
+    onsearch: true,
+    onseeked: true,
+    onseeking: true,
+    onselect: true,
+    onselectstart: true,
+    onshow: true,
+    onstalled: true,
+    onsubmit: true,
+    onsuspend: true,
+    ontimeupdate: true,
+    onvolumechange: true,
+    onwaiting: true,
+    onwebkitfullscreenchange: true,
+    onwebkitfullscreenerror: true,
+    onwheel: true,
+    outerHTML: true,
+    outerText: true,
+    ownerDocument: true,
+    parentElement: true,
+    parentNode: true,
+    prefix: true,
+    previousElementSibling: true,
+    previousSibling: true,
+    scrollHeight: true,
+    scrollLeft: true,
+    scrollTop: true,
+    scrollWidth: true,
+    shadowRoot: true,
+    spellcheck: true,
+    style: true,
+    tabIndex: true,
+    tagName: true,
+    textContent: true,
+    title: true,
+    translate: true,
+    webkitShadowRoot: true,
+    webkitdropzone: true,
+    resolvePath: true,
 
-  shadowRoots: true,
-  $: true,
-  controller: true,
-  eventDelegates: true,
-  reflect: true,
+    shadowRoots: true,
+    $: true,
+    controller: true,
+    eventDelegates: true,
+    reflect: true,
 
-  onautocomplete: true,
-  onautocompleteerror: true,
-  ontoggle: true,
-  hasBeenAttached: true,
-  element: true
+    onautocomplete: true,
+    onautocompleteerror: true,
+    ontoggle: true,
+    hasBeenAttached: true,
+    element: true
   };
 }
 
-function processMutations (mutations) {
+/**
+ * Processes a list of DOM mutations given by mutation observers and for each
+ * mutation, creates a JSONized object for the element that got affected.
+ * @param  {Array} mutations Array of mutations
+ * @return {Array}           List of JSON objects each representing a changed element.
+ */
+function processMutations(mutations) {
   var changedElementKeys = {};
   var changedElements = [];
   for (var i = 0; i < mutations.length; i++) {
@@ -440,12 +481,14 @@ function processMutations (mutations) {
 }
 
 /**
-* JSONize `el` or document.body (if `el` isn't passed)
-*/
-function getDOMJSON (el) {
+ * Returns JSON representation for a DOM element
+ * @param  {Object} el An element
+ * @return {Object}    A JSON representation of the element
+ */
+function getDOMJSON(el) {
   return {
     'data': window[NAMESPACE].JSONizer.JSONizeDOMObject(el || document.body,
-      function (domNode, converted, lightDOM) {
+      function(domNode, converted, lightDOM) {
         if (!domNode.__keyPolymer__) {
           if (lightDOM) {
             // Something that wasn't found in the composed tree but found in the light DOM
@@ -470,7 +513,7 @@ function getDOMJSON (el) {
           // so that it will report all light DOM changes and to *all* shadow roots so they will
           // report all shadow DOM changes.
           if (key === window[NAMESPACE].firstDOMKey || domNode.shadowRoot) {
-            var observer = new MutationObserver(function (mutations) {
+            var observer = new MutationObserver(function(mutations) {
               window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('dom-mutation'), {
                 detail: window[NAMESPACE].processMutations(mutations)
               }));
@@ -501,10 +544,13 @@ function getDOMJSON (el) {
 }
 
 /**
-* JSONize an object one level deep
-* isModel tells if we should into the model data structures
-*/
-function getObjectJSON (key, path, isModel) {
+ * Returns a JSON representation for an object
+ * @param  {Number}  key     The key of the element to which the object belongs
+ * @param  {Array}   path    Path to reach the object from the element's top level
+ * @param  {Boolean} isModel If the object is a model object
+ * @return {Object}          A JSON object representation
+ */
+function getObjectJSON(key, path, isModel) {
   var obj = window[NAMESPACE].resolveObject(key, path, isModel);
   if (!obj) {
     return {
@@ -516,18 +562,18 @@ function getObjectJSON (key, path, isModel) {
   var indexMap = window[NAMESPACE].getIndexMapObject(key, path, isModel);
   var filter = null;
   if (path.length === 0) {
-    filter = function (prop) {
+    filter = function(prop) {
       return prop !== '__keyPolymer__';
     };
   }
   if (window[NAMESPACE].isPolymerElement(obj)) {
-    filter = function (prop) {
+    filter = function(prop) {
       return window[NAMESPACE].filterProperty(prop) && prop !== '__keyPolymer__';
     };
   }
   return {
     'data': window[NAMESPACE].JSONizer.
-      JSONizeObject(obj, function (converted) {
+    JSONizeObject(obj, function(converted) {
         var propList = converted.value;
         for (var i = 0; i < propList.length; i++) {
           if (!isModel) {
@@ -546,15 +592,19 @@ function getObjectJSON (key, path, isModel) {
 }
 
 /**
-* Add an object observer that reports changes to it using O.o()
-* isModel tells if we should into the model data structures
-*/
-function addObjectObserver (key, path, isModel) {
+ * Adds an object observer to an object
+ * @param {Number}  key     Key of the element to which the object belongs
+ * @param {Array}   path    Path to reach the object from the element's top level
+ * @param {Boolean} isModel If the object is a model object
+ */
+function addObjectObserver(key, path, isModel) {
   /**
-  * Checks if a property is present in the higher prototype objects
-  * of an object.
-  */
-  function checkChainUpForProp (prop, obj) {
+   * Checks if a property is a present in the higher proto levels of the object
+   * @param  {String} prop The property we are looking at
+   * @param  {Object} obj  The object that owns the property
+   * @return {Boolean}     If it is present somewhere above.
+   */
+  function checkChainUpForProp(prop, obj) {
     var proto = obj.__proto__;
     while (proto) {
       if (proto.hasOwnProperty(prop)) {
@@ -565,10 +615,13 @@ function addObjectObserver (key, path, isModel) {
     return false;
   }
   /**
-  * Checks if a property is present in the lower prototype objects
-  * of an object.
-  */
-  function checkChainDownForProp (prop, protoObj, obj) {
+   * Checks if a property is present in lower proto levels of an object
+   * @param  {String} prop     The property
+   * @param  {Object} protoObj The level below which we are looking
+   * @param  {Object} obj      The starting level to look from
+   * @return {Boolean}         If it was found.
+   */
+  function checkChainDownForProp(prop, protoObj, obj) {
     var proto = obj;
     while (proto !== protoObj && proto) {
       if (proto.hasOwnProperty(prop)) {
@@ -587,22 +640,24 @@ function addObjectObserver (key, path, isModel) {
   var indexMap = window[NAMESPACE].getIndexMapObject(key, path, isModel);
 
   /**
-  * Returns a change object that looks like this:
-  * {
-  *   path: <path of the object>,
-  *   key: <DOM element's key>,
-  *   changes: [
-  *     {
-  *       index: <the index by which the UI knows about the property>,
-  *       name: <the property's name>,
-  *       type: <the type of change (see O.o() docs),
-  *       object: <the changed object at the property wrapped in another object>
-  *     },
-  *     // one of every change
-  *   ]
-  * }
-  */
-  function processChanges (changes) {
+   * Processes O.o() changes
+   * @param  {Array} changes Array of changes given by O.o()
+   * @return {Object}         Looks like:
+   * {
+   *   path: <path of the object>,
+   *   key: <DOM element's key>,
+   *   changes: [
+   *     {
+   *       index: <the index by which the UI knows about the property>,
+   *       name: <the property's name>,
+   *       type: <the type of change (see O.o() docs),
+   *       object: <the changed object at the property, wrapped in another object>
+   *     },
+   *     // one of every change
+   *   ]
+   * }
+   */
+  function processChanges(changes) {
     var processedChangeObject = {
       isModel: isModel,
       path: path,
@@ -625,7 +680,7 @@ function addObjectObserver (key, path, isModel) {
         case 'update':
           // We've chosen to ignore certain Polymer properties which may have gotten updated
           if (window[NAMESPACE].isPolymerElement(obj) &&
-              !window[NAMESPACE].filterProperty(change.name)) {
+            !window[NAMESPACE].filterProperty(change.name)) {
             continue;
           }
           // We might be dealing with non-Objects which DOMJSONizer can't JSONize.
@@ -634,7 +689,7 @@ function addObjectObserver (key, path, isModel) {
             value: change.object[change.name]
           };
           summary.object = window[NAMESPACE].JSONizer.
-            JSONizeObject(wrappedObject);
+          JSONizeObject(wrappedObject);
           break;
         case 'delete':
           if (checkChainUpForProp(change.name, obj)) {
@@ -647,7 +702,7 @@ function addObjectObserver (key, path, isModel) {
               value: change.object[change.name]
             };
             summary.object = window[NAMESPACE].JSONizer.
-              JSONizeObject(wrappedObject);
+            JSONizeObject(wrappedObject);
           } else {
             // Update the index-to-propName map to reflect the deletion
             window[NAMESPACE].removeFromSubIndexMap(indexMap, indexMap['name-' + change.name], isModel);
@@ -662,7 +717,7 @@ function addObjectObserver (key, path, isModel) {
             value: change.object[change.name]
           };
           summary.object = window[NAMESPACE].JSONizer.
-            JSONizeObject(wrappedObject);
+          JSONizeObject(wrappedObject);
           if (window[NAMESPACE].isPolymerElement(obj) &&
             checkChainUpForProp(change.name, obj)) {
             // Even though this is an addition at one level, this is an update in the view of the UI
@@ -680,7 +735,7 @@ function addObjectObserver (key, path, isModel) {
     return processedChangeObject;
   }
 
-  function observer (changes) {
+  function observer(changes) {
     console.log('observing');
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
@@ -710,11 +765,13 @@ function addObjectObserver (key, path, isModel) {
 }
 
 /**
-* Stop observing an object
-* isModel tells if we should into the model data structures
-*/
-function removeObjectObserver (key, path, isModel) {
-  function recursiveUnobserve (obj, hashLocation, indexMap) {
+ * removes an object observer
+ * @param  {Number}  key     Key of the element that owns the object
+ * @param  {Array}   path    Path to reach the object
+ * @param  {Boolean} isModel If the object is a model object
+ */
+function removeObjectObserver(key, path, isModel) {
+  function recursiveUnobserve(obj, hashLocation, indexMap) {
     if (hashLocation['__objectObserver__']) {
       Object.unobserve(obj, hashLocation['__objectObserver__']);
       if (window[NAMESPACE].isPolymerElement(obj)) {
@@ -755,6 +812,10 @@ function removeObjectObserver (key, path, isModel) {
   delete parent[path.length === 0 ? key : path[path.length - 1]];
 }
 
+/**
+ * Creates all the data-structures needed by the extension to maintain a consitent image
+ * of the page.
+ */
 function createCache() {
   // All DOM elements discovered are hashed by a unique key
   window[NAMESPACE].DOMCache = {};

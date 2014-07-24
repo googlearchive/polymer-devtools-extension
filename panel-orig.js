@@ -1,4 +1,4 @@
-(function () {
+(function() {
   // elementTree is the tree used for viewing composed DOM.
   // It is initialized once and its branches are kept up-to-date as necessary.
   var elementTree;
@@ -45,7 +45,7 @@
   /**
    * Called when panel is opened or page is refreshed.
    */
-  function init () {
+  function init() {
     elementTree = document.querySelector('element-tree#composedDOMTree');
     localDOMTree = document.querySelector('element-tree#localDOMTree');
 
@@ -70,7 +70,7 @@
     // shown in view
     var tabs = document.querySelector('#tabs');
     var objectTreePages = document.querySelector('#objectTreePages');
-    tabs.addEventListener('core-select', function (event) {
+    tabs.addEventListener('core-select', function(event) {
       objectTreePages.selected = tabs.selected;
     });
 
@@ -78,7 +78,7 @@
     // composed DOM and local DOM views
     var toggleButton = document.querySelector('#toggleButton');
     var elementTreePages = document.querySelector('#elementTreePages');
-    toggleButton.addEventListener('change', function (event) {
+    toggleButton.addEventListener('change', function(event) {
       // Unselect whatever is selected in whichever element-tree
       unSelectInTree();
       splitPane.leftScrollTop = elementTreeScrollTop;
@@ -88,140 +88,108 @@
 
     // Create an EvalHelper object that will help us interact with host page
     // via `eval` calls.
-    createEvalHelper(function (helper) {
+    createEvalHelper(function(helper) {
       EvalHelper = helper;
       // Make all the definitions in the host page
-      EvalHelper.defineFunctions([
-        {
-          name: 'highlight',
-          string: highlight.toString()
-        },
-        {
-          name: 'unhighlight',
-          string: unhighlight.toString()
-        },
-        {
-          name: 'scrollIntoView',
-          string: scrollIntoView.toString()
-        },
-        {
-          name: 'changeProperty',
-          string: changeProperty.toString()
-        },
-        {
-          name: 'getProperty',
-          string: getProperty.toString()
-        },
-        {
-          name: 'resolveObject',
-          string: resolveObject.toString()
-        },
-        {
-          name: 'addObjectObserver',
-          string: addObjectObserver.toString()
-        },
-        {
-          name: 'removeObjectObserver',
-          string: removeObjectObserver.toString()
-        },
-        {
-          name: 'createCache',
-          string: createCache.toString()
-        },
-        {
-          name: 'addToCache',
-          string: addToCache.toString()
-        },
-        {
-          name: 'getPropPath',
-          string: getPropPath.toString()
-        },
-        {
-          name: 'getIndexMapObject',
-          string: getIndexMapObject.toString()
-        },
-        {
-          name: 'addToSubIndexMap',
-          string: addToSubIndexMap.toString()
-        },
-        {
-          name: 'addToIndexMap',
-          string: addToIndexMap.toString()
-        },
-        {
-          name: 'emptyIndexMap',
-          string: emptyIndexMap.toString()
-        },
-        {
-          name: 'removeFromSubIndexMap',
-          string: removeFromSubIndexMap.toString()
-        },
-        {
-          name: 'DOMJSONizer',
-          string: DOMJSONizer.toString()
-        },
-        {
-          name: 'getObjectJSON',
-          string: getObjectJSON.toString()
-        },
-        {
-          name: 'getDOMJSON',
-          string: getDOMJSON.toString()
-        },
-        {
-          name: 'setBreakpoint',
-          string: setBreakpoint.toString()
-        },
-        {
-          name: 'clearBreakpoint',
-          string: clearBreakpoint.toString()
-        },
-        {
-          name: 'filterProperty',
-          string: filterProperty.toString()
-        },
-        {
-          name: 'setBlacklist',
-          string: setBlacklist.toString()
-        },
-        {
-          name: 'isPolymerElement',
-          string: isPolymerElement.toString()
-        },
-        {
-          name: 'processMutations',
-          string: processMutations.toString()
-        },
-        {
-          name: 'inspectorSelectionChangeListener',
-          string: inspectorSelectionChangeListener.toString()
-        },
-        {
-          name: 'getNamespacedEventName',
-          string: getNamespacedEventName.toString()
-        },
-        {
-          name: 'isPageFresh',
-          string: isPageFresh.toString()
-        }
-      ], function (result, error) {
+      EvalHelper.defineFunctions([{
+        name: 'highlight',
+        string: highlight.toString()
+      }, {
+        name: 'unhighlight',
+        string: unhighlight.toString()
+      }, {
+        name: 'scrollIntoView',
+        string: scrollIntoView.toString()
+      }, {
+        name: 'changeProperty',
+        string: changeProperty.toString()
+      }, {
+        name: 'getProperty',
+        string: getProperty.toString()
+      }, {
+        name: 'resolveObject',
+        string: resolveObject.toString()
+      }, {
+        name: 'addObjectObserver',
+        string: addObjectObserver.toString()
+      }, {
+        name: 'removeObjectObserver',
+        string: removeObjectObserver.toString()
+      }, {
+        name: 'createCache',
+        string: createCache.toString()
+      }, {
+        name: 'addToCache',
+        string: addToCache.toString()
+      }, {
+        name: 'getPropPath',
+        string: getPropPath.toString()
+      }, {
+        name: 'getIndexMapObject',
+        string: getIndexMapObject.toString()
+      }, {
+        name: 'addToSubIndexMap',
+        string: addToSubIndexMap.toString()
+      }, {
+        name: 'emptySubIndexMap',
+        string: emptySubIndexMap.toString()
+      }, {
+        name: 'removeFromSubIndexMap',
+        string: removeFromSubIndexMap.toString()
+      }, {
+        name: 'DOMJSONizer',
+        string: DOMJSONizer.toString()
+      }, {
+        name: 'getObjectJSON',
+        string: getObjectJSON.toString()
+      }, {
+        name: 'getDOMJSON',
+        string: getDOMJSON.toString()
+      }, {
+        name: 'setBreakpoint',
+        string: setBreakpoint.toString()
+      }, {
+        name: 'clearBreakpoint',
+        string: clearBreakpoint.toString()
+      }, {
+        name: 'filterProperty',
+        string: filterProperty.toString()
+      }, {
+        name: 'setBlacklist',
+        string: setBlacklist.toString()
+      }, {
+        name: 'isPolymerElement',
+        string: isPolymerElement.toString()
+      }, {
+        name: 'processMutations',
+        string: processMutations.toString()
+      }, {
+        name: 'inspectorSelectionChangeListener',
+        string: inspectorSelectionChangeListener.toString()
+      }, {
+        name: 'getNamespacedEventName',
+        string: getNamespacedEventName.toString()
+      }, {
+        name: 'isPageFresh',
+        string: isPageFresh.toString()
+      }], function(result, error) {
         // Set the blacklist static property on `filterProperty`
-        EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
+        EvalHelper.executeFunction('setBlacklist', [], function(result, error) {
           if (error) {
             throw error;
           }
-          EvalHelper.executeFunction('createCache', [], function (result, error) {
+          EvalHelper.executeFunction('createCache', [], function(result, error) {
             if (error) {
               throw error;
             }
-            EvalHelper.executeFunction('getDOMJSON', [], function (result, error) {
+            EvalHelper.executeFunction('getDOMJSON', [], function(result, error) {
               if (error) {
                 throw error;
               }
               var DOM = result.data;
               console.log('loading composed DOM tree');
               // Load the composed DOM tree
-              doTreeLoad(function () {
+              doTreeLoad(function() {
                 elementTree.initFromDOMTree(DOM, true);
                 addMutations(pendingDOMMutations);
               });
@@ -246,7 +214,7 @@
    * @param  {Function} callback       called when loading state is set
    * @param  {Boolean}  isLocalDOMTree if it is the local DOM tree that is being rendered
    */
-  function doTreeLoad (callback, isLocalDOMTree) {
+  function doTreeLoad(callback, isLocalDOMTree) {
     isTreeLoading = true;
     var loadingBar = isLocalDOMTree ? localDOMTreeLoadingBar : composedTreeLoadingBar;
     loadingBar.style.display = 'block';
@@ -261,8 +229,8 @@
    * @param  {Object} tree either localDOMTree or a sub-tree of it to be rendered.
    * @param  {Object} DOM  The DOM object or part of it extracted from the page.
    */
-  function initLocalDOMTree (tree, DOM) {
-    doTreeLoad(function () {
+  function initLocalDOMTree(tree, DOM) {
+    doTreeLoad(function() {
       if (!deepView) {
         // DOM tree is to be shown as light DOM tree
         if (tree === localDOMTree) {
@@ -306,7 +274,7 @@
    * Gets the currently selected element's key in whichever view
    * @return {Number} The key
    */
-  function getCurrentElementTreeKey () {
+  function getCurrentElementTreeKey() {
     if (localDOMMode) {
       return localDOMTree.selectedChild ? localDOMTree.selectedChild.key : null;
     }
@@ -317,7 +285,7 @@
    * Gets the currently focused element tree
    * @return {ElementTree} Either the composed DOM tree or localDOMTree
    */
-  function getCurrentElementTree () {
+  function getCurrentElementTree() {
     if (localDOMMode) {
       return localDOMTree;
     }
@@ -327,7 +295,7 @@
   /**
    * Unselect the selected element in whichever tree
    */
-  function unSelectInTree () {
+  function unSelectInTree() {
     var selectedKey = getCurrentElementTreeKey();
     if (selectedKey) {
       var childTree = getCurrentElementTree().selectedChild;
@@ -338,7 +306,7 @@
   /**
    * Switch to local DOM view if we're not in it
    */
-  function switchToLocalDOMView () {
+  function switchToLocalDOMView() {
     if (localDOMMode) {
       return;
     }
@@ -358,7 +326,7 @@
    * @param  {Number} key The key of the DOM element
    * @return {HTMLElement}     The element corresponding to key.
    */
-  function getDOMTreeForKey (key) {
+  function getDOMTreeForKey(key) {
     var childTree = elementTree.getChildTreeForKey(key);
     return childTree ? childTree.tree : null;
   }
@@ -368,13 +336,13 @@
    * @param  {Number}  key     The key of the element to be highlighted
    * @param  {Boolean} isHover If it is a hover and not a selection
    */
-  function highlightElement (key, isHover) {
-    EvalHelper.executeFunction('highlight', [key, isHover], function (result, error) {
+  function highlightElement(key, isHover) {
+    EvalHelper.executeFunction('highlight', [key, isHover], function(result, error) {
       if (error) {
         throw error;
       }
     });
-    EvalHelper.executeFunction('scrollIntoView', [key], function (result, error) {
+    EvalHelper.executeFunction('scrollIntoView', [key], function(result, error) {
       if (error) {
         console.log(error);
       }
@@ -386,8 +354,8 @@
    * @param  {Number}  key     Key of the element to be unhighlighted
    * @param  {Boolean} isHover If it is because of a hover-out and not an unselection.
    */
-  function unhighlightElement (key, isHover) {
-    EvalHelper.executeFunction('unhighlight', [key, isHover], function (result, error) {
+  function unhighlightElement(key, isHover) {
+    EvalHelper.executeFunction('unhighlight', [key, isHover], function(result, error) {
       if (error) {
         throw error;
       }
@@ -400,8 +368,8 @@
    * @param  {Array}   path    An array representing the path to find the expansion point.
    * @param  {Boolean} isModel If it is the model-tree we're trying to expand.
    */
-  function expandObject (key, path, isModel) {
-    EvalHelper.executeFunction('getObjectJSON', [key, path, isModel], function (result, error) {
+  function expandObject(key, path, isModel) {
+    EvalHelper.executeFunction('getObjectJSON', [key, path, isModel], function(result, error) {
       if (error) {
         throw error;
       }
@@ -414,7 +382,7 @@
       if (!isModel && path.length === 0) {
         methodList.list = objectTree.tree;
       }
-      EvalHelper.executeFunction('addObjectObserver', [key, path, isModel], function (result, error) {
+      EvalHelper.executeFunction('addObjectObserver', [key, path, isModel], function(result, error) {
         if (error) {
           throw error;
         }
@@ -426,7 +394,7 @@
    * Selects an element = expands Object-tree and highlights in page
    * @param  {Number} key Key of element to expand.
    */
-  function selectElement (key) {
+  function selectElement(key) {
     // When an element is selected, we try to open both the main and model trees
     expandObject(key, [], false);
     expandObject(key, [], true);
@@ -439,13 +407,13 @@
    * @param  {Number}   key      Key of the unselected element.
    * @param  {Function} callback Called when everything is done.
    */
-  function unselectElement (key, callback) {
-    function removeObject (isModel, callback) {
-      EvalHelper.executeFunction('removeObjectObserver', [key, [], isModel], function (result, error) {
+  function unselectElement(key, callback) {
+    function removeObject(isModel, callback) {
+      EvalHelper.executeFunction('removeObjectObserver', [key, [], isModel], function(result, error) {
         if (error) {
           throw error;
         }
-        EvalHelper.executeFunction('emptyIndexMap', [key, [], isModel], function (result, error) {
+        EvalHelper.executeFunction('emptySubIndexMap', [key, [], isModel], function(result, error) {
           if (error) {
             throw error;
           }
@@ -462,16 +430,16 @@
       });
     }
     // First remove everything associated with the actual object
-    removeObject(false, function () {
+    removeObject(false, function() {
       // Then remove everything associated with the model
       removeObject(true, callback);
     });
   }
 
   /**
-  * Refresh a property (*an accessor only*)
-  * isModel tells if this is with regard to the model tree
-  */
+   * Refresh a property (*an accessor only*)
+   * isModel tells if this is with regard to the model tree
+   */
   /**
    * Refresh an accessor property.
    * @param  {Number}  key       Key of the element concerned.
@@ -479,9 +447,9 @@
    * @param  {Array}   path      Path to find the property.
    * @param  {Boolean} isModel   If the property belongs to the model-tree.
    */
-  function refreshProperty (key, childTree, path, isModel) {
+  function refreshProperty(key, childTree, path, isModel) {
     var index = path[path.length - 1];
-    EvalHelper.executeFunction('getProperty', [key, path, isModel], function (result, error) {
+    EvalHelper.executeFunction('getProperty', [key, path, isModel], function(result, error) {
       var newObj = result.value[0];
       childTree[index] = newObj;
     });
@@ -491,17 +459,18 @@
    * Processes DOM mutations. i.e., updates trees with these changes.
    * @param {Array} mutations An array of mutations.
    */
-  function addMutations (mutations) {
+  function addMutations(mutations) {
     for (var i = 0; i < mutations.length; i++) {
       var newElement = mutations[i].data;
       var key = newElement.key;
       var childElementTree = elementTree.getChildTreeForKey(key);
       var childLocalDOMTree = localDOMTree.getChildTreeForKey(key);
-      function resetTree () {
+
+      function resetTree() {
         // elementTree has all composed DOM elements. A DOM mutation will might need
         // an update there
         if (childElementTree) {
-          doTreeLoad(function () {
+          doTreeLoad(function() {
             childElementTree.initFromDOMTree(newElement, true, elementTree);
           });
         }
@@ -522,14 +491,14 @@
     mutations.length = 0;
   }
   // When the panel is opened
-  window.addEventListener('polymer-ready', function () {
+  window.addEventListener('polymer-ready', function() {
     init();
 
     // When an element in the element-tree is selected
-    window.addEventListener('selected', function (event) {
+    window.addEventListener('selected', function(event) {
       var key = event.detail.key;
       if (event.detail.oldKey) {
-        unselectElement(event.detail.oldKey, function () {
+        unselectElement(event.detail.oldKey, function() {
           selectElement(key);
         });
       } else {
@@ -538,13 +507,13 @@
     });
 
     // When an element in the element-tree is unselected
-    window.addEventListener('unselected', function (event) {
+    window.addEventListener('unselected', function(event) {
       var key = event.detail.key;
       unselectElement(key);
     });
 
     // When a property in the object-tree changes
-    window.addEventListener('property-changed', function (event) {
+    window.addEventListener('property-changed', function(event) {
       var newValue = event.detail.value;
       var path = event.detail.path;
       var key = getCurrentElementTreeKey();
@@ -552,7 +521,7 @@
       var isModel = (event.target.id === 'model-tree');
       // Reflect a change in property in the host page
       EvalHelper.executeFunction('changeProperty', [key, path, newValue, isModel],
-        function (result, error) {
+        function(result, error) {
           if (error) {
             throw error;
           }
@@ -566,7 +535,7 @@
     });
 
     // When the refresh button is clicked in the object-trees.
-    window.addEventListener('refresh-property', function (event) {
+    window.addEventListener('refresh-property', function(event) {
       var key = getCurrentElementTreeKey();
       var childTree = event.detail.tree;
       var path = event.detail.path;
@@ -575,7 +544,7 @@
     });
 
     // When an object is expanded.
-    window.addEventListener('object-expand', function (event) {
+    window.addEventListener('object-expand', function(event) {
       var isModel = (event.target.id === 'model-tree');
       var key = getCurrentElementTreeKey();
       expandObject(key, event.detail.path, isModel);
@@ -583,15 +552,15 @@
 
     // An object has been collapsed. We must remove the object observer
     // and empty the index-propName map in the host page for this object
-    window.addEventListener('object-collapse', function (event) {
+    window.addEventListener('object-collapse', function(event) {
       var key = getCurrentElementTreeKey();
       var path = event.detail.path;
       var isModel = (event.target.id === 'model-tree');
-      EvalHelper.executeFunction('removeObjectObserver', [key, path, isModel], function (result, error) {
+      EvalHelper.executeFunction('removeObjectObserver', [key, path, isModel], function(result, error) {
         if (error) {
           throw error;
         }
-        EvalHelper.executeFunction('emptyIndexMap', [key, path, isModel], function (result, error) {
+        EvalHelper.executeFunction('emptySubIndexMap', [key, path, isModel], function(result, error) {
           if (error) {
             throw error;
           }
@@ -600,11 +569,11 @@
     });
 
     // When a breakpoint is added/removed.
-    window.addEventListener('breakpoint-toggle', function (event) {
+    window.addEventListener('breakpoint-toggle', function(event) {
       var key = getCurrentElementTreeKey();
       var index = event.detail.index;
       var functionName = event.detail.isSet ? 'setBreakpoint' : 'clearBreakpoint';
-      EvalHelper.executeFunction(functionName, [key, [index]], function (result, error) {
+      EvalHelper.executeFunction(functionName, [key, [index]], function(result, error) {
         if (error) {
           throw error;
         }
@@ -612,13 +581,13 @@
     });
 
     // Happens when an element is hovered over
-    window.addEventListener('highlight', function (event) {
+    window.addEventListener('highlight', function(event) {
       var key = event.detail.key;
       highlightElement(key, true);
     });
 
     // Happens when an element is hovered out
-    window.addEventListener('unhighlight', function (event) {
+    window.addEventListener('unhighlight', function(event) {
       var key = event.detail.key;
       unhighlightElement(key, true);
     });
@@ -626,7 +595,7 @@
     // Happens when an element is to be magnified,
     // i.e., either seen in the local DOM view or if already in the 
     // local DOM view, to see the shadow content of it.
-    window.addEventListener('magnify', function (event) {
+    window.addEventListener('magnify', function(event) {
       var key = event.detail.key;
       var childTree = getCurrentElementTree().getChildTreeForKey(key);
       if (!localDOMMode) {
@@ -657,7 +626,7 @@
 
     // When an element in the local DOM view is to be 'unmagnified',
     // i.e., its light DOM is to be seen.
-    window.addEventListener('unmagnify', function (event) {
+    window.addEventListener('unmagnify', function(event) {
       // Only possible inside local DOM view and when in deepView
       var key = event.detail.key;
       var childTree = getCurrentElementTree().getChildTreeForKey(key);
@@ -669,7 +638,7 @@
 
     // When a bread crumb click happens we may need to focus something else in
     // tree
-    window.addEventListener('bread-crumb-click', function (event) {
+    window.addEventListener('bread-crumb-click', function(event) {
       unSelectInTree();
       var key = event.detail.key;
       var DOMTree = getDOMTreeForKey(key);
@@ -678,7 +647,7 @@
     });
 
     // When a Polymer element's definition is to be viewed.
-    window.addEventListener('view-source', function (event) {
+    window.addEventListener('view-source', function(event) {
       var key = event.detail.key;
       var DOMTree = getDOMTreeForKey(key);
       var sourceURL = DOMTree.sourceURL;
@@ -691,13 +660,13 @@
       name: 'panel'
     });
     // All these messages come from the background page and not from the UI of the extension.
-    backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
+    backgroundPageConnection.onMessage.addListener(function(message, sender, sendResponse) {
       switch (message.name) {
         case 'check-page-fresh':
           // The page's location has changed. This doesn't necessarily mean that
           // the page itself got reloaded. So we try to execute a function which is supposed
           // to be defined if the page is not fresh. If it fails, then the page is fresh.
-          EvalHelper.executeFunction('isPageFresh', [], function (result, error) {
+          EvalHelper.executeFunction('isPageFresh', [], function(result, error) {
             if (error) {
               // Let the background page know so it can spawn the content script.
               // Expect a 'refresh' message after that.
@@ -712,7 +681,7 @@
           // This happens when either:
           // 1. The page got upgraded by Polymer ('polymer-ready')
           // 2. The page got actually refreshed.
-          EvalHelper.executeFunction('cleanUp', [], function (result, error) {
+          EvalHelper.executeFunction('cleanUp', [], function(result, error) {
             // Ignore error. If this 'refresh' was due to a 'polymer-ready' event, cleanUp will
             // do its job. Otherwise it must be a fresh page, so there is no clean up needed.
             init();
@@ -794,8 +763,8 @@
 
     // When an element selection changes in the inspector, we try to update the new pane with
     // the same element selected
-    chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
-      EvalHelper.executeFunction('inspectorSelectionChangeListener', [], function (result, error) {
+    chrome.devtools.panels.elements.onSelectionChanged.addListener(function() {
+      EvalHelper.executeFunction('inspectorSelectionChangeListener', [], function(result, error) {
         if (error) {
           console.log(error);
         }
