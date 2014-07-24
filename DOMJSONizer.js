@@ -20,13 +20,12 @@ function DOMJSONizer () {
     attributeChanged: true
   };
 
- /**
-  * Checks if a property is an acessor.
-  * Note: obj.hasOwnProperty(prop) has to be true.
-  * @param  {Object} obj
-  * @param  {string} prop
-  * @return {Boolean}
-  */
+  /**
+   * Checks if a property is an accessor property.
+   * @param  {Object} obj  The exact object on which the property is present.
+   * @param  {String} prop Name of the property
+   * @return {Boolean}      Whether the property is an accessor (get/set) or not.
+   */
   function propHasAccessor (obj, prop) {
     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
     if (!descriptor) {
@@ -36,10 +35,12 @@ function DOMJSONizer () {
   }
 
   /**
-  * Copies a property from oldObj to newObjArray and adds some metadata.
-  * protoObject is the exact object in the chain where the prop is present.
-  * It is necessary to determine if the prop is an accessor or not.
-  */
+   * Copies a property from oldObj to newObjArray and adds some metadata.
+   * @param  {Object} protoObject The exact object in chain where the property exists.
+   * @param  {Object} oldObj The source object
+   * @param  {Array}  newObjArray  The destination object (which is maintained as an Array).
+   * @param  {String} prop        Name of the property
+   */
   function copyProperty (protoObject, oldObj, newObjArray, prop) {
     try {
       var tmp = oldObj[prop];
@@ -99,15 +100,19 @@ function DOMJSONizer () {
   }
 
   /**
-  * Converts an object to JSON only one level deep
-  */
+   * Converts an object to JSON but only one-level deep.
+   * @param {Object}   obj    The object to be converted.
+   * @param {Function} filter A filter function that is supposed to filter out properties.
+   */
   function JSONize (obj, filter) {
 
     /**
-    * Gets the Polymer-specific *own* properties of an object
-    */
-    function getPolymerProps (element) {
-      var props = Object.getOwnPropertyNames(element);
+     * Gets the own properties of an object.
+     * @param  {Object} obj The object whose properties we want.
+     * @return {Array}         An array of properties.
+     */
+    function getOwnFilteredProps (obj) {
+      var props = Object.getOwnPropertyNames(obj);
       if (filter) {
         props = props.filter(filter);
       }
@@ -115,10 +120,14 @@ function DOMJSONizer () {
     }
 
     /**
-    * Explores a Polymer element for properties
-    */
+     * Explores a Polymer element for its properties by searching multiple
+     * prototype levels.
+     * @param  {HTMLElement} element The element that we want to explore.
+     * @param  {Array}       destObj The destination object (managed as an array) we want to populate.
+     */
     function explorePolymerObject (element, destObj) {
       var addedProps = {};
+      /** Tells if a property was already added */
       function isAdded (el) {
         return (el in addedProps);
       }
@@ -127,8 +136,9 @@ function DOMJSONizer () {
       }
       if (isPolymerElement(element)) {
         var proto = element;
+        // Go looking into the proto chain.
         while (proto && !Polymer.isBase(proto)) {
-          var props = getPolymerProps(proto);
+          var props = getOwnFilteredProps(proto);
           for (var i = 0; i < props.length; i++) {
             if (isAdded(props[i])) {
               continue;
@@ -139,7 +149,7 @@ function DOMJSONizer () {
             if (props[i] in polymerSpecificProps) {
               destObj[destObj.length - 1].polymer = true;
             }
-            // Add a flag to show that published properties differently
+            // Add a flag to show published properties differently
             if (props[i] in element.publish) {
               destObj[destObj.length - 1].published = true;
             }
@@ -153,8 +163,10 @@ function DOMJSONizer () {
     }
 
     /**
-    * Explores an object (non-Polymer) for properties
-    */
+     * Explores a non-Polymer object for own properties
+     * @param  {Object} obj     object to look in
+     * @param  {Array}  destObj destination object (managed as an array) to copy properties
+     */
     function exploreObject (obj, destObj) {
       var props = Object.getOwnPropertyNames(obj).sort();
       for (var i = 0; i < props.length; i++) {
@@ -170,8 +182,10 @@ function DOMJSONizer () {
     }
 
     /**
-    * Explores an array for properties
-    */
+     * Copies the contents of an array to destination.
+     * @param  {Array} arr     Source array
+     * @param  {Array} destObj Destination object (managed as an array)
+     */
     function exploreArray (arr, destObj) {
       for (var i = 0; i < arr.length; i++) {
         try {
@@ -182,6 +196,7 @@ function DOMJSONizer () {
       }
     }
 
+    // The root object is named as `Root`.
     var res = {
       name: 'Root',
       value: []
@@ -202,20 +217,28 @@ function DOMJSONizer () {
     return res;
   }
 
+  /**
+   * Tells if an element is a script or style element.
+   * @param  {HTMLElement}  el The element we're checkin
+   * @return {Boolean}    whether it is a <script> or <style>
+   */
   function isScriptOrStyle (el) {
     return el && (el.tagName === 'SCRIPT' || el.tagName === 'STYLE');
   }
+
   /**
-  * Does a deep light DOM exploration.
-  * Puts child tree under <shadow> and <content> tags if found
-  * Returned object looks like:
-  * {
-  *   tagName: <tagName>,
-  *   children: <list of other such objects>,
-  *   isLightDOMTree: true
-  * }
-  * unless callback does something else to it
-  */
+   * Does a deep light DOM exploration.
+   * Puts the child tree under <shadow> and <content> tags if found
+   * @param  {HTMLElement}   root     The root element to traverse from.
+   * @param  {Function}      callback function to be called for every element found.
+   * @return {Object}            Looks like this:
+   * {
+   *   tagName: <tagName>,
+   *   children: <list of other such objects>,
+   *   isLightDOMTree: true
+   * }
+   * unless callback does something else to it
+   */
   function exploreLightDOM (root, callback) {
     var res = {
       children: [],
@@ -250,9 +273,12 @@ function DOMJSONizer () {
     }
     return res;
   }
+
   /**
-  * Gets the children of root in the composed DOM (Shadow DOM + Light DOM)
-  */
+   * Gets the immediate children of root in the composed DOM tree.
+   * @param  {HTMLElement} root The element to look under.
+   * @return {Array}      A list of children in composed DOM tree.
+   */
   function getComposedDOMChildren (root) {
     if (root.tagName === 'CONTENT') {
       // <content> must get replaced by what gets distributed into it
@@ -293,17 +319,19 @@ function DOMJSONizer () {
   }
 
   /**
-  * JSONizes a DOM element
-  * Return object looks like this:
-  * {
-  *   tagName: <tag-name>,
-  *   key: <unique-key>,
-  *   lightDOMTree: <what exploreLightDOM returns>
-  *   children: [<more such objects>]
-  * }
-  * unless callback does anything else to it.
-  * @callback: is executed on every DOM element found
-  */
+   * JSONizes the DOM tree and includes information about light DOM, shadow DOM and
+   * composed DOM.
+   * @param {HTMLElement}   root     The root of the DOM tree.
+   * @param {Function}      callback function to be called for every element discovered.
+   * @return {Object}         Looks like this:
+   * {
+   *   tagName: <tag-name>,
+   *   key: <unique-key>,
+   *   lightDOMTree: <what exploreLightDOM returns>
+   *   children: [<more such objects>]
+   * }
+   * unless callback does anything else to it.
+   */
   this.JSONizeDOMObject = function (root, callback) {
     function traverse (root) {
       var res = {};
@@ -339,27 +367,26 @@ function DOMJSONizer () {
   };
 
   /**
-  * JSONize any object (or function) one level deep.
-  * It checks for only own properties.
-  * Pass in a wrapped object and unwrap later if passing a non-object.
-  * @callback: this is called once just before JSONizing the newly created one-level
-  *   deep object mirror
-  * Return object looks like this:
-  * {
-  *   type: 'object',
-  *   name: 'Root',
-  *   value: [
-  *     {
-  *       type: <type>,
-  *       name: <name>,
-  *       value: <value>, (empty array if property is an object)
-  *       hasAccessor: <true|false>,
-  *       error: <true|false> (if there was an error while executing the getter (if there was one))
-  *     },
-  *     // More such objects for each property in the passed object
-  *   ]
-  * }
-  */
+   * JSONizes an object considering only own properties.
+   * @param {Object}   obj      The object to JSONize.
+   * @param {Function} callback Function called with the result.
+   * @param {Function} filter   function that is to filter out properties.
+   * @return {Object}     Looks like:
+   * {
+   *   type: 'object',
+   *   name: 'Root',
+   *   value: [
+   *     {
+   *       type: <type>,
+   *       name: <name>,
+   *       value: <value>, (empty array if property is an object)
+   *       hasAccessor: <true|false>,
+   *       error: <true|false> (if there was an error while executing the getter (if there was one))
+   *     },
+   *     // More such objects for each property in the passed object
+   *   ]
+   * }
+   */
   this.JSONizeObject = function (obj, callback, filter) {
     var res = JSONize(obj, filter);
     callback && callback(res);
@@ -367,21 +394,24 @@ function DOMJSONizer () {
   };
 
   /**
-  * Takes an object and a property name and JSONizes just that property's value.
-  * It returns a wrapped object with the same property containing the required property.
-  * Returns an object that looks like this:
-  * {
-  *   type: 'object',
-  *   name: 'Root',
-  *   value: [
-  *     // `value` array size is 1 and just contains the property asked for
-  *     {
-  *       name: <prop-name>,
-  *       ...
-  *     }
-  *   ]
-  * }
-  */
+   * JSONizes a property. Even though this seems unnecessary, it is required when
+   * single property requests arrive and the resulting representation still has to
+   * contain meta-data.
+   * @param {String} prop The name of the property.
+   * @param {Object} obj  The object which contains the property.
+   * @return {Object} Looks like this:
+   * {
+   *   type: 'object',
+   *   name: 'Root',
+   *   value: [
+   *     // `value` array size is 1 and just contains the property asked for
+   *     {
+   *       name: <prop-name>,
+   *       ...
+   *     }
+   *   ]
+   * }
+   */
   this.JSONizeProperty = function (prop, obj) {
     // Get to the object in the prototype chain that actually contains the property
     var actualObject = obj;

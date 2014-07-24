@@ -2,39 +2,59 @@
   // elementTree is the tree used for viewing composed DOM.
   // It is initialized once and its branches are kept up-to-date as necessary.
   var elementTree;
-  // shadowDOMTree is the tree used for viewing local DOM contents
-  var shadowDOMTree;
+
+  // localDOMTree is the tree used for viewing local DOM contents
+  var localDOMTree;
+
+  // Object-tree is the object tree in the right pane.
   var objectTree;
+
   // The bread crumbs that are shown in the local DOM view
   var breadCrumbs;
+
   // For breakpoints
   var methodList;
-  // For injecting code into the host page
-  // Loading bars
+
   var splitPane;
+
+  // Loading bars
   var composedTreeLoadingBar;
   var localDOMTreeLoadingBar;
 
+  // For injecting code into the host page
   var EvalHelper;
+
+  // Last scroll position of the element tree.
   var elementTreeScrollTop;
+
   // localDOMMode is true when we're viewing the local DOM element tree
   var localDOMMode = false;
-  // deepView is true when the local DOM view is showing the shadow DOM contents,
+
+  // deepView is true when the local DOM tree is showing the shadow DOM contents,
   // false when showing the light DOM contents
   var deepView = false;
 
   // If the page had DOM mutations while the tree was rendered, we need to account
   // for those later.
   var pendingDOMMutations = [];
+
+  // isTreeLoading is set to true when the tree is being loaded (upon init or
+  // DOM mutations)
   var isTreeLoading = false;
+
+  /**
+   * Called when panel is opened or page is refreshed.
+   */
   function init () {
-    var DOM;
     elementTree = document.querySelector('element-tree#composedDOMTree');
-    shadowDOMTree = document.querySelector('element-tree#shadowDOMTree');
+    localDOMTree = document.querySelector('element-tree#localDOMTree');
+
     // objectTree shows the properties of a selected element in the tree
     objectTree = document.querySelector('object-tree#main-tree');
+
     // modelTree shows the model behind a seleccted element (if any)
     modelTree = document.querySelector('object-tree#model-tree');
+
     // methodList is the list of methods of the selected element. It is used
     // to add breakpoints
     methodList = document.querySelector('method-list');
@@ -45,13 +65,15 @@
 
     composedTreeLoadingBar = document.querySelector('#composedTreeLoadingBar');
     localDOMTreeLoadingBar = document.querySelector('#localDOMTreeLoadingBar');
-    // tabs is an instance of paper-tabs that is used to change the object-tree
+
+    // tabs is a reference to the paper-tabs that is used to change the object-tree
     // shown in view
     var tabs = document.querySelector('#tabs');
     var objectTreePages = document.querySelector('#objectTreePages');
     tabs.addEventListener('core-select', function (event) {
       objectTreePages.selected = tabs.selected;
     });
+
     // toggleButton is an instance of paper-toggle-button used to switch between
     // composed DOM and local DOM views
     var toggleButton = document.querySelector('#toggleButton');
@@ -63,6 +85,9 @@
       elementTreePages.selected = toggleButton.checked ? 1 : 0;
       localDOMMode = toggleButton.checked;
     });
+
+    // Create an EvalHelper object that will help us interact with host page
+    // via `eval` calls.
     createEvalHelper(function (helper) {
       EvalHelper = helper;
       // Make all the definitions in the host page
@@ -180,6 +205,7 @@
           string: isPageFresh.toString()
         }
       ], function (result, error) {
+        // Set the blacklist static property on `filterProperty`
         EvalHelper.executeFunction('setBlacklist', [], function (result, error) {
           if (error) {
             throw error;
@@ -192,14 +218,16 @@
               if (error) {
                 throw error;
               }
-              DOM = result.data;
+              var DOM = result.data;
               console.log('loading composed DOM tree');
+              // Load the composed DOM tree
               doTreeLoad(function () {
                 elementTree.initFromDOMTree(DOM, true);
                 addMutations(pendingDOMMutations);
               });
               console.log('loading local DOM tree');
-              initLocalDOMTree(shadowDOMTree, DOM);
+              // Load the local DOM tree
+              initLocalDOMTree(localDOMTree, DOM);
               breadCrumbs.list.push({
                 name: DOM.tagName,
                 key: DOM.key
@@ -212,6 +240,12 @@
     });
   }
 
+  /**
+   * Sets the loading state and loading sign while the tree is rendered and
+   * resets them back when done.
+   * @param  {Function} callback       called when loading state is set
+   * @param  {Boolean}  isLocalDOMTree if it is the local DOM tree that is being rendered
+   */
   function doTreeLoad (callback, isLocalDOMTree) {
     isTreeLoading = true;
     var loadingBar = isLocalDOMTree ? localDOMTreeLoadingBar : composedTreeLoadingBar;
@@ -222,19 +256,21 @@
   }
 
   /**
-  * Initializes the element tree in the local DOM view with the DOM tree supplied.
-  * It checks `deepView` and decides how to display the DOM tree (i.e., light DOM or shadow DOM).
-  */
+   * Initializes the element tree in the local DOM view with the DOM tree supplied.
+   * It checks `deepView` and decides how to display the DOM tree (i.e., light DOM or shadow DOM).
+   * @param  {Object} tree either localDOMTree or a sub-tree of it to be rendered.
+   * @param  {Object} DOM  The DOM object or part of it extracted from the page.
+   */
   function initLocalDOMTree (tree, DOM) {
     doTreeLoad(function () {
       if (!deepView) {
         // DOM tree is to be shown as light DOM tree
-        if (tree === shadowDOMTree) {
+        if (tree === localDOMTree) {
           tree.initFromDOMTree(DOM.lightDOMTree, true);
         } else {
-          tree.initFromDOMTree(DOM.lightDOMTree, true, shadowDOMTree);
+          tree.initFromDOMTree(DOM.lightDOMTree, true, localDOMTree);
         }
-      } else if (tree === shadowDOMTree) {
+      } else if (tree === localDOMTree) {
         // We are trying to set the entire tree here.
         // It is done this way:
         // 1. First level of children are from the composed DOM
@@ -253,7 +289,7 @@
           var childTree;
           for (var i = 0; i < DOM.children.length; i++) {
             childTree = new ElementTree();
-            childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, shadowDOMTree);
+            childTree.initFromDOMTree(DOM.children[i].lightDOMTree, true, localDOMTree);
             tree.addChild(childTree);
           }
         }
@@ -261,33 +297,36 @@
         // called when DOM mutations happen and we need update just one part of the tree
         tree.initFromDOMTree(DOM.lightDOMTree, true);
       }
+      // Add DOM mutations if there were any.
       addMutations(pendingDOMMutations);
     }, true);
   }
 
   /**
-  * Gets the currently selected element's key in whichever view
-  */
+   * Gets the currently selected element's key in whichever view
+   * @return {Number} The key
+   */
   function getCurrentElementTreeKey () {
     if (localDOMMode) {
-      return shadowDOMTree.selectedChild ? shadowDOMTree.selectedChild.key : null;
+      return localDOMTree.selectedChild ? localDOMTree.selectedChild.key : null;
     }
     return elementTree.selectedChild ? elementTree.selectedChild.key : null;
   }
 
   /**
-  * Gets the currently focused element tree
-  */
+   * Gets the currently focused element tree
+   * @return {ElementTree} Either the composed DOM tree or localDOMTree
+   */
   function getCurrentElementTree () {
     if (localDOMMode) {
-      return shadowDOMTree;
+      return localDOMTree;
     }
     return elementTree;
   }
 
   /**
-  * Unselect the selected element in whichever tree
-  */
+   * Unselect the selected element in whichever tree
+   */
   function unSelectInTree () {
     var selectedKey = getCurrentElementTreeKey();
     if (selectedKey) {
@@ -297,8 +336,8 @@
   }
 
   /**
-  * Switch to local DOM view if we're not in it
-  */
+   * Switch to local DOM view if we're not in it
+   */
   function switchToLocalDOMView () {
     if (localDOMMode) {
       return;
@@ -312,20 +351,23 @@
   }
 
   /**
-  * elementTree has references to all rendered elements. So if someother
-  * part of the code wants a reference to a DOM element we can just get it from
-  * elementTree. It is an alternative to a separate hash table which would have
-  * needed another complete tree traversal.
-  */
+   * elementTree has references to all rendered elements. So if someother
+   * part of the code wants a reference to a DOM element we can just get it from
+   * elementTree. It is an alternative to a separate hash table which would have
+   * needed another complete tree traversal.
+   * @param  {Number} key The key of the DOM element
+   * @return {HTMLElement}     The element corresponding to key.
+   */
   function getDOMTreeForKey (key) {
     var childTree = elementTree.getChildTreeForKey(key);
     return childTree ? childTree.tree : null;
   }
+
   /**
-  * Highlight an element in the page
-  * isHover: true if element is to be highlighted because it was hovered
-  * over in the element-tree.
-  */
+   * Highlight an element in the page
+   * @param  {Number}  key     The key of the element to be highlighted
+   * @param  {Boolean} isHover If it is a hover and not a selection
+   */
   function highlightElement (key, isHover) {
     EvalHelper.executeFunction('highlight', [key, isHover], function (result, error) {
       if (error) {
@@ -340,10 +382,10 @@
   }
 
   /**
-  * Unhighlight a highlighted element in the page
-  * isHover: true if element is to be unhighlighted because it was hovered
-  * out in the element-tree.
-  */
+   * Unhighlight a highlighted element in the page
+   * @param  {Number}  key     Key of the element to be unhighlighted
+   * @param  {Boolean} isHover If it is because of a hover-out and not an unselection.
+   */
   function unhighlightElement (key, isHover) {
     EvalHelper.executeFunction('unhighlight', [key, isHover], function (result, error) {
       if (error) {
@@ -353,8 +395,11 @@
   }
 
   /**
-  * isModel tells if it is model-tree that we are expanding
-  */
+   * Expands an object in either of the object-trees and adds O.o() listeners.
+   * @param  {Number}  key     Key of the element whose object is to be expanded.
+   * @param  {Array}   path    An array representing the path to find the expansion point.
+   * @param  {Boolean} isModel If it is the model-tree we're trying to expand.
+   */
   function expandObject (key, path, isModel) {
     EvalHelper.executeFunction('getObjectJSON', [key, path, isModel], function (result, error) {
       if (error) {
@@ -377,6 +422,10 @@
     });
   }
 
+  /**
+   * Selects an element = expands Object-tree and highlights in page
+   * @param  {Number} key Key of element to expand.
+   */
   function selectElement (key) {
     // When an element is selected, we try to open both the main and model trees
     expandObject(key, [], false);
@@ -385,6 +434,11 @@
     highlightElement(key);
   }
 
+  /**
+   * Unselects an element = removes O.o() listeners and empties index map.
+   * @param  {Number}   key      Key of the unselected element.
+   * @param  {Function} callback Called when everything is done.
+   */
   function unselectElement (key, callback) {
     function removeObject (isModel, callback) {
       EvalHelper.executeFunction('removeObjectObserver', [key, [], isModel], function (result, error) {
@@ -413,10 +467,18 @@
       removeObject(true, callback);
     });
   }
+
   /**
   * Refresh a property (*an accessor only*)
   * isModel tells if this is with regard to the model tree
   */
+  /**
+   * Refresh an accessor property.
+   * @param  {Number}  key       Key of the element concerned.
+   * @param  {ObjectTree}  childTree The sub-object-tree where this property is rendered.
+   * @param  {Array}   path      Path to find the property.
+   * @param  {Boolean} isModel   If the property belongs to the model-tree.
+   */
   function refreshProperty (key, childTree, path, isModel) {
     var index = path[path.length - 1];
     EvalHelper.executeFunction('getProperty', [key, path, isModel], function (result, error) {
@@ -425,12 +487,16 @@
     });
   }
 
+  /**
+   * Processes DOM mutations. i.e., updates trees with these changes.
+   * @param {Array} mutations An array of mutations.
+   */
   function addMutations (mutations) {
     for (var i = 0; i < mutations.length; i++) {
       var newElement = mutations[i].data;
       var key = newElement.key;
       var childElementTree = elementTree.getChildTreeForKey(key);
-      var childLocalDOMTree = shadowDOMTree.getChildTreeForKey(key);
+      var childLocalDOMTree = localDOMTree.getChildTreeForKey(key);
       function resetTree () {
         // elementTree has all composed DOM elements. A DOM mutation will might need
         // an update there
@@ -455,8 +521,10 @@
     // Empty the array when done.
     mutations.length = 0;
   }
+  // When the panel is opened
   window.addEventListener('polymer-ready', function () {
     init();
+
     // When an element in the element-tree is selected
     window.addEventListener('selected', function (event) {
       var key = event.detail.key;
@@ -468,11 +536,13 @@
         selectElement(key);
       }
     });
+
     // When an element in the element-tree is unselected
     window.addEventListener('unselected', function (event) {
       var key = event.detail.key;
       unselectElement(key);
     });
+
     // When a property in the object-tree changes
     window.addEventListener('property-changed', function (event) {
       var newValue = event.detail.value;
@@ -494,6 +564,8 @@
         }
       );
     });
+
+    // When the refresh button is clicked in the object-trees.
     window.addEventListener('refresh-property', function (event) {
       var key = getCurrentElementTreeKey();
       var childTree = event.detail.tree;
@@ -501,11 +573,14 @@
       var isModel = (event.target.id === 'model-tree');
       refreshProperty(key, childTree, path, isModel);
     });
+
+    // When an object is expanded.
     window.addEventListener('object-expand', function (event) {
       var isModel = (event.target.id === 'model-tree');
       var key = getCurrentElementTreeKey();
       expandObject(key, event.detail.path, isModel);
     });
+
     // An object has been collapsed. We must remove the object observer
     // and empty the index-propName map in the host page for this object
     window.addEventListener('object-collapse', function (event) {
@@ -523,6 +598,8 @@
         });
       });
     });
+
+    // When a breakpoint is added/removed.
     window.addEventListener('breakpoint-toggle', function (event) {
       var key = getCurrentElementTreeKey();
       var index = event.detail.index;
@@ -533,11 +610,13 @@
         }
       });
     });
+
     // Happens when an element is hovered over
     window.addEventListener('highlight', function (event) {
       var key = event.detail.key;
       highlightElement(key, true);
     });
+
     // Happens when an element is hovered out
     window.addEventListener('unhighlight', function (event) {
       var key = event.detail.key;
@@ -558,7 +637,7 @@
           name: DOMTree.tagName,
           key: DOMTree.key
         }];
-        initLocalDOMTree(shadowDOMTree, DOMTree);
+        initLocalDOMTree(localDOMTree, DOMTree);
         switchToLocalDOMView();
       } else {
         deepView = true;
@@ -572,12 +651,12 @@
             key: DOMTree.key
           });
         }
-        initLocalDOMTree(shadowDOMTree, DOMTree);
+        initLocalDOMTree(localDOMTree, DOMTree);
       }
     });
 
     // When an element in the local DOM view is to be 'unmagnified',
-    // i.e., it's light DOM is to be seen.
+    // i.e., its light DOM is to be seen.
     window.addEventListener('unmagnify', function (event) {
       // Only possible inside local DOM view and when in deepView
       var key = event.detail.key;
@@ -585,7 +664,7 @@
       deepView = false;
       var DOMTree = childTree.tree;
       unSelectInTree();
-      initLocalDOMTree(shadowDOMTree, DOMTree);
+      initLocalDOMTree(localDOMTree, DOMTree);
     });
 
     // When a bread crumb click happens we may need to focus something else in
@@ -595,19 +674,23 @@
       var key = event.detail.key;
       var DOMTree = getDOMTreeForKey(key);
       deepView = false;
-      initLocalDOMTree(shadowDOMTree, DOMTree);
+      initLocalDOMTree(localDOMTree, DOMTree);
     });
 
+    // When a Polymer element's definition is to be viewed.
     window.addEventListener('view-source', function (event) {
       var key = event.detail.key;
       var DOMTree = getDOMTreeForKey(key);
       var sourceURL = DOMTree.sourceURL;
+      // TODO: Is there any way to find the exact line and column of definition of
+      // a Polymer element?
       chrome.devtools.panels.openResource(sourceURL, 1, 1);
     });
 
     var backgroundPageConnection = chrome.runtime.connect({
       name: 'panel'
     });
+    // All these messages come from the background page and not from the UI of the extension.
     backgroundPageConnection.onMessage.addListener(function (message, sender, sendResponse) {
       switch (message.name) {
         case 'check-page-fresh':
@@ -636,7 +719,7 @@
           });
           break;
         case 'object-changed':
-          // An object has changed. Must update object-tree
+          // An object has changed. Must update the object-trees
 
           // The list of changes
           var changeObj = message.changeList;
@@ -684,6 +767,7 @@
           // A DOM element has changed. Must re-render it in the element tree.
           var mutations = message.changeList;
           if (isTreeLoading) {
+            // If the tree is loading, we'll defer the mutation update to when it's done.
             pendingDOMMutations.push.apply(pendingDOMMutations, mutations);
           } else {
             addMutations(mutations);

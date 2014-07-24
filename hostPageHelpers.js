@@ -682,7 +682,6 @@ function addObjectObserver (key, path, isModel) {
 
   function observer (changes) {
     console.log('observing');
-    console.log(changes);
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
     }));
