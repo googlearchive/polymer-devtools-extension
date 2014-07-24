@@ -743,13 +743,15 @@
           }
           break;
         case 'inspected-element-changed':
-          // An element got selected in the inspector, must select in element-tree
-          var tree = getCurrentElementTree();
-          var childTree = tree.getChildTreeForKey(message.key);
+          if (localDOMMode) {
+            return;
+          }
+          // An element got selected in the inspector, must select in composed DOM tree
+          var childTree = elementTree.getChildTreeForKey(message.key);
           if (childTree && !childTree.selected) {
             childTree.toggleSelection();
+            childTree.scrollIntoView();
           }
-          childTree.scrollIntoView();
           break;
       }
     });
