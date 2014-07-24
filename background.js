@@ -29,6 +29,7 @@
           chrome.tabs.executeScript(message.tabId, {
             file: 'contentScript.js'
           });
+          // Ask the panel to reload itself
           port.postMessage({
             name: 'refresh'
           });
@@ -61,18 +62,21 @@
     }
     switch (message.name) {
       case 'object-changed':
+        // When an object changes
         port.postMessage({
           name: 'object-changed',
           changeList: message.changeList
         });
         break;
       case 'dom-mutation':
+        // When a DOM mutation occurs
         port.postMessage({
           name: 'dom-mutation',
           changeList: message.changeList
         });
         break;
       case 'inspected-element-changed':
+        // When element selection changes in the inspector
         port.postMessage({
           name: 'inspected-element-changed',
           key: message.key
@@ -90,10 +94,10 @@
   // When a tab gets updated
   // Sequence of events:
   // 1. Background-page to panel => 'check-page-refresh'
-  // Possibly:
+  // Possibly (if page is fresh):
   // 2. panel to Background-page => 'fresh-page'
   // 3. Background-page to panel => 'refresh'
-  // Possibly:
+  // Possibly (if `polymer-ready` happened after content script was loaded):
   // 4. content-script to background-page => 'polymer-ready'
   // 5. background-page to panel => 'refresh'
   chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
