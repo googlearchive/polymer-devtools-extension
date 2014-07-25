@@ -70,9 +70,6 @@
       this.keyMap[this.key] = this;
       this.tree = tree;
       this.isDiggable = isDiggable;
-      if (this.isPolymer) {
-        this.$.name.setAttribute('polymer', 'polymer');
-      }
       this.root = root || this;
       for (var i = 0; i < tree.children.length; i++) {
         // Create a new ElementTree to hold a child

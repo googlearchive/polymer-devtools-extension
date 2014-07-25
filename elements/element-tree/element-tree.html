@@ -69,7 +69,7 @@
         <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
         <input hidden?='{{!isPolymer || unRendered}}' type='button' id='magnify' value='{{isDiggable ? "+" : "-"}}' on-click='{{magnify}}'></input>
         <span hidden?='{{!unRendered}}'> ! </span>
-        <span on-click='{{toggleSelection}}' id='name'>
+        <span on-click='{{toggleSelection}}' id='name' polymer?='{{isPolymer}}'>
           {{text}}
           <span id='srcBtn' hidden?='{{!isPolymer}}' on-click='{{viewSource}}'>
             source file
