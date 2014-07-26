@@ -86,6 +86,16 @@
       localDOMMode = toggleButton.checked;
     });
 
+    // When the perf view button is clicked, we just refresh the page and it logs
+    // the needed perf stats.
+    document.querySelector('#perfView').addEventListener('click', function (event) {
+      EvalHelper.executeFunction('reloadPage', function (result, error) {
+        if (error) {
+          throw error;
+        }
+      });
+    });
+
     // Create an EvalHelper object that will help us interact with host page
     // via `eval` calls.
     createEvalHelper(function(helper) {
@@ -172,6 +182,9 @@
       }, {
         name: 'isPageFresh',
         string: isPageFresh.toString()
+      }, {
+        name: 'reloadPage',
+        string: reloadPage.toString()
       }], function(result, error) {
         // Set the blacklist static property on `filterProperty`
         EvalHelper.executeFunction('setBlacklist', [], function(result, error) {

@@ -63,6 +63,13 @@
         color: rgb(39, 112, 39);
         display: none;
       }
+      #perfView {
+        background: #4285f4;
+        color: white;
+      }
+      #perfView::shadow #ripple {
+        color: #2a56c6;
+      }
     </style>
   </head>
   <body unresolved>
@@ -73,6 +80,7 @@
           <paper-toggle-button id='toggleButton'></paper-toggle-button>
           <span>Local DOM</span>
         </div>
+        <paper-button id='perfView' label='Perf stats'></paper-button>
         <core-pages id='elementTreePages' selected='0'>
           <div>
             <div id='composedTreeLoadingBar' class='loading'>

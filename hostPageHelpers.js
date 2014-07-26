@@ -5,6 +5,13 @@
 // in its body is self-executed in the context of the host page.
 
 /**
+ * Reloads the page.
+ */
+function reloadPage () {
+  window.location.reload();
+}
+
+/**
  * Used to check if the page is fresh (untouched by the extension).
  * If it is defined in the page, then it won't raise an error. The page is considered unfresh.
  * If it goes through, the page is fresh.

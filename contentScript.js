@@ -8,8 +8,12 @@ function getNamespacedEventName(name) {
   return chrome.runtime.id + '-' + name;
 }
 
+var startTimeStamp = new Date();
+console.log(startTimeStamp);
+
 // 'polymer-ready' event means that the host page runs a Polymer app and it was upgraded by Polymer.
 window.addEventListener('polymer-ready', function() {
+  console.log(new Date());
   chrome.runtime.sendMessage({
     name: 'polymer-ready'
   });
@@ -34,6 +38,10 @@ window.addEventListener(getNamespacedEventName('inspected-element-changed'), fun
     name: 'inspected-element-changed',
     key: event.detail.key
   });
+});
+
+window.addEventListener('HTMLImportsLoaded', function (event) {
+  console.log(new Date());
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
