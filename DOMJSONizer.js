@@ -1,9 +1,8 @@
 // Contains a class DOMJSONizer used to JSONize DOM tree, objects, properties
 
 // TODO: Remove all logic that pertains to Polymer elements from here and pass them as callbacks
-
-function DOMJSONizer () {
-  function isPolymerElement (element) {
+function DOMJSONizer() {
+  function isPolymerElement(element) {
     return element && ('element' in element) && (element.element.localName === 'polymer-element');
   }
 
@@ -26,10 +25,10 @@ function DOMJSONizer () {
    * @param  {String} prop Name of the property
    * @return {Boolean}     Whether the property is an accessor (get/set) or not.
    */
-  function propHasAccessor (obj, prop) {
+  function propHasAccessor(obj, prop) {
     var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
     if (!descriptor) {
-    console.error(prop);
+      console.error(prop);
     }
     return Boolean(descriptor.set) || Boolean(descriptor.get);
   }
@@ -41,7 +40,7 @@ function DOMJSONizer () {
    * @param  {Array}  newObjArray  The destination object (which is maintained as an Array).
    * @param  {String} prop         Name of the property
    */
-  function copyProperty (protoObject, oldObj, newObjArray, prop) {
+  function copyProperty(protoObject, oldObj, newObjArray, prop) {
     try {
       var tmp = oldObj[prop];
     } catch (e) {
@@ -64,8 +63,8 @@ function DOMJSONizer () {
         name: prop
       });
     } else if (typeof oldObj[prop] === 'string' ||
-        typeof oldObj[prop] === 'number' ||
-        typeof oldObj[prop] === 'boolean') {
+      typeof oldObj[prop] === 'number' ||
+      typeof oldObj[prop] === 'boolean') {
       newObjArray.push({
         type: typeof oldObj[prop],
         hasAccessor: propHasAccessor(protoObject, prop),
@@ -74,7 +73,7 @@ function DOMJSONizer () {
       });
     } else if (((typeof oldObj[prop] === 'object' &&
         !(oldObj[prop] instanceof Array)) ||
-        typeof oldObj[prop] === 'function')) {
+      typeof oldObj[prop] === 'function')) {
       newObjArray.push({
         type: typeof oldObj[prop],
         hasAccessor: propHasAccessor(protoObject, prop),
@@ -104,14 +103,14 @@ function DOMJSONizer () {
    * @param {Object}   obj    The object to be converted.
    * @param {Function} filter A filter function that is supposed to filter out properties.
    */
-  function JSONize (obj, filter) {
+  function JSONize(obj, filter) {
 
     /**
      * Gets the own properties of an object.
      * @param  {Object} obj The object whose properties we want.
      * @return {Array}      An array of properties.
      */
-    function getOwnFilteredProps (obj) {
+    function getOwnFilteredProps(obj) {
       var props = Object.getOwnPropertyNames(obj);
       if (filter) {
         props = props.filter(filter);
@@ -125,13 +124,14 @@ function DOMJSONizer () {
      * @param  {HTMLElement} element The element that we want to explore.
      * @param  {Array}       destObj The destination object (managed as an array) we want to populate.
      */
-    function explorePolymerObject (element, destObj) {
+    function explorePolymerObject(element, destObj) {
       var addedProps = {};
       /** Tells if a property was already added */
-      function isAdded (el) {
+      function isAdded(el) {
         return (el in addedProps);
       }
-      function addToAddedProps (el) {
+
+      function addToAddedProps(el) {
         addedProps[el] = true;
       }
       if (isPolymerElement(element)) {
@@ -156,7 +156,7 @@ function DOMJSONizer () {
           }
           proto = proto.__proto__;
         }
-        destObj.sort(function (a, b) {
+        destObj.sort(function(a, b) {
           return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
         });
       }
@@ -167,7 +167,7 @@ function DOMJSONizer () {
      * @param  {Object} obj     object to look in
      * @param  {Array}  destObj destination object (managed as an array) to copy properties
      */
-    function exploreObject (obj, destObj) {
+    function exploreObject(obj, destObj) {
       var props = Object.getOwnPropertyNames(obj).sort();
       for (var i = 0; i < props.length; i++) {
         if (!filter || filter(props[i])) {
@@ -186,7 +186,7 @@ function DOMJSONizer () {
      * @param  {Array} arr     Source array
      * @param  {Array} destObj Destination object (managed as an array)
      */
-    function exploreArray (arr, destObj) {
+    function exploreArray(arr, destObj) {
       for (var i = 0; i < arr.length; i++) {
         try {
           copyProperty(arr, arr, destObj, i);
@@ -209,7 +209,7 @@ function DOMJSONizer () {
         res.type = 'array';
         exploreArray(obj, res.value);
       } else if (typeof obj === 'object' ||
-          typeof obj === 'function') {
+        typeof obj === 'function') {
         res.type = typeof obj;
         exploreObject(obj, res.value);
       }
@@ -222,7 +222,7 @@ function DOMJSONizer () {
    * @param  {HTMLElement}  el The element we're checkin
    * @return {Boolean}         whether it is a <script> or <style>
    */
-  function isScriptOrStyle (el) {
+  function isScriptOrStyle(el) {
     return el && (el.tagName === 'SCRIPT' || el.tagName === 'STYLE');
   }
 
@@ -239,7 +239,7 @@ function DOMJSONizer () {
    * }
    * unless callback does something else to it
    */
-  function exploreLightDOM (root, callback) {
+  function exploreLightDOM(root, callback) {
     var res = {
       children: [],
       tagName: root.tagName.toLowerCase(),
@@ -279,7 +279,7 @@ function DOMJSONizer () {
    * @param  {HTMLElement} root The element to look under.
    * @return {Array}            A list of children in composed DOM tree.
    */
-  function getComposedDOMChildren (root) {
+  function getComposedDOMChildren(root) {
     if (root.tagName === 'CONTENT') {
       // <content> must get replaced by what gets distributed into it
       var children = [];
@@ -332,8 +332,8 @@ function DOMJSONizer () {
    * }
    * unless callback does anything else to it.
    */
-  this.JSONizeDOMObject = function (root, callback) {
-    function traverse (root) {
+  this.JSONizeDOMObject = function(root, callback) {
+    function traverse(root) {
       var res = {};
       if ('tagName' in root) {
         res.tagName = root.tagName.toLowerCase();
@@ -387,7 +387,7 @@ function DOMJSONizer () {
    *   ]
    * }
    */
-  this.JSONizeObject = function (obj, callback, filter) {
+  this.JSONizeObject = function(obj, callback, filter) {
     var res = JSONize(obj, filter);
     callback && callback(res);
     return res;
@@ -412,7 +412,7 @@ function DOMJSONizer () {
    *   ]
    * }
    */
-  this.JSONizeProperty = function (prop, obj) {
+  this.JSONizeProperty = function(prop, obj) {
     // Get to the object in the prototype chain that actually contains the property
     var actualObject = obj;
     while (actualObject) {
