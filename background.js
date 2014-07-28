@@ -5,6 +5,8 @@
   var tabIdToPortMap = {};
   var portIdToTabIdMap = {};
   var portIdToPortMap = {};
+  var isFreshPage = {};
+  var isPolymerPage = {};
   // To assign port IDs to ports because ports aren't hashable
   var lastPortId = 0;
 
@@ -30,10 +32,9 @@
           chrome.tabs.executeScript(message.tabId, {
             file: 'contentScript.js'
           });
-          // Ask the panel to reload itself
-          port.postMessage({
-            name: 'refresh'
-          });
+          // Mark it so.
+          isFreshPage[message.tabId] = true;
+          isPolymerPage[message.tabId] = message.isPolymerPage;
           break;
       }
     }
@@ -47,6 +48,8 @@
       delete portIdToTabIdMap[portId];
       delete portIdToPortMap[portId];
       delete tabIdToPortMap[tabId];
+      delete isFreshPage[tabId];
+      delete isPolymerPage[tabId];
 
       // Send a message to the content script do necessary clean-up
       chrome.tabs.sendMessage(tabId, {
@@ -92,8 +95,8 @@
     }
   });
 
-  // When a tab gets updated
-  // Sequence of events:
+  // When a page navigation is initiated.
+  // Sequence of events that happen:
   // 1. Background-page to panel => 'check-page-refresh'
   // Possibly (if page is fresh):
   // 2. panel to Background-page => 'fresh-page'
@@ -101,17 +104,39 @@
   // Possibly (if `polymer-ready` happened after content script was loaded):
   // 4. content-script to background-page => 'polymer-ready'
   // 5. background-page to panel => 'refresh'
-  chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    if (changeInfo.status === 'complete') {
-      // Only if it has finished loading
-      if (tabId in tabIdToPortMap) {
-        // If extension was open in this tab, send a message to check if this was
-        // an actual page reload. Further action is based on the response to this.
-        var port = tabIdToPortMap[tabId];
-        port.postMessage({
-          name: 'check-page-fresh'
-        });
-      }
+  chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
+    if (details.frameId !== 0) {
+      // If it is not the top-frame, we just ignore it.
+      return;
+    }
+    var tabId = details.tabId;
+    if (tabId in tabIdToPortMap) {
+      // If extension was open in this tab, send a message to check if this was
+      // an actual page reload. Further action is based on the response to this.
+      var port = tabIdToPortMap[tabId];
+      isFreshPage[tabId] = false;
+      isPolymerPage[tabId] = false;
+      port.postMessage({
+        name: 'check-page-fresh'
+      });
+    }
+  });
+
+  // When a page navigation is completed.
+  chrome.webNavigation.onCompleted.addListener(function(details) {
+    if (details.frameId !== 0) {
+      // If it is not the top-frame, we just ignore it.
+      return;
+    }
+    var tabId = details.tabId;
+    if (tabId in tabIdToPortMap && tabId in isFreshPage && !(tabId in isPolymerPage)) {
+      // If the panel has told us that this page is fresh, the panel needs to be
+      // re-initialized. This has to be done only if it is a Polymer page, otherwise
+      // content script will send a message 'polymer-ready' which should take care of it.
+      var port = tabIdToPortMap[tabId];
+      port.postMessage({
+        name: 'refresh'
+      });
     }
   });
 })();

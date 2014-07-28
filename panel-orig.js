@@ -86,9 +86,8 @@
       localDOMMode = toggleButton.checked;
     });
 
-    // When the perf view button is clicked, we just refresh the page and it logs
-    // the needed perf stats.
-    document.querySelector('#perfView').addEventListener('click', function (event) {
+    // When the reload button is clicked.
+    document.querySelector('#reloadPage').addEventListener('click', function (event) {
       EvalHelper.executeFunction('reloadPage', function (result, error) {
         if (error) {
           throw error;
@@ -677,11 +676,17 @@
           // to be defined if the page is not fresh. If it fails, then the page is fresh.
           EvalHelper.executeFunction('isPageFresh', [], function(result, error) {
             if (error) {
-              // Let the background page know so it can spawn the content script.
-              // Expect a 'refresh' message after that.
-              backgroundPageConnection.postMessage({
-                name: 'fresh-page',
-                tabId: chrome.devtools.inspectedWindow.tabId
+              // The page is fresh.
+              // Check if this is a Polymer page.
+              chrome.devtools.inspectedWindow.eval('Polymer', function (result, error) {
+                // Boolean(error) tells if this was a Polymer page.
+                // Let the background page know so it can spawn the content script.
+                // Expect a 'refresh' message after that.
+                backgroundPageConnection.postMessage({
+                  name: 'fresh-page',
+                  tabId: chrome.devtools.inspectedWindow.tabId,
+                  isPolymerPage: Boolean(error)
+                });
               });
             }
           });

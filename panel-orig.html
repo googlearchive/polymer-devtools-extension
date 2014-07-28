@@ -32,7 +32,6 @@
         background-color: rgba(14, 177, 228, 0.83);
       }
       #localViewToggle {
-        margin: 10px;
         -webkit-border-radius: 5px 5px 5px 5px;
         border: 1px solid #C7E4ED;
         display: inline-block;
@@ -63,41 +62,51 @@
         color: rgb(39, 112, 39);
         display: none;
       }
-      #perfView {
+      #reloadPage {
         background: #4285f4;
         color: white;
+        font-size: 12px;
+        float: right;
       }
-      #perfView::shadow #ripple {
+      #reloadPage::shadow #ripple {
         color: #2a56c6;
+      }
+      #controlContainer {
+        margin: 10px;
+        width: 96%;
       }
     </style>
   </head>
   <body unresolved>
     <split-pane>
       <div class='split-pane-left'>
-        <div id='localViewToggle'>
-          <span>Composed DOM</span>
-          <paper-toggle-button id='toggleButton'></paper-toggle-button>
-          <span>Local DOM</span>
+        <div id='controlContainer'>
+          <div id='localViewToggle'>
+            <span>Composed DOM</span>
+            <paper-toggle-button id='toggleButton'></paper-toggle-button>
+            <span>Local DOM</span>
+          </div>
+          <paper-button id='reloadPage' label='Reload page'></paper-button>
         </div>
-        <paper-button id='perfView' label='Perf stats'></paper-button>
-        <core-pages id='elementTreePages' selected='0'>
-          <div>
-            <div id='composedTreeLoadingBar' class='loading'>
-              Loading...
+        <div>
+          <core-pages id='elementTreePages' selected='0'>
+            <div>
+              <div id='composedTreeLoadingBar' class='loading'>
+                Loading...
+              </div>
+              <element-tree id='composedDOMTree'></element-tree>
             </div>
-            <element-tree id='composedDOMTree'></element-tree>
-          </div>
-          <div>
-            <div id='localDOMTreeLoadingBar' class='loading'>
-              Loading...
+            <div>
+              <div id='localDOMTreeLoadingBar' class='loading'>
+                Loading...
+              </div>
+              <div class='breadCrumbsContainer'>
+                <bread-crumbs></bread-crumbs>
+              </div>
+              <element-tree id='localDOMTree'></element-tree>
             </div>
-            <div class='breadCrumbsContainer'>
-              <bread-crumbs></bread-crumbs>
-            </div>
-            <element-tree id='localDOMTree'></element-tree>
-          </div>
-        </core-pages>
+          </core-pages>
+        </div>
       </div>
       <div class='split-pane-right'>
         <paper-tabs id='tabs' selected='0' noink>
