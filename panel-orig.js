@@ -233,8 +233,8 @@
     window.setTimeout(function () {
       callback();
       loadingBar.style.display = 'none';
+      isTreeLoading = false;
     }, 0);
-    isTreeLoading = false;
   }
 
   /**
