@@ -230,8 +230,10 @@
     isTreeLoading = true;
     var loadingBar = isLocalDOMTree ? localDOMTreeLoadingBar : composedTreeLoadingBar;
     loadingBar.style.display = 'block';
-    callback();
-    loadingBar.style.display = 'none';
+    window.setTimeout(function () {
+      callback();
+      loadingBar.style.display = 'none';
+    }, 0);
     isTreeLoading = false;
   }
 
