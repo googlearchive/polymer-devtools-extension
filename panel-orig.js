@@ -345,10 +345,31 @@
     }
     unSelectInTree();
     elementTreeScrollTop = splitPane.leftScrollTop;
-    elementTreePages.selected = 1;
     localDOMMode = true;
     toggleButton.checked = true;
     splitPane.rightScrollTop = 0;
+  }
+
+  /**
+   * Switch to composed DOM view if we're not in it and reset localDOMTree.
+   */
+  function switchToComposedDOMView() {
+    if (!localDOMMode) {
+      return;
+    }
+    unSelectInTree();
+    localDOMMode = false;
+    splitPane.leftScrollTop = elementTreeScrollTop = 0;
+    deepView = false;
+    // Reset bread-crumbs and localDOMTree to what it is when panel loads the first time.
+    breadCrumbs.list = [{
+      name: elementTree.tree.tagName,
+      key: elementTree.tree.key
+    }];
+    var DOMTree = getDOMTreeForKey(1);
+    console.log(DOMTree === elementTree.tree);
+    initLocalDOMTree(localDOMTree, elementTree.tree);
+    doPendingActions();
   }
 
   /**
@@ -485,6 +506,30 @@
   }
 
   /**
+   * Tells if an element is a child of another.
+   * @param  {Number}  childKey     Key of the child element.
+   * @param  {Number}  parentKey    Key of the supposed parent element.
+   * @return {Boolean}              Whether it is a child actually.
+   */
+  function isChildOf(childKey, parentKey) {
+    var childTree = getDOMTreeForKey(childKey);
+    if (!childTree) {
+      throw 'No child tree with that key';
+    }
+    var nextParentKey;
+    // Iterate up parent key links until we reach the top or we find that it is
+    // parentKey.
+    do {
+      nextParentKey = childTree.parentKey;
+      if (nextParentKey === parentKey) {
+        return true;
+      }
+      childTree = getDOMTreeForKey(nextParentKey);
+    } while (childTree && childTree.parentKey);
+    return false;
+  }
+
+  /**
    * Processes DOM mutations. i.e., updates trees with pending DOM mutations.
    */
   function addMutations() {
@@ -497,16 +542,21 @@
       var childLocalDOMTree = localDOMTree.getChildTreeForKey(key);
 
       function resetTree() {
+        if (childLocalDOMTree) {
+          // The element to be refreshed is there in the local DOM tree.
+          initLocalDOMTree(childLocalDOMTree, newElement);
+        } else if (isChildOf(localDOMTree.key, key)) {
+          // The root of local DOM tree is a child of the element being
+          // re-rendered due to DOM mutation. So it will be inconsistent to continue showing it.
+          switchToComposedDOMView();
+          localDOMTree.empty();
+        }
         // elementTree has all composed DOM elements. A DOM mutation will might need
         // an update there
         if (childElementTree) {
           doTreeLoad(function() {
             childElementTree.initFromDOMTree(newElement, true, elementTree);
           });
-        }
-        if (childLocalDOMTree) {
-          // The element to be refreshed is there in the local DOM tree as well.
-          initLocalDOMTree(childLocalDOMTree, newElement);
         }
       }
       if ((childElementTree && childElementTree.selected) ||
@@ -645,10 +695,20 @@
         var DOMTree = getDOMTreeForKey(key);
         unSelectInTree();
         deepView = false;
-        breadCrumbs.list = [{
-          name: DOMTree.tagName,
-          key: DOMTree.key
-        }];
+        breadCrumbsList = [];
+        var parentDOMTree = DOMTree;
+        // Iterate through parents until we reach the root to show bread-crumbs for
+        // each parent.
+        do {
+          breadCrumbsList.push({
+            name: parentDOMTree.tagName,
+            key: parentDOMTree.key
+          });
+          parentDOMTree = getDOMTreeForKey(parentDOMTree.parentKey);
+        } while (parentDOMTree);
+
+        breadCrumbsList.reverse();
+        breadCrumbs.list = breadCrumbsList;
         initLocalDOMTree(localDOMTree, DOMTree);
         switchToLocalDOMView();
       } else {

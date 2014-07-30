@@ -295,7 +295,8 @@ function DOMJSONizer() {
       // <shadow> must get replaced by stuff from older shadow root
       var children = [];
       var shadowRoot = root;
-      while (!shadowRoot.host) {
+      // The || is because <a> elements have a 'host' property which is a string.
+      while (!shadowRoot.host || typeof shadowRoot.host !== 'object') {
         shadowRoot = shadowRoot.parentNode;
       }
       if (!shadowRoot.olderShadowRoot) {

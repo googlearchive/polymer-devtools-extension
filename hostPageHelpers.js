@@ -495,9 +495,9 @@ function processMutations(mutations) {
 function getDOMJSON(el) {
   return {
     'data': window[NAMESPACE].JSONizer.JSONizeDOMObject(el || document.body,
-      function(domNode, converted, lightDOM) {
+      function(domNode, converted, isLightDOM) {
         if (!domNode.__keyPolymer__) {
-          if (lightDOM) {
+          if (isLightDOM) {
             // Something that wasn't found in the composed tree but found in the light DOM
             // was probably not rendered.
             converted.unRendered = true;
@@ -540,6 +540,15 @@ function getDOMJSON(el) {
         }
         converted.key = domNode.__keyPolymer__;
         var isPolymer = window[NAMESPACE].isPolymerElement(domNode);
+        if (domNode.parentNode) {
+          // Set the parent node key.
+          // The || is because <a> elements have a 'host' property which is a string.
+          if (domNode.parentNode.host && typeof domNode.parentNode.host === 'object') {
+            converted.parentKey = domNode.parentNode.host.__keyPolymer__;
+          } else {
+            converted.parentKey = domNode.parentNode.__keyPolymer__;
+          }
+        }
         // conditionally set the properties
         if (isPolymer) {
           converted.isPolymer = true;
