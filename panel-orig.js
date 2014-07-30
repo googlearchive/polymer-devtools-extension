@@ -34,67 +34,22 @@
   // false when showing the light DOM contents
   var deepView = false;
 
-  // If the page had DOM mutations while the tree was rendered, we need to account
-  // for those later.
+  // If the page had DOM mutations while the tree was being rendered, we need
+  // to account for those later.
   var pendingDOMMutations = [];
+
+  // If the page has a pending refresh while the tree was being rendered.
+  var pendingRefresh = false;
 
   // isTreeLoading is set to true when the tree is being loaded (upon init or
   // DOM mutations)
   var isTreeLoading = false;
 
   /**
-   * Called when panel is opened or page is refreshed.
+   * Called when the panel has to re-init itself upon host page reload/change.
    */
-  function init() {
-    elementTree = document.querySelector('element-tree#composedDOMTree');
-    localDOMTree = document.querySelector('element-tree#localDOMTree');
-
-    // objectTree shows the properties of a selected element in the tree
-    objectTree = document.querySelector('object-tree#main-tree');
-
-    // modelTree shows the model behind a seleccted element (if any)
-    modelTree = document.querySelector('object-tree#model-tree');
-
-    // methodList is the list of methods of the selected element. It is used
-    // to add breakpoints
-    methodList = document.querySelector('method-list');
-
-    splitPane = document.querySelector('split-pane');
-    breadCrumbs = document.querySelector('bread-crumbs');
-    breadCrumbs.list = [];
-
-    composedTreeLoadingBar = document.querySelector('#composedTreeLoadingBar');
-    localDOMTreeLoadingBar = document.querySelector('#localDOMTreeLoadingBar');
-
-    // tabs is a reference to the paper-tabs that is used to change the object-tree
-    // shown in view
-    var tabs = document.querySelector('#tabs');
-    var objectTreePages = document.querySelector('#objectTreePages');
-    tabs.addEventListener('core-select', function(event) {
-      objectTreePages.selected = tabs.selected;
-    });
-
-    // toggleButton is an instance of paper-toggle-button used to switch between
-    // composed DOM and local DOM views
-    var toggleButton = document.querySelector('#toggleButton');
-    var elementTreePages = document.querySelector('#elementTreePages');
-    toggleButton.addEventListener('change', function(event) {
-      // Unselect whatever is selected in whichever element-tree
-      unSelectInTree();
-      splitPane.leftScrollTop = elementTreeScrollTop;
-      elementTreePages.selected = toggleButton.checked ? 1 : 0;
-      localDOMMode = toggleButton.checked;
-    });
-
-    // When the reload button is clicked.
-    document.querySelector('#reloadPage').addEventListener('click', function (event) {
-      EvalHelper.executeFunction('reloadPage', function (result, error) {
-        if (error) {
-          throw error;
-        }
-      });
-    });
-
+  function createPageView() {
+    pendingRefresh = false;
     // Create an EvalHelper object that will help us interact with host page
     // via `eval` calls.
     createEvalHelper(function(helper) {
@@ -198,12 +153,16 @@
               if (error) {
                 throw error;
               }
+              // Reset object-trees and bread-crumbs
+              objectTree.tree.length = 0;
+              modelTree.tree.length = 0;
+              breadCrumbs.list.length = 0;
+              // Load element-trees
               var DOM = result.data;
               console.log('loading composed DOM tree');
               // Load the composed DOM tree
               doTreeLoad(function() {
                 elementTree.initFromDOMTree(DOM, true);
-                addMutations(pendingDOMMutations);
               });
               console.log('loading local DOM tree');
               // Load the local DOM tree
@@ -212,12 +171,67 @@
                 name: DOM.tagName,
                 key: DOM.key
               });
-              console.log('loaded trees');
+              doPendingActions();
             });
           });
         });
       });
     });
+  }
+
+  /**
+   * Called when panel is opened or page is refreshed.
+   */
+  function init() {
+    elementTree = document.querySelector('element-tree#composedDOMTree');
+    localDOMTree = document.querySelector('element-tree#localDOMTree');
+
+    // objectTree shows the properties of a selected element in the tree
+    objectTree = document.querySelector('object-tree#main-tree');
+
+    // modelTree shows the model behind a seleccted element (if any)
+    modelTree = document.querySelector('object-tree#model-tree');
+
+    // methodList is the list of methods of the selected element. It is used
+    // to add breakpoints
+    methodList = document.querySelector('method-list');
+
+    splitPane = document.querySelector('split-pane');
+    breadCrumbs = document.querySelector('bread-crumbs');
+    breadCrumbs.list = [];
+
+    composedTreeLoadingBar = document.querySelector('#composedTreeLoadingBar');
+    localDOMTreeLoadingBar = document.querySelector('#localDOMTreeLoadingBar');
+
+    // tabs is a reference to the paper-tabs that is used to change the object-tree
+    // shown in view
+    var tabs = document.querySelector('#tabs');
+    var objectTreePages = document.querySelector('#objectTreePages');
+    tabs.addEventListener('core-select', function(event) {
+      objectTreePages.selected = tabs.selected;
+    });
+
+    // toggleButton is an instance of paper-toggle-button used to switch between
+    // composed DOM and local DOM views
+    var toggleButton = document.querySelector('#toggleButton');
+    var elementTreePages = document.querySelector('#elementTreePages');
+    toggleButton.addEventListener('change', function(event) {
+      // Unselect whatever is selected in whichever element-tree
+      unSelectInTree();
+      splitPane.leftScrollTop = elementTreeScrollTop;
+      elementTreePages.selected = toggleButton.checked ? 1 : 0;
+      localDOMMode = toggleButton.checked;
+    });
+
+    // When the reload button is clicked.
+    document.querySelector('#reloadPage').addEventListener('click', function (event) {
+      EvalHelper.executeFunction('reloadPage', function (result, error) {
+        if (error) {
+          throw error;
+        }
+      });
+    });
+    createPageView();
   }
 
   /**
@@ -229,12 +243,19 @@
   function doTreeLoad(callback, isLocalDOMTree) {
     isTreeLoading = true;
     var loadingBar = isLocalDOMTree ? localDOMTreeLoadingBar : composedTreeLoadingBar;
+    var tree = isLocalDOMTree ? localDOMTree : elementTree;
     loadingBar.style.display = 'block';
-    window.setTimeout(function () {
-      callback();
-      loadingBar.style.display = 'none';
-      isTreeLoading = false;
-    }, 0);
+    tree.style.display = 'none';
+    if (isLocalDOMTree) {
+      breadCrumbs.style.display = 'none';
+    }
+    callback();
+    loadingBar.style.display = 'none';
+    tree.style.display = 'block';
+    if (isLocalDOMTree) {
+      breadCrumbs.style.display = 'block';
+    }
+    isTreeLoading = false;
   }
 
   /**
@@ -279,8 +300,6 @@
         // called when DOM mutations happen and we need update just one part of the tree
         tree.initFromDOMTree(DOM.lightDOMTree, true);
       }
-      // Add DOM mutations if there were any.
-      addMutations(pendingDOMMutations);
     }, true);
   }
 
@@ -466,10 +485,11 @@
   }
 
   /**
-   * Processes DOM mutations. i.e., updates trees with these changes.
-   * @param {Array} mutations An array of mutations.
+   * Processes DOM mutations. i.e., updates trees with pending DOM mutations.
    */
-  function addMutations(mutations) {
+  function addMutations() {
+    var mutations = pendingDOMMutations.slice(0);
+    pendingDOMMutations.length = 0;
     for (var i = 0; i < mutations.length; i++) {
       var newElement = mutations[i].data;
       var key = newElement.key;
@@ -497,8 +517,21 @@
         resetTree();
       }
     }
-    // Empty the array when done.
-    mutations.length = 0;
+    if (pendingDOMMutations.length > 0) {
+      doPendingActions();
+    }
+  }
+
+  /**
+   * Do pending stuff (page reloads or DOM mutations) that happened while trees were
+   * being rendered.
+   */
+  function doPendingActions() {
+    if (pendingRefresh) {
+      createPageView();
+    } else {
+      addMutations();
+    }
   }
   // When the panel is opened
   window.addEventListener('polymer-ready', function() {
@@ -632,6 +665,7 @@
         }
         initLocalDOMTree(localDOMTree, DOMTree);
       }
+      doPendingActions();
     });
 
     // When an element in the local DOM view is to be 'unmagnified',
@@ -644,6 +678,7 @@
       var DOMTree = childTree.tree;
       unSelectInTree();
       initLocalDOMTree(localDOMTree, DOMTree);
+      doPendingActions();
     });
 
     // When a bread crumb click happens we may need to focus something else in
@@ -654,6 +689,7 @@
       var DOMTree = getDOMTreeForKey(key);
       deepView = false;
       initLocalDOMTree(localDOMTree, DOMTree);
+      doPendingActions();
     });
 
     // When a Polymer element's definition is to be viewed.
@@ -694,14 +730,16 @@
           });
           break;
         case 'refresh':
-          // This happens when either:
-          // 1. The page got upgraded by Polymer ('polymer-ready')
-          // 2. The page got actually refreshed.
-          EvalHelper.executeFunction('cleanUp', [], function(result, error) {
-            // Ignore error. If this 'refresh' was due to a 'polymer-ready' event, cleanUp will
-            // do its job. Otherwise it must be a fresh page, so there is no clean up needed.
-            init();
-          });
+          // This happens when the page actually got reloaded.
+          if (isTreeLoading) {
+            // We don't want to trigger another init process starting if the extension UI
+            // is still trying to get set up. We just mark it so it can processed afterwards.
+            pendingRefresh = true;
+            // No use processing DOM mutations of older page.
+            pendingDOMMutations.length = 0;
+          } else {
+            createPageView();
+          }
           break;
         case 'object-changed':
           // An object has changed. Must update the object-trees
@@ -751,11 +789,9 @@
         case 'dom-mutation':
           // A DOM element has changed. Must re-render it in the element tree.
           var mutations = message.changeList;
-          if (isTreeLoading) {
-            // If the tree is loading, we'll defer the mutation update to when it's done.
-            pendingDOMMutations.push.apply(pendingDOMMutations, mutations);
-          } else {
-            addMutations(mutations);
+          pendingDOMMutations.push.apply(pendingDOMMutations, mutations);
+          if (!isTreeLoading) {
+            addMutations();
           }
           break;
         case 'inspected-element-changed':

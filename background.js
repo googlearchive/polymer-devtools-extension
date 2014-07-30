@@ -104,7 +104,7 @@
   // Possibly (if `polymer-ready` happened after content script was loaded):
   // 4. content-script to background-page => 'polymer-ready'
   // 5. background-page to panel => 'refresh'
-  chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
+  chrome.webNavigation.onCommitted.addListener(function(details) {
     if (details.frameId !== 0) {
       // If it is not the top-frame, we just ignore it.
       return;

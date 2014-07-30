@@ -18,8 +18,8 @@
 	console.log('%c' + getFormattedDate(), timeStyle);
 
 	// 'polymer-ready' event means that the host page runs a Polymer app and it just got upgraded by Polymer.
-	window.addEventListener('polymer-ready:', function() {
-		console.log('%cpolymer-ready', messageStyle);
+	window.addEventListener('polymer-ready', function() {
+		console.log('%cpolymer-ready:', messageStyle);
 		console.log('%c' + getFormattedDate(), timeStyle);
 		chrome.runtime.sendMessage({
 			name: 'polymer-ready'

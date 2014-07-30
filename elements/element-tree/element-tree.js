@@ -49,13 +49,12 @@
       this.childElements = [];
     },
     /**
-     * Populates the tree with a tree object.
+     * Helper method that is invoked by initFromDOMTree the first time.
      * @param  {Object}       tree       An object with a tagName and children trees
      * @param  {Boolean}      isDiggable If it is possible to hit the `+` button to see inner stuff
      * @param  {ElementTree}  root       Root of this tree (top-most parent)
      */
-    initFromDOMTree: function(tree, isDiggable, root) {
-      this.empty();
+    _initFromDOMTreeHelper: function(tree, isDiggable, root) {
       this.text = '<' + tree.tagName + '>';
       // conditionally set these to save memory (there can be a huge page with very few
       // Polymer elements)
@@ -74,9 +73,19 @@
       for (var i = 0; i < tree.children.length; i++) {
         // Create a new ElementTree to hold a child
         var child = new ElementTree();
-        child.initFromDOMTree(tree.children[i], isDiggable, this.root);
+        child._initFromDOMTreeHelper(tree.children[i], isDiggable, this.root);
         this.addChild(child);
       }
+    },
+    /**
+     * Populates the tree with a tree object.
+     * @param  {Object}       tree       An object with a tagName and children trees
+     * @param  {Boolean}      isDiggable If it is possible to hit the `+` button to see inner stuff
+     * @param  {ElementTree}  root       Root of this tree (top-most parent)
+     */
+    initFromDOMTree: function(tree, isDiggable, root) {
+      this.empty();
+      this._initFromDOMTreeHelper(tree, isDiggable, root);
     },
     /**
      * When the tree is expanded or minimized.
