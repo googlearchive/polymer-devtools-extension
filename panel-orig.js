@@ -49,6 +49,11 @@
    * Called when the panel has to re-init itself upon host page reload/change.
    */
   function createPageView() {
+
+    // Even though this is to be set only when a tree is loading, during the first
+    // page view creation, by the time the initialization stuff is done in the page's
+    // context, we don't want DOM mutations doing stuff.
+    isTreeLoading = true;
     pendingRefresh = false;
     // Create an EvalHelper object that will help us interact with host page
     // via `eval` calls.
@@ -351,24 +356,21 @@
   }
 
   /**
-   * Switch to composed DOM view if we're not in it and reset localDOMTree.
+   * Zoom out local DOM view to a key in the bread-crumbs.
+   * @param {Object} newTree Object representing the JSON tree object we need to
+   * zoom out till.
    */
-  function switchToComposedDOMView() {
+  function zoomOutLocalDOMView(newTree) {
     if (!localDOMMode) {
       return;
     }
     unSelectInTree();
-    localDOMMode = false;
-    splitPane.leftScrollTop = elementTreeScrollTop = 0;
     deepView = false;
-    // Reset bread-crumbs and localDOMTree to what it is when panel loads the first time.
-    breadCrumbs.list = [{
-      name: elementTree.tree.tagName,
-      key: elementTree.tree.key
-    }];
-    var DOMTree = getDOMTreeForKey(1);
-    console.log(DOMTree === elementTree.tree);
-    initLocalDOMTree(localDOMTree, elementTree.tree);
+    // Remove last few crumbs from bread-crumbs until we hit key.
+    while (breadCrumbs.list[breadCrumbs.list.length - 1].key !== newTree.key) {
+      breadCrumbs.list.pop();
+    }
+    initLocalDOMTree(localDOMTree, newTree);
     doPendingActions();
   }
 
@@ -548,8 +550,8 @@
         } else if (isChildOf(localDOMTree.key, key)) {
           // The root of local DOM tree is a child of the element being
           // re-rendered due to DOM mutation. So it will be inconsistent to continue showing it.
-          switchToComposedDOMView();
-          localDOMTree.empty();
+          // We zoom out to the point where it is consistent.
+          zoomOutLocalDOMView(newElement);
         }
         // elementTree has all composed DOM elements. A DOM mutation will might need
         // an update there
@@ -567,9 +569,7 @@
         resetTree();
       }
     }
-    if (pendingDOMMutations.length > 0) {
-      doPendingActions();
-    }
+    doPendingActions();
   }
 
   /**
@@ -579,7 +579,7 @@
   function doPendingActions() {
     if (pendingRefresh) {
       createPageView();
-    } else {
+    } else if (pendingDOMMutations.length > 0) {
       addMutations();
     }
   }
@@ -790,13 +790,13 @@
           });
           break;
         case 'refresh':
+          // No use processing DOM mutations of older page.
+          pendingDOMMutations.length = 0;
           // This happens when the page actually got reloaded.
           if (isTreeLoading) {
             // We don't want to trigger another init process starting if the extension UI
             // is still trying to get set up. We just mark it so it can processed afterwards.
             pendingRefresh = true;
-            // No use processing DOM mutations of older page.
-            pendingDOMMutations.length = 0;
           } else {
             createPageView();
           }
