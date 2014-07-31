@@ -13,6 +13,10 @@ Polymer debugging extension
 
 - Get Closure compiler from <a href='http://code.google.com/p/closure-compiler/downloads/list'>here</a>.
 - Unzip file and put `compiler.jar` in `~/closureCompiler`.
+- Install [vulcanize](https://github.com/Polymer/vulcanize)
+
+> npm install -g vulcanize
+ 
 - Build the project.
 
 > python build.py
