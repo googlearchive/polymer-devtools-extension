@@ -116,14 +116,15 @@ closureCompile(srcs=[
   'DOMJSONizer.js',
   'devtools.js',
   'contentScript.js',
-  'background.js'
+  'background.js',
+  'perfContentScript.js',
 ], dest='build')
 
 print 'Finished compiling'
 
 print 'Adding files to build/ ...\n'
 
-# All custom elements defined in the project need not be vulcanized since they are 
+# All custom elements defined in the project need not be vulcanized since they are
 # CSP compliant. All we need to do is copy them over to build/.
 copyDirectoriesToBuild(['elements'], silentFail=False)
 
