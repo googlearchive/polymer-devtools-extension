@@ -144,6 +144,12 @@
       }, {
         name: 'reloadPage',
         string: reloadPage.toString()
+      }, {
+        name: 'renderOverlay',
+        string: renderOverlay.toString()
+      }, {
+        name: 'hideOverlays',
+        string: hideOverlays.toString()
       }], function(result, error) {
         // Set the blacklist static property on `filterProperty`
         EvalHelper.executeFunction('setBlacklist', [], function(result, error) {

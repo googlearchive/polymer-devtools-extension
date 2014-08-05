@@ -35,26 +35,60 @@ function getNamespacedEventName(name) {
 }
 
 /**
+ * Creates/updates an overlay at `rect`. Will replace the previous overlay at
+ * `Overlays[index]` if it exists.
+ *
+ * @param {!ClientRect} rect
+ * @param {Number}      index
+ */
+function renderOverlay(rect, index) {
+  console.log('renderOverlay', rect, index);
+  var overlay = window[NAMESPACE].Overlays[index];
+  if (!overlay) {
+    overlay = window[NAMESPACE].Overlays[index] = document.createElement('div');
+    document.body.appendChild(overlay);
+
+    overlay.style.position        = 'absolute';
+    overlay.style.backgroundColor = 'rgba(255, 64, 129, 0.5)';
+    overlay.style.pointerEvents   = 'none';
+    overlay.style.zIndex          = 100000000;
+  }
+
+  overlay.style.left       = (rect.left + window.scrollX) + 'px';
+  overlay.style.top        = (rect.top  + window.scrollY) + 'px';
+  overlay.style.height     = rect.height + 'px';
+  overlay.style.width      = rect.width  + 'px';
+  overlay.style.visibility = 'visible';
+}
+
+/**
+ * Hides overlays at index and above.
+ *
+ * @param {Number} index
+ */
+function hideOverlays(index) {
+  var overlays = window[NAMESPACE].Overlays;
+  for (var i = overlays.length - 1; i >= index; i--) {
+    overlays[i].style.visibility = 'hidden';
+  }
+}
+
+/**
  * Highlights an element in the page.
  * @param  {Number}  key     Key of the element to highlight
  * @param  {Boolean} isHover if the element was hovered upon in the extension
  */
 function highlight(key, isHover) {
   var element = window[NAMESPACE].DOMCache[key];
-  if (isHover) {
-    window[NAMESPACE].prevHoveredOutline = element.style.outline;
-    window[NAMESPACE].prevHoveredBackgroundColor = element.style.backgroundColor;
-  } else {
-    window[NAMESPACE].unhighlight(key, true);
-    if (window[NAMESPACE].lastSelectedKey) {
-      window[NAMESPACE].unhighlight(window[NAMESPACE].lastSelectedKey, false);
-    }
-    window[NAMESPACE].lastSelectedKey = key;
-    window[NAMESPACE].prevSelectedOutline = element.style.outline;
-    window[NAMESPACE].prevSelectedBackgroundColor = element.style.backgroundColor;
+  if (window[NAMESPACE].HighlightedElement == element) return;
+  window[NAMESPACE].HighlightedElement = element;
+
+  var rects = element.getClientRects();
+  for (var i = 0, rect; rect = rects[i]; i++) {
+    window[NAMESPACE].renderOverlay(rect, i);
   }
-  element.style.outline = '1px dashed red';
-  element.style.backgroundColor = 'rgba(255,0,0,0.1)';
+  // And mop up any extras.
+  window[NAMESPACE].hideOverlays(rects.length);
 }
 
 /**
@@ -64,10 +98,10 @@ function highlight(key, isHover) {
  */
 function unhighlight(key, isHover) {
   var element = window[NAMESPACE].DOMCache[key];
-  element.style.outline = isHover ? window[NAMESPACE].prevHoveredOutline :
-    window[NAMESPACE].prevSelectedOutline;
-  element.style.backgroundColor = isHover ? window[NAMESPACE].prevHoveredBackgroundColor :
-    window[NAMESPACE].prevSelectedBackgroundColor;
+  if (window[NAMESPACE].HighlightedElement == element) {
+    window[NAMESPACE].HighlightedElement = null;
+    window[NAMESPACE].hideOverlays(0);
+  }
 }
 
 /**
@@ -855,4 +889,6 @@ function createCache() {
   // Mutation observers are stored so they can be removed later
   window[NAMESPACE].mutationObserverCache = {};
   window[NAMESPACE].JSONizer = new window[NAMESPACE].DOMJSONizer();
+  // All active overlays
+  window[NAMESPACE].Overlays = [];
 }
