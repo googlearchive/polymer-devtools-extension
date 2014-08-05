@@ -131,7 +131,7 @@ copyDirectoriesToBuild(['elements'], silentFail=False)
 # panel.js is a product of vulcanize. Since it got compiled to build/ we don't need it.
 removeFiles(['panel.js'], silentFail=False)
 
-copyFilesToBuild(['devtools.html', 'manifest.json', 'perfContentScript.js'], silentFail=False)
+copyFilesToBuild(['devtools.html', 'manifest.json'], silentFail=False)
 
 # <script>s are not copied by vulcanize, so these have to be moved in as well.
 execCmd('cp bower_components/platform/platform.js build/bower_components/platform/platform.js',
