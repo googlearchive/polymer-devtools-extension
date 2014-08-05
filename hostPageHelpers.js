@@ -3,6 +3,9 @@
 // E.g, to define `highlight` a function which takes `NAMESPACE`
 // as an argument and has a `window[<namspace>] = <highlight-function-string>;`
 // in its body is self-executed in the context of the host page.
+//
+// If you add a new function, and wish for it to be exposed, you will also need
+// to add it to `createPageView()` in `panel-orig.js`.
 
 /**
  * Reloads the page.
