@@ -403,11 +403,6 @@
         throw error;
       }
     });
-    EvalHelper.executeFunction('scrollIntoView', [key], function(result, error) {
-      if (error) {
-        console.log(error);
-      }
-    });
   }
 
   /**
