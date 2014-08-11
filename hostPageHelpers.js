@@ -35,39 +35,68 @@ function getNamespacedEventName(name) {
 }
 
 /**
- * Highlights an element in the page.
- * @param  {Number}  key     Key of the element to highlight
- * @param  {Boolean} isHover if the element was hovered upon in the extension
+ * Creates/updates an overlay at `rect`. Will replace the previous overlay at
+ * `Overlays[index]` if it exists.
+ * @param {!ClientRect} rect  rectangle to display a highlight over.
+ * @param {Number}      index index of `Overlays` to reuse/set.
  */
-function highlight(key, isHover) {
-  var element = window[NAMESPACE].DOMCache[key];
-  if (isHover) {
-    window[NAMESPACE].prevHoveredOutline = element.style.outline;
-    window[NAMESPACE].prevHoveredBackgroundColor = element.style.backgroundColor;
-  } else {
-    window[NAMESPACE].unhighlight(key, true);
-    if (window[NAMESPACE].lastSelectedKey) {
-      window[NAMESPACE].unhighlight(window[NAMESPACE].lastSelectedKey, false);
-    }
-    window[NAMESPACE].lastSelectedKey = key;
-    window[NAMESPACE].prevSelectedOutline = element.style.outline;
-    window[NAMESPACE].prevSelectedBackgroundColor = element.style.backgroundColor;
+function renderOverlay(rect, index) {
+  var overlay = window[NAMESPACE].overlays[index];
+  if (!overlay) {
+    overlay = window[NAMESPACE].overlays[index] = document.createElement('div');
+    document.body.appendChild(overlay);
+
+    overlay.style.position        = 'absolute';
+    overlay.style.backgroundColor = 'rgba(255, 64, 129, 0.5)';
+    overlay.style.pointerEvents   = 'none';
+    overlay.style.zIndex          = 2147483647; // Infinity is not valid.
   }
-  element.style.outline = '1px dashed red';
-  element.style.backgroundColor = 'rgba(255,0,0,0.1)';
+
+  overlay.style.left       = (rect.left + window.scrollX) + 'px';
+  overlay.style.top        = (rect.top  + window.scrollY) + 'px';
+  overlay.style.height     = rect.height + 'px';
+  overlay.style.width      = rect.width  + 'px';
+  overlay.style.visibility = 'visible';
+}
+
+/**
+ * Hides overlays at minIndex and above.
+ * @param {Number} minIndex minimum index to hide at.
+ */
+function hideOverlays(minIndex) {
+  var overlays = window[NAMESPACE].overlays;
+  for (var i = overlays.length - 1; i >= minIndex; i--) {
+    overlays[i].style.visibility = 'hidden';
+  }
+}
+
+/**
+ * Highlights an element in the page.
+ * @param  {Number} key Key of the element to highlight
+ */
+function highlight(key) {
+  var element = window[NAMESPACE].DOMCache[key];
+  if (window[NAMESPACE].highlightedElement == element) return;
+  window[NAMESPACE].highlightedElement = element;
+
+  var rects = element.getClientRects();
+  for (var i = 0, rect; rect = rects[i]; i++) {
+    window[NAMESPACE].renderOverlay(rect, i);
+  }
+  // And mop up any extras.
+  window[NAMESPACE].hideOverlays(rects.length);
 }
 
 /**
  * Unhighlights an element in the page.
- * @param  {Number}  key     Key of the element in the page
- * @param  {Boolean} isHover if the element was hovered-out of
+ * @param  {Number} key Key of the element in the page
  */
-function unhighlight(key, isHover) {
+function unhighlight(key) {
   var element = window[NAMESPACE].DOMCache[key];
-  element.style.outline = isHover ? window[NAMESPACE].prevHoveredOutline :
-    window[NAMESPACE].prevSelectedOutline;
-  element.style.backgroundColor = isHover ? window[NAMESPACE].prevHoveredBackgroundColor :
-    window[NAMESPACE].prevSelectedBackgroundColor;
+  if (window[NAMESPACE].highlightedElement == element) {
+    window[NAMESPACE].highlightedElement = null;
+    window[NAMESPACE].hideOverlays(0);
+  }
 }
 
 /**
@@ -482,7 +511,7 @@ function processMutations(mutations) {
       continue;
     }
     // We should ideally remove all the removed nodes from `DOMCache` but it
-    // would involve finding all children of a removed node (recursively through the 
+    // would involve finding all children of a removed node (recursively through the
     // composed DOM). So we let them be.
     changedElements.push(window[NAMESPACE].getDOMJSON(changedElement));
     changedElementKeys[changedElement.__keyPolymer__] = true;
@@ -755,7 +784,6 @@ function addObjectObserver(key, path, isModel) {
   }
 
   function observer(changes) {
-    console.log('observing');
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
     }));
@@ -855,4 +883,6 @@ function createCache() {
   // Mutation observers are stored so they can be removed later
   window[NAMESPACE].mutationObserverCache = {};
   window[NAMESPACE].JSONizer = new window[NAMESPACE].DOMJSONizer();
+  // All active overlays
+  window[NAMESPACE].overlays = [];
 }

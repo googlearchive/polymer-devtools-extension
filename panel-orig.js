@@ -144,6 +144,12 @@
       }, {
         name: 'reloadPage',
         string: reloadPage.toString()
+      }, {
+        name: 'renderOverlay',
+        string: renderOverlay.toString()
+      }, {
+        name: 'hideOverlays',
+        string: hideOverlays.toString()
       }], function(result, error) {
         // Set the blacklist static property on `filterProperty`
         EvalHelper.executeFunction('setBlacklist', [], function(result, error) {
@@ -389,11 +395,10 @@
 
   /**
    * Highlight an element in the page
-   * @param  {Number}  key     The key of the element to be highlighted
-   * @param  {Boolean} isHover If it is a hover and not a selection
+   * @param  {Number key The key of the element to be highlighted
    */
-  function highlightElement(key, isHover) {
-    EvalHelper.executeFunction('highlight', [key, isHover], function(result, error) {
+  function highlightElement(key) {
+    EvalHelper.executeFunction('highlight', [key], function(result, error) {
       if (error) {
         throw error;
       }
@@ -407,11 +412,10 @@
 
   /**
    * Unhighlight a highlighted element in the page
-   * @param  {Number}  key     Key of the element to be unhighlighted
-   * @param  {Boolean} isHover If it is because of a hover-out and not an unselection.
+   * @param  {Number} key Key of the element to be unhighlighted
    */
-  function unhighlightElement(key, isHover) {
-    EvalHelper.executeFunction('unhighlight', [key, isHover], function(result, error) {
+  function unhighlightElement(key) {
+    EvalHelper.executeFunction('unhighlight', [key], function(result, error) {
       if (error) {
         throw error;
       }
@@ -454,8 +458,6 @@
     // When an element is selected, we try to open both the main and model trees
     expandObject(key, [], false);
     expandObject(key, [], true);
-    // Visually highlight the element in the page and scroll it into view
-    highlightElement(key);
   }
 
   /**
@@ -476,7 +478,6 @@
           // Empty the object/model tree
           if (!isModel) {
             objectTree.tree.length = 0;
-            unhighlightElement(key, false);
           } else {
             modelTree.tree.length = 0;
           }
@@ -675,18 +676,16 @@
 
     // Happens when an element is hovered over
     window.addEventListener('highlight', function(event) {
-      var key = event.detail.key;
-      highlightElement(key, true);
+      highlightElement(event.detail.key);
     });
 
     // Happens when an element is hovered out
     window.addEventListener('unhighlight', function(event) {
-      var key = event.detail.key;
-      unhighlightElement(key, true);
+      unhighlightElement(event.detail.key);
     });
 
     // Happens when an element is to be magnified,
-    // i.e., either seen in the local DOM view or if already in the 
+    // i.e., either seen in the local DOM view or if already in the
     // local DOM view, to see the shadow content of it.
     window.addEventListener('magnify', function(event) {
       var key = event.detail.key;
