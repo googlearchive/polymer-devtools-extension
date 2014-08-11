@@ -37,21 +37,19 @@ function getNamespacedEventName(name) {
 /**
  * Creates/updates an overlay at `rect`. Will replace the previous overlay at
  * `Overlays[index]` if it exists.
- *
- * @param {!ClientRect} rect
- * @param {Number}      index
+ * @param {!ClientRect} rect  rectangle to display a highlight over.
+ * @param {Number}      index index of `Overlays` to reuse/set.
  */
 function renderOverlay(rect, index) {
-  console.log('renderOverlay', rect, index);
-  var overlay = window[NAMESPACE].Overlays[index];
+  var overlay = window[NAMESPACE].overlays[index];
   if (!overlay) {
-    overlay = window[NAMESPACE].Overlays[index] = document.createElement('div');
+    overlay = window[NAMESPACE].overlays[index] = document.createElement('div');
     document.body.appendChild(overlay);
 
     overlay.style.position        = 'absolute';
     overlay.style.backgroundColor = 'rgba(255, 64, 129, 0.5)';
     overlay.style.pointerEvents   = 'none';
-    overlay.style.zIndex          = 100000000;
+    overlay.style.zIndex          = 2147483647; // Infinity is not valid.
   }
 
   overlay.style.left       = (rect.left + window.scrollX) + 'px';
@@ -62,26 +60,24 @@ function renderOverlay(rect, index) {
 }
 
 /**
- * Hides overlays at index and above.
- *
- * @param {Number} index
+ * Hides overlays at minIndex and above.
+ * @param {Number} minIndex minimum index to hide at.
  */
-function hideOverlays(index) {
-  var overlays = window[NAMESPACE].Overlays;
-  for (var i = overlays.length - 1; i >= index; i--) {
+function hideOverlays(minIndex) {
+  var overlays = window[NAMESPACE].overlays;
+  for (var i = overlays.length - 1; i >= minIndex; i--) {
     overlays[i].style.visibility = 'hidden';
   }
 }
 
 /**
  * Highlights an element in the page.
- * @param  {Number}  key     Key of the element to highlight
- * @param  {Boolean} isHover if the element was hovered upon in the extension
+ * @param  {Number} key Key of the element to highlight
  */
-function highlight(key, isHover) {
+function highlight(key) {
   var element = window[NAMESPACE].DOMCache[key];
-  if (window[NAMESPACE].HighlightedElement == element) return;
-  window[NAMESPACE].HighlightedElement = element;
+  if (window[NAMESPACE].highlightedElement == element) return;
+  window[NAMESPACE].highlightedElement = element;
 
   var rects = element.getClientRects();
   for (var i = 0, rect; rect = rects[i]; i++) {
@@ -93,13 +89,12 @@ function highlight(key, isHover) {
 
 /**
  * Unhighlights an element in the page.
- * @param  {Number}  key     Key of the element in the page
- * @param  {Boolean} isHover if the element was hovered-out of
+ * @param  {Number} key Key of the element in the page
  */
-function unhighlight(key, isHover) {
+function unhighlight(key) {
   var element = window[NAMESPACE].DOMCache[key];
-  if (window[NAMESPACE].HighlightedElement == element) {
-    window[NAMESPACE].HighlightedElement = null;
+  if (window[NAMESPACE].highlightedElement == element) {
+    window[NAMESPACE].highlightedElement = null;
     window[NAMESPACE].hideOverlays(0);
   }
 }
@@ -516,7 +511,7 @@ function processMutations(mutations) {
       continue;
     }
     // We should ideally remove all the removed nodes from `DOMCache` but it
-    // would involve finding all children of a removed node (recursively through the 
+    // would involve finding all children of a removed node (recursively through the
     // composed DOM). So we let them be.
     changedElements.push(window[NAMESPACE].getDOMJSON(changedElement));
     changedElementKeys[changedElement.__keyPolymer__] = true;
@@ -789,7 +784,6 @@ function addObjectObserver(key, path, isModel) {
   }
 
   function observer(changes) {
-    console.log('observing');
     window.dispatchEvent(new CustomEvent(window[NAMESPACE].getNamespacedEventName('object-changed'), {
       detail: processChanges(changes)
     }));
@@ -890,5 +884,5 @@ function createCache() {
   window[NAMESPACE].mutationObserverCache = {};
   window[NAMESPACE].JSONizer = new window[NAMESPACE].DOMJSONizer();
   // All active overlays
-  window[NAMESPACE].Overlays = [];
+  window[NAMESPACE].overlays = [];
 }
