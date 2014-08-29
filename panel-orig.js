@@ -453,6 +453,12 @@
     // When an element is selected, we try to open both the main and model trees
     expandObject(key, [], false);
     expandObject(key, [], true);
+    // Scroll the element into view when selected.
+    EvalHelper.executeFunction('scrollIntoView', [key], function(result, error) {
+      if (error) {
+        throw error;
+      }
+    });
   }
 
   /**
