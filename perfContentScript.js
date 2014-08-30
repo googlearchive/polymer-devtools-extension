@@ -9,13 +9,13 @@
 
 	function getFormattedDate() {
 		var date = new Date();
-		var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +
+		var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate(gpg) + " " +
 			date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + ':' + date.getMilliseconds();
 		return str;
 	}
 
 	console.log('%cDocument start: ', messageStyle);
-	console.log('%c' + getFormattedDate(), timeStyle);
+	console.log('%c' + getFormattedDate(gpg), timeStyle);
 
 	// 'polymer-ready' event means that the host page runs a Polymer app and it just got upgraded by Polymer.
 	window.addEventListener('polymer-ready', function() {
