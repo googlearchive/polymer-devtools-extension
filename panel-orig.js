@@ -150,6 +150,15 @@
       }, {
         name: 'hideOverlays',
         string: hideOverlays.toString()
+      }, {
+        name: 'isCustomElement',
+        string: isCustomElement.toString()
+      }, {
+        name: 'isUnregisteredCustomElement',
+        string: isUnregisteredCustomElement.toString()
+      }, {
+        name: 'warnUnregisteredCustomElement',
+        string: warnUnregisteredCustomElement.toString()
       }], function(result, error) {
         // Set the blacklist static property on `filterProperty`
         EvalHelper.executeFunction('setBlacklist', [], function(result, error) {

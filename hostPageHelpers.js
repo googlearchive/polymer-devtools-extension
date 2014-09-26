@@ -322,6 +322,33 @@ function isPolymerElement(element) {
 }
 
 /**
+ * Tells if an element is a custom element.
+ * @param  {HTMLElement}  el The element to check.
+ * @return {Boolean}         whether it is a custom element.
+ */
+function isCustomElement(el) {
+  return el.localName.indexOf('-') !== -1 || el.getAttribute('is');
+}
+
+/**
+ * Tells if a custom element is unregistered
+ * @param  {HTMLElement}  el The element to check.
+ * @return {Boolean}         whether it is unregistered or not.
+ */
+function isUnregisteredCustomElement(el) {
+  return window[NAMESPACE].isCustomElement(el) && el.constructor === HTMLElement;
+}
+
+/**
+ * Warns about an unregistered custom element.
+ * @param  {HTMLElement}  el The element to check.
+ */
+function warnUnregisteredCustomElement(el) {
+  console.log('%cThis custom element isn\'t registered: ', 'color: red; font-size: 13px;');
+  console.log(el);
+}
+
+/**
  * A property filter
  * @param  {String} prop A property name
  * @return {Boolean}     Whether it is to be kept or not.
@@ -568,6 +595,10 @@ function getDOMJSON(el) {
             if (domNode.shadowRoot) {
               observer.observe(domNode.shadowRoot, config);
             }
+          }
+          // Warn about unregistered custom elements.
+          if (window[NAMESPACE].isUnregisteredCustomElement(domNode)) {
+            window[NAMESPACE].warnUnregisteredCustomElement(domNode);
           }
         }
         converted.key = domNode.__keyPolymer__;
