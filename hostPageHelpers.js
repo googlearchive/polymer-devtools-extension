@@ -344,8 +344,7 @@ function isUnregisteredCustomElement(el) {
  * @param  {HTMLElement}  el The element to check.
  */
 function warnUnregisteredCustomElement(el) {
-  var warningStyle = 'color: red; font-size: 13px;';
-  console.log('%cThis custom element isn\'t registered: ', warningStyle);
+  console.log('%cThis custom element isn\'t registered: ', 'color: red; font-size: 13px;');
   console.log(el);
 }
 
