@@ -11,7 +11,7 @@ Polymer debugging extension
 
 > bower install
 
-- Get Closure compiler from <a href='http://code.google.com/p/closure-compiler/downloads/list'>here</a>.
+- Get Closure compiler from <a href='//github.com/google/closure-compiler#getting-started'>here</a>.
 - Unzip file and put `compiler.jar` in `~/closureCompiler`.
 - Install [vulcanize](https://github.com/Polymer/vulcanize)
 
