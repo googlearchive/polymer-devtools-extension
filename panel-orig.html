@@ -1,0 +1,127 @@
+<html>
+  <head>
+    <script src="bower_components/platform/platform.js"></script>
+    <script src="DOMJSONizer.js"></script>
+    <script src="hostPageHelpers.js"></script>
+    <script src="evalHelper.js"></script>
+    <script src="panel-orig.js"></script>
+    <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+    <link rel="import" href="bower_components/paper-toggle-button/paper-toggle-button.html">
+    <link rel="import" href="elements/core-pages/core-pages.html">
+    <link rel="import" href="elements/split-pane/split-pane.html">
+    <link rel="import" href="elements/element-tree/element-tree.html">
+    <link rel="import" href="elements/object-tree/object-tree.html">
+    <link rel="import" href="elements/method-list/method-list.html">
+    <link rel="import" href="elements/bread-crumbs/bread-crumbs.html">
+    <style>
+      #objectTreePagesContainer {
+        margin-left: 10px;
+        margin-top: 10px;
+      }
+      paper-tab {
+        margin: 1px;
+        border: 1px solid rgb(230, 240, 177);
+      }
+      paper-tabs {
+        background-color: rgba(239, 245, 255, 0.63);
+        width: 97%;
+        height: 30px;
+        color: rgb(47, 150, 141);
+      }
+      paper-tabs::shadow #selectionBar {
+        background-color: rgba(14, 177, 228, 0.83);
+      }
+      #localViewToggle {
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border: 1px solid #C7E4ED;
+        display: inline-block;
+        padding: 3px;
+      }
+      #localViewToggle > span {
+        margin: 5px;
+        color: rgb(57, 139, 19);
+        -webkit-user-select: none;
+        cursor: default;
+      }
+      paper-toggle-button {
+        vertical-align: middle
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink {
+        color: white;
+      }
+      paper-toggle-button::shadow paper-radio-button::shadow #ink[checked] {
+        color: white;
+      }
+      .breadCrumbsContainer {
+        margin-left: 10px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+      .loading {
+        font-size: 14px;
+        color: rgb(39, 112, 39);
+        display: none;
+      }
+      #reloadPage {
+        background: #DFE9E6;
+        color: rgb(87, 89, 92);
+        font-size: 12px;
+        float: right;
+      }
+      #reloadPage::shadow #ripple {
+        color: #2a56c6;
+      }
+      #controlContainer {
+        margin: 10px;
+        width: 96%;
+      }
+    </style>
+  </head>
+  <body unresolved>
+    <split-pane>
+      <div class='split-pane-left'>
+        <div id='controlContainer'>
+          <div id='localViewToggle'>
+            <span>Composed DOM</span>
+            <paper-toggle-button id='toggleButton'></paper-toggle-button>
+            <span>Local DOM</span>
+          </div>
+          <paper-button id='reloadPage' label='Reload page'></paper-button>
+        </div>
+        <div>
+          <core-pages id='elementTreePages' selected='0'>
+            <div>
+              <div id='composedTreeLoadingBar' class='loading'>
+                Loading... Please wait
+              </div>
+              <element-tree id='composedDOMTree'></element-tree>
+            </div>
+            <div>
+              <div id='localDOMTreeLoadingBar' class='loading'>
+                Loading... Please wait
+              </div>
+              <div class='breadCrumbsContainer'>
+                <bread-crumbs></bread-crumbs>
+              </div>
+              <element-tree id='localDOMTree'></element-tree>
+            </div>
+          </core-pages>
+        </div>
+      </div>
+      <div class='split-pane-right'>
+        <paper-tabs id='tabs' selected='0' noink>
+          <paper-tab>Properties</paper-tab>
+          <paper-tab>Model</paper-tab>
+          <paper-tab>Breakpoints</paper-tab>
+        </paper-tabs>
+        <div id='objectTreePagesContainer'>
+          <core-pages id='objectTreePages' selected='0'>
+            <object-tree id='main-tree'></object-tree>
+            <object-tree id='model-tree'></object-tree>
+            <method-list></method-list>
+          </core-pages>
+        </div>
+      </div>
+    </split-pane>
+  </body>
+</html>

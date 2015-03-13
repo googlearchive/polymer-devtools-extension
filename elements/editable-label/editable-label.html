@@ -1,0 +1,23 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<!--A text label that is editable upon mouse-click-->
+
+<polymer-element name='editable-label' attributes='width text hidden'>
+  <template>
+    <style>
+      #static {
+        border: 1px solid #E6F0EA;
+        min-width: 10px;
+        height: 13px;
+        float: left;
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
+      }
+    </style>
+    <div hidden?='{{hidden}}'>
+      <div id='static' on-click='{{startEditing}}'>{{text}}</div>
+      <input id='dynamic' type='text' value='{{text}}' size='{{width}}'
+      on-blur='{{stopEditing}}' on-keypress='{{handleKeyPress}}'/>
+    </div>
+  </template>
+  <script src='editable-label.js'></script>
+</polymer-element>

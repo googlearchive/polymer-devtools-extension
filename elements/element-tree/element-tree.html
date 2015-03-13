@@ -1,0 +1,83 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/core-icons/core-icons.html">
+
+<!-- Reasons for not implementing it like object-tree:
+  - The entire DOM tree is fetched at once as opposed to how objects are fetched level-by-level in object-tree
+  - Information is lost and refetched everytime the object-tree is collapsed whereas here, it is not.
+    DOM mutations are fewer and we are better of responding to changes
+
+  Use:
+    - declare <element-tree></element-tree>
+    - tree.initFromDOMTree(treeObject)
+    - tree.empty() to empty tree
+    - tree.getChildTreeForKey(key) to get child tree
+
+    Listen to:
+    1. unselected : when an element is unselected (explicitly with the mouse)
+    2. selected : when an element is selected
+    3. highlight : when an element is hovered over
+    4. unhighlight : when an element is hovered out of
+-->
+<polymer-element name='element-tree' attributes='indent text basewidth' constructor='ElementTree'>
+  <template>
+    <style>
+      #expandBtn {
+        cursor: pointer;
+      }
+      #thisElement {
+        padding: 1px;
+        -webkit-user-select: none;
+      }
+      #thisElement:hover {
+        background-color: #C7E4ED;
+      }
+      #thisElement[selected] {
+        background-color: rgb(178, 224, 178);
+        color: white;
+      }
+      #name {
+        font-size: 12px;
+        font-family: dejavu sans mono, monospace;
+        cursor: default;
+        width: 87%;
+        color: #C04747;
+        height: 16px;
+        display: inline-block;
+      }
+      #srcBtn {
+        text-decoration: underline;
+        font-size: 9px;
+        color: rgb(119, 121, 180);
+        cursor: pointer;
+        display: none;
+      }
+      #name[polymer] {
+        color: rgb(19, 106, 185);
+      }
+      #name[polymer]:hover {
+        color: rgb(8, 8, 231);
+      }
+      #name:hover {
+        color: #8F1904;
+      }
+      #name:hover #srcBtn {
+        display: inline-block;
+      }
+    </style>
+    <div id='content'>
+      <div id='thisElement' on-mouseover='{{mouseOver}}' on-mouseout='{{mouseOut}}'>
+        <core-icon id='expandBtn' on-click='{{toggle}}' icon='{{expandBtnIcon}}' size='15'></core-icon>
+        <input hidden?='{{!isPolymer || unRendered}}' type='button' id='magnify' value='{{isDiggable ? "+" : "-"}}' on-click='{{magnify}}'></input>
+        <span hidden?='{{!unRendered}}'> ! </span>
+        <span on-click='{{toggleSelection}}' id='name' polymer?='{{isPolymer}}'>
+          {{text}}
+          <span id='srcBtn' hidden?='{{!isPolymer}}' on-click='{{viewSource}}'>
+            source file
+          </span>
+        </span>
+      </div>
+      <div id='childrenContent'></div>
+    </div>
+  </template>
+  <script src='element-tree.js'></script>
+</polymer-element>

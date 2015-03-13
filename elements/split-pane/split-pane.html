@@ -1,0 +1,36 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<!--Creates a double pane with a splitter in between-->
+
+<link rel="import" href="../../bower_components/core-splitter/core-splitter.html">
+
+<polymer-element name='split-pane'>
+  <template>
+    <style>
+      #content {
+        display: flex;
+        flex-direction: row;
+        overflow: auto;
+      }
+      #left {
+        width: 70%;
+        height: 100%;
+        overflow: auto;
+      }
+      #right {
+        height: 100%;
+        overflow: auto;
+        flex: 1;
+      }
+    </style>
+    <div horizontal layout id='content'>
+      <div id='left'>
+        <content select='.split-pane-left'></content>
+      </div>
+      <core-splitter allowOverflow='true'></core-splitter>
+      <div id='right'>
+        <content select='.split-pane-right'></content>
+      </div>
+    </div>
+  </template>
+  <script src='split-pane.js'></script>
+</polymer-element>

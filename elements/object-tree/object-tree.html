@@ -1,0 +1,85 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../editable-label/editable-label.html">
+<link rel="import" href="../../bower_components/core-icons/core-icons.html">
+
+<!--
+  Use:
+    - Declare <object-tree></object-tree>
+    - tree.tree = treeObj; // Set the driving model tree object
+    - Update treeObj as required and the object-tree is updated automatically
+
+    - Listen to:
+      1. object-expand : When an object is expanded
+      2. object-collapse : When an object is collapsed
+      3. property-changed: When a property is changed
+      4. refresh-property: When a property is to be refreshed
+-->
+<polymer-element name='object-tree' attributes='hidden basewidth' constructor='ObjectTree'>
+  <template>
+    <style>
+      #content {
+        white-space: nowrap;
+        font-size: 12px;
+        -webkit-user-select: none;
+      }
+      .property {
+         padding: 3px;
+      }
+      editable-label {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .labelText {
+        font-family: dejavu sans mono, monospace;
+        color: rgb(19, 106, 185);
+      }
+      .labelText[isPolymer] {
+        font-family: Courier, monospace;
+        color: #6A02BF;
+        font-size: 13px;
+      }
+      .typeText {
+        color: gray;
+        font-family: "Arial", Courier, monospace;
+        font-size: 11px;
+      }
+      .btn {
+        cursor: pointer;
+      }
+      .children {
+        margin-left: {{baseWidth}}px;
+      }
+      .propMarker {
+        margin-right: 4px;
+        margin-left: 4px;
+      }
+    </style>
+    <div id='content' hidden?='{{hidden}}'>
+      <!--IDs are assigned dynamically and uniquely. They serve to identify the element.-->
+      <template repeat='{{prop, index in tree}}'>
+        <div class='property'>
+          <span hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}' class='btn'>
+            <core-icon id='img{{index}}' icon='{{prop.value.length > 0 ? "expand-more" : "chevron-right"}}' on-click='{{toggle}}' 
+              state='{{prop.value.length > 0 ? "expanded" : "collapsed"}}' size='15'></core-icon>
+          </span>
+          <span hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}' class='propMarker'>
+            <core-icon icon='check-circle-blank' size='4'></core-icon>
+          </span>
+          <label class='labelText' id='name{{index}}' isPolymer?='{{prop.polymer}}'>{{prop.name}}</label>
+          <label class='typeText' hidden?='{{prop.type != "object" && prop.type != "array" && prop.type != "function"}}'>&lt;{{prop.type}}&gt;</label>
+          <label class='typeText' hidden?='{{!prop.published}}'>&lt;published&gt;</label>
+          <editable-label id='field{{index}}' text='{{prop.value}}' data-hasAccessor='{{prop.hasAccessor}}' data-name='{{prop.name}}' 
+            hidden?='{{prop.type == "object" || prop.type == "array" || prop.type == "function"}}'>
+          </editable-label>
+          <span hidden?='{{!prop.hasAccessor}}' class='btn'>
+            <core-icon id='refresh{{index}}' data-name='{{prop.name}}' on-click='{{refreshField}}' icon='refresh' size='12'></core-icon>
+          </span>
+        </div>
+        <div class='children'>
+          <object-tree id='child{{index}}'></object-tree>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script src='object-tree.js'></script>
+</polymer-element>
