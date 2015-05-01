@@ -3,3 +3,5 @@
 /build
 deb_build.py
 .DS_Store
+.log/log-id 
+/Polymer
