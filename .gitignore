@@ -2,4 +2,6 @@
 /node_modules
 /build
 deb_build.py
-.DS_Store
+.DS_Store 
+.Polymer 
+.log/log-id
