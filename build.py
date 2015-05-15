@@ -1,6 +1,7 @@
 import subprocess
 import sys
-import os
+import os 
+import cloud-google
 
 # Check if it is a clean or a build
 args = sys.argv
