@@ -15,5 +15,5 @@
       "js": ["perfContentScript.js"],
       "run_at": "document_start"
     }
-  ]
+  ]<core-polymer>
 }
