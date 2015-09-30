@@ -1,5 +1,7 @@
 /bower_components
 /node_modules
 /build
-deb_build.py
-.DS_Store
+/deb_build.py
+/.DS_Store 
+/.NEW API NEW APK NEW SDK Polymer-devtools-extension
+.NEW Polymer Devtools-updata 2015
